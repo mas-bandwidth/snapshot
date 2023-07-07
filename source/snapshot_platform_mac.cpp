@@ -43,7 +43,7 @@ int snapshot_platform_init()
     return SNAPSHOT_OK;
 }
 
-void snapshoht_platform_term()
+void snapshot_platform_term()
 {
     // ...
 }

@@ -5,10 +5,13 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "snapshot.h"
 
 int main()
 {
-    printf( "\nhello world\n\n" );
+    snapshot_init();
+    printf( "\nhello snapshot world\n\n" );
     fflush( stdout );
+    snapshot_term();
     return 0;
 }

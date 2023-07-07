@@ -103,12 +103,7 @@
 
 // -----------------------------------------
 
-struct snapshot_config_t
-{
-    // ...
-};
-
-int snapshot_init( void * context, struct snapshot_config_t * config );
+int snapshot_init();
 
 void snapshot_term();
 

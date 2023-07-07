@@ -1,0 +1,22 @@
+DONE
+
+	Import basic platform files
+
+	Get compiling with premake and stub test.cpp
+
+	Prefix all files with snapshot_
+
+	Setup snapshot.h with definitions needed by all files (eg. platform detection, endianness, asserts etc...)
+
+	Get snapshot_crypto.h/cpp compiling
+
+TODO
+
+	Get snapshot_address.h / cpp in
+
+	Get mac platform cut down and compiling
+
+	Setup snapshot_platform.h and snapshot_platform.cpp so there is an interface to platform stuff that multiple files can call
+
+	Implement snapshot.cpp so we can init and term the library
+
