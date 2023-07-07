@@ -3,14 +3,12 @@
     Commercial licenses under different terms are available. Contact licensing@mas-bandwidth.com for details.
 */
 
-#include "common.h"
+#include "snapshot_common.h"
 
-#if 0 // todo
+#ifndef NEXT_IOS_H
+#define NEXT_IOS_H
 
-#ifndef NEXT_MAC_H
-#define NEXT_MAC_H
-
-#if NEXT_PLATFORM == NEXT_PLATFORM_MAC
+#if NEXT_PLATFORM == NEXT_PLATFORM_IOS
 
 #include <pthread.h>
 #include <unistd.h>
@@ -46,8 +44,6 @@ struct next_platform_mutex_t
 
 // -------------------------------------
 
-#endif // #if NEXT_PLATFORM == NEXT_PLATFORM_MAC
+#endif // #if NEXT_PLATFORM == NEXT_PLATFORM_IOS
 
-#endif // #ifndef NEXT_MAC_H
-
-#endif // todo
+#endif // #ifndef NEXT_IOS_H

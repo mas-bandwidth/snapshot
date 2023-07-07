@@ -3,7 +3,7 @@
     Commercial licenses under different terms are available. Contact licensing@mas-bandwidth.com for details.
 */
 
-#include "common.h"
+#include "snapshot_common.h"
 
 #ifndef SNAPSHOT_CRYPTO_H
 #define SNAPSHOT_CRYPTO_H

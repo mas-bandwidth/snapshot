@@ -3,11 +3,11 @@
     Commercial licenses under different terms are available. Contact licensing@mas-bandwidth.com for details.
 */
 
-#include "platform_mac.h"
+#include "snapshot_platform_ios.h"
 
 #if 0 // todo
 
-#if NEXT_PLATFORM == NEXT_PLATFORM_MAC
+#if NEXT_PLATFORM == NEXT_PLATFORM_IOS
 
 #include <netdb.h>
 #include <sys/types.h>
@@ -35,49 +35,30 @@ static mach_timebase_info_data_t timebase_info;
 
 static int connection_type = NEXT_CONNECTION_TYPE_UNKNOWN;
 
-static uint64_t time_start;
-
 int next_platform_init()
 {
     mach_timebase_info( &timebase_info );
 
-    time_start = mach_absolute_time();
-
     connection_type = NEXT_CONNECTION_TYPE_UNKNOWN;
 
-    SCDynamicStoreRef dynamic_store = SCDynamicStoreCreate( kCFAllocatorDefault, CFSTR( "FindCurrentInterfaceIpMac" ), NULL, NULL );
-    CFPropertyListRef global = SCDynamicStoreCopyValue( dynamic_store, CFSTR( "State:/Network/Global/IPv4" ) );
-    if ( global )
+    SCNetworkReachabilityRef reachability = SCNetworkReachabilityCreateWithName( NULL, "8.8.8.8" );
+    if ( reachability )
     {
-        CFStringRef primary_interface_name = (CFStringRef)( CFDictionaryGetValue( (CFDictionaryRef)( global ), CFSTR( "PrimaryInterface" ) ) );
-        CFArrayRef interfaces = SCNetworkInterfaceCopyAll();
-        CFIndex count = CFArrayGetCount( interfaces );
-        for ( CFIndex i = 0; i < count; i++ )
-        {   
-            SCNetworkInterfaceRef interface = (SCNetworkInterfaceRef)( CFArrayGetValueAtIndex( interfaces, i ) );
-            CFStringRef bsd_name = SCNetworkInterfaceGetBSDName( interface );
-            if ( CFStringCompare( primary_interface_name, bsd_name, 0 ) == kCFCompareEqualTo )
-            {   
-                CFStringRef interface_type = SCNetworkInterfaceGetInterfaceType( interface );
-                if ( CFStringCompare( interface_type, kSCNetworkInterfaceTypeEthernet, 0 ) == kCFCompareEqualTo )
-                {
-                    connection_type = NEXT_CONNECTION_TYPE_WIRED;
-                }
-                else if ( CFStringCompare( interface_type, kSCNetworkInterfaceTypeIEEE80211, 0 ) == kCFCompareEqualTo )
-                {
-                    connection_type = NEXT_CONNECTION_TYPE_WIFI;
-                }
-                else if ( CFStringCompare( interface_type, kSCNetworkInterfaceTypeWWAN, 0 ) == kCFCompareEqualTo )
-                {
-                    connection_type = NEXT_CONNECTION_TYPE_CELLULAR;
-                }
-                break;
+        SCNetworkReachabilityFlags flags;
+        bool success = SCNetworkReachabilityGetFlags( reachability, &flags );
+        CFRelease( reachability );
+        if ( success )
+        {
+            if ( flags & kSCNetworkReachabilityFlagsIsWWAN )
+            {
+                connection_type = NEXT_CONNECTION_TYPE_CELLULAR;
+            }
+            else
+            {
+                connection_type = NEXT_CONNECTION_TYPE_WIFI;
             }
         }
-        CFRelease( interfaces );
-        CFRelease( global );
     }
-    CFRelease( dynamic_store );
 
     return NEXT_OK;
 }
@@ -174,10 +155,12 @@ int next_platform_connection_type()
 
 int next_platform_id()
 {
-    return NEXT_PLATFORM_MAC;
+    return NEXT_PLATFORM_IOS;
 }
 
 // ---------------------------------------------------
+
+static uint64_t time_start = 0;
 
 double next_platform_time()
 {
@@ -212,7 +195,7 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
     if ( socket->handle < 0 )
     {
         next_printf( NEXT_LOG_LEVEL_ERROR, "failed to create socket" );
-        next_free( context, socket );
+        next_platform_socket_destroy( socket );
         return NULL;
     }
 
@@ -317,7 +300,6 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
 
     if ( socket_type == NEXT_PLATFORM_SOCKET_NON_BLOCKING )
     {
-        // non-blocking
         if ( fcntl( socket->handle, F_SETFL, O_NONBLOCK, 1 ) == -1 )
         {
             next_printf( NEXT_LOG_LEVEL_ERROR, "failed to set socket to non-blocking" );
@@ -327,7 +309,7 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
     }
     else if ( timeout_seconds > 0.0f )
     {
-        // blocking with receive timeout
+        // set receive timeout
         struct timeval tv;
         tv.tv_sec = 0;
         tv.tv_usec = (int) ( timeout_seconds * 1000000.0 );
@@ -340,7 +322,7 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
     }
     else
     {
-        // blocking with no timeout
+        // socket is blocking with no timeout
     }
 
 #if NEXT_PACKET_TAGGING
@@ -384,7 +366,7 @@ void next_platform_socket_destroy( next_platform_socket_t * socket )
 {
     next_assert( socket );
 
-    if ( socket->handle != 0 )
+    if ( socket->handle > 0 )
     {
         close( socket->handle );
     }
@@ -499,25 +481,6 @@ int next_platform_socket_receive_packet( next_platform_socket_t * socket, next_a
 
 // ---------------------------------------------------
 
-struct thread_shim_data_t
-{
-    void * context;
-    void * real_thread_data;
-    next_platform_thread_func_t real_thread_function;
-};
-
-static void* thread_function_shim( void * data )
-{
-    next_assert( data );
-    thread_shim_data_t * shim_data = (thread_shim_data_t*) data;
-    void * context = shim_data->context;
-    void * real_thread_data = shim_data->real_thread_data;
-    next_platform_thread_func_t real_thread_function = shim_data->real_thread_function;
-    next_free( context, data );
-    real_thread_function( real_thread_data );
-    return NULL;
-}
-
 next_platform_thread_t * next_platform_thread_create( void * context, next_platform_thread_func_t thread_function, void * arg )
 {
     next_platform_thread_t * thread = (next_platform_thread_t*) next_malloc( context, sizeof( next_platform_thread_t) );
@@ -525,22 +488,10 @@ next_platform_thread_t * next_platform_thread_create( void * context, next_platf
     next_assert( thread );
 
     thread->context = context;
-
-    thread_shim_data_t * shim_data = (thread_shim_data_t*) next_malloc( context, sizeof(thread_shim_data_t) );
-    next_assert( shim_data );
-    if ( !shim_data )
+    
+    if ( pthread_create( &thread->handle, NULL, thread_function, arg ) != 0 )
     {
         next_free( context, thread );
-        return NULL;
-    }
-    shim_data->context = context;
-    shim_data->real_thread_function = thread_function;
-    shim_data->real_thread_data = arg;
-
-    if ( pthread_create( &thread->handle, NULL, thread_function_shim, shim_data ) != 0 )
-    {
-        next_free( context, thread );
-        next_free( context, shim_data );
         return NULL;
     }
 
@@ -561,9 +512,9 @@ void next_platform_thread_destroy( next_platform_thread_t * thread )
 
 bool next_platform_thread_high_priority( next_platform_thread_t * thread )
 {
-    struct sched_param param;
-    param.sched_priority = sched_get_priority_max( SCHED_FIFO );
-    return pthread_setschedparam( thread->handle, SCHED_FIFO, &param ) == 0;
+    // todo
+    (void)thread;
+    return false;
 }
 
 // ---------------------------------------------------
@@ -616,10 +567,10 @@ void next_platform_mutex_destroy( next_platform_mutex_t * mutex )
 
 // ---------------------------------------------------
 
-#else // #if NEXT_PLATFORM == NEXT_PLATFORM_MAC
+#else // #if NEXT_PLATFORM == NEXT_PLATFORM_IOS
 
-int next_mac_dummy_symbol = 0;
+int next_ios_dummy_symbol = 0;
 
-#endif // #if NEXT_PLATFORM == NEXT_PLATFORM_MAC
+#endif // #if NEXT_PLATFORM == NEXT_PLATFORM_IOS
 
 #endif // todo

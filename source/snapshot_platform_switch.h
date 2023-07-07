@@ -3,30 +3,33 @@
     Commercial licenses under different terms are available. Contact licensing@mas-bandwidth.com for details.
 */
 
-#include "common.h"
+#include "snapshot_common.h"
 
 #if 0 // todo
 
-#ifndef NEXT_PS5_H
-#define NEXT_PS5_H
+#ifndef NEXT_SWITCH_H
+#define NEXT_SWITCH_H
 
-#if NEXT_PLATFORM == NEXT_PLATFORM_PS5
+#if NEXT_PLATFORM == NEXT_PLATFORM_SWITCH
 
-#include <kernel.h>
-#include <net.h>
+#include <nn/os.h>
 
 #define NEXT_PLATFORM_SOCKET_NON_BLOCKING       0
 #define NEXT_PLATFORM_SOCKET_BLOCKING           1
 
 // -------------------------------------
 
-typedef SceNetId next_platform_socket_handle_t;
+typedef int next_platform_socket_handle_t;
 
 struct next_platform_socket_t
 {
     next_platform_socket_handle_t handle;
+    next_address_t address;
     int type;
     float timeout_seconds;
+    int send_buffer_size;
+    int receive_buffer_size;
+    bool enable_packet_tagging;
     void * context;
 };
 
@@ -34,7 +37,8 @@ struct next_platform_socket_t
 
 struct next_platform_thread_t
 {
-    ScePthread handle;
+    nn::os::ThreadType handle;
+    char * stack;
     void * context;
 };
 
@@ -42,14 +46,13 @@ struct next_platform_thread_t
 
 struct next_platform_mutex_t
 {
-    bool ok;
-    ScePthreadMutex handle;
+    nn::os::MutexType handle;
 };
 
 // -------------------------------------
 
-#endif // #if NEXT_PLATFORM == NEXT_PLATFORM_PS5
+#endif // #if NEXT_PLATFORM == NEXT_PLATFORM_SWITCH
 
-#endif // #ifndef NEXT_PS5_H
+#endif // #ifndef NEXT_SWITCH_H
 
 #endif // todo

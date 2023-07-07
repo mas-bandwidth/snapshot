@@ -5,11 +5,9 @@
 
 // IMPORTANT: you must compile this file with /ZW to get windows runtime components
 
-#include "platform_xboxone.h"
+#include "snapshot_platform_gdk.h"
 
-#if 0 // todo
-
-#if NEXT_PLATFORM == NEXT_PLATFORM_XBOX_ONE
+#ifdef _GAMING_XBOX
 
 #include <sodium.h>
 
@@ -21,12 +19,13 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <ws2ipdef.h>
+#include <iphlpapi.h>
+#include <iptypes.h>
 #include <malloc.h>
 #include <time.h>
 #include <bcrypt.h> // random
+#include <XNetworking.h>
 #pragma pack(pop)
-
-#pragma comment( lib, "WS2_32.lib" )
 
 #ifdef SetPort
 #undef SetPort
@@ -161,7 +160,7 @@ static LARGE_INTEGER timer_start;
 
 static const char * next_randombytes_implementation_name()
 {
-    return "xboxone";
+    return "gdk";
 }
 
 static uint32_t next_randombytes_random()
@@ -235,33 +234,28 @@ int next_platform_init()
         return NEXT_ERROR;
     }
 
-    connection_type = NEXT_CONNECTION_TYPE_UNKNOWN;
-    try
+    XNetworkingConnectivityHint connectivityHint;
+    if ( SUCCEEDED( XNetworkingGetConnectivityHint( &connectivityHint ) ) )
     {
-        auto profile = Windows::Networking::Connectivity::NetworkInformation::GetInternetConnectionProfile();
-        if ( profile )
+        switch ( connectivityHint.ianaInterfaceType )
         {
-            switch ( profile->NetworkAdapter->IanaInterfaceType )
-            {
-                case 6:
-                    connection_type = NEXT_CONNECTION_TYPE_WIRED;
-                    break;
-                case 71:
-                    connection_type = NEXT_CONNECTION_TYPE_WIFI;
-                    break;
-                case 237:
-                case 243:
-                case 244:
-                    connection_type = NEXT_CONNECTION_TYPE_CELLULAR;
-                    break;
-            }
+            case IF_TYPE_ETHERNET_CSMACD:
+                connection_type = NEXT_CONNECTION_TYPE_WIRED;
+                break;
+            case IF_TYPE_IEEE80211:
+                connection_type = NEXT_CONNECTION_TYPE_WIFI;
+                break;
+            case IF_TYPE_WWANPP:
+            case IF_TYPE_WWANPP2:
+                connection_type = NEXT_CONNECTION_TYPE_CELLULAR;
+                break;
         }
     }
-    catch ( Platform::Exception^ )
-    {
-    }
+
     return NEXT_OK;
 }
+
+#pragma warning(disable:4723)
 
 double next_platform_time()
 {
@@ -385,6 +379,8 @@ void next_platform_socket_destroy( next_platform_socket_t * );
 
 next_platform_socket_t * next_platform_socket_create( void * context, next_address_t * address, int socket_type, float timeout_seconds, int send_buffer_size, int receive_buffer_size, bool enable_packet_tagging )
 {
+    (void) enable_packet_tagging;
+
     next_assert( address );
     next_assert( address->type != NEXT_ADDRESS_NONE );
 
@@ -459,9 +455,9 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
         sockaddr_in socket_address;
         memset( &socket_address, 0, sizeof( socket_address ) );
         socket_address.sin_family = AF_INET;
-        socket_address.sin_addr.s_addr = ( ( (uint32_t) address->data.ipv4[0] ) )      | 
-                                         ( ( (uint32_t) address->data.ipv4[1] ) << 8 )  | 
-                                         ( ( (uint32_t) address->data.ipv4[2] ) << 16 ) | 
+        socket_address.sin_addr.s_addr = ( ( (uint32_t) address->data.ipv4[0] ) )      |
+                                         ( ( (uint32_t) address->data.ipv4[1] ) << 8 )  |
+                                         ( ( (uint32_t) address->data.ipv4[2] ) << 16 ) |
                                          ( ( (uint32_t) address->data.ipv4[3] ) << 24 );
         socket_address.sin_port = next_platform_htons( address->port );
 
@@ -569,9 +565,9 @@ void next_platform_socket_send_packet( next_platform_socket_t * socket, const ne
         sockaddr_in socket_address;
         memset( &socket_address, 0, sizeof( socket_address ) );
         socket_address.sin_family = AF_INET;
-        socket_address.sin_addr.s_addr = ( ( (uint32_t) to->data.ipv4[0] ) )        | 
-                                         ( ( (uint32_t) to->data.ipv4[1] ) << 8 )   | 
-                                         ( ( (uint32_t) to->data.ipv4[2] ) << 16 )  | 
+        socket_address.sin_addr.s_addr = ( ( (uint32_t) to->data.ipv4[0] ) )        |
+                                         ( ( (uint32_t) to->data.ipv4[1] ) << 8 )   |
+                                         ( ( (uint32_t) to->data.ipv4[2] ) << 16 )  |
                                          ( ( (uint32_t) to->data.ipv4[3] ) << 24 );
         socket_address.sin_port = next_platform_htons( to->port );
         sendto( socket->handle, (const char*)( packet_data ), packet_bytes, 0, (sockaddr*)( &socket_address ), sizeof( sockaddr_in ) );
@@ -586,7 +582,7 @@ int next_platform_socket_receive_packet( next_platform_socket_t * socket, next_a
     next_assert( max_packet_size > 0 );
 
     typedef int socklen_t;
-    
+
     sockaddr_storage sockaddr_from;
     socklen_t from_length = sizeof( sockaddr_from );
 
@@ -629,7 +625,7 @@ int next_platform_socket_receive_packet( next_platform_socket_t * socket, next_a
         next_assert( 0 );
         return 0;
     }
-  
+
     next_assert( result >= 0 );
 
     return result;
@@ -642,13 +638,17 @@ int next_platform_connection_type()
 
 int next_platform_id()
 {
+    #if defined(_GAMING_XBOX_SCARLETT)
+    return NEXT_PLATFORM_XBOX_SERIES_X;
+    #elif defined(_GAMING_XBOX_XBOXONE)
     return NEXT_PLATFORM_XBOX_ONE;
+    #else
+    return NEXT_PLATFORM_WINDOWS;
+    #endif
 }
 
-#else // #if NEXT_PLATFORM == NEXT_PLATFORM_XBOX_ONE
+#else // #ifdef _GAMING_XBOX
 
-int next_xbox_one_dummy_symbol = 0;
+int next_gdk_dummy_symbol = 0;
 
-#endif // #if NEXT_PLATFORM == NEXT_PLATFORM_XBOX_ONE
-
-#endif // todo
+#endif // #ifdef _GAMING_XBOX

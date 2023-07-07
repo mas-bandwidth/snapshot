@@ -3,7 +3,7 @@
     Commercial licenses under different terms are available. Contact licensing@mas-bandwidth.com for details.
 */
 
-#include "platform_switch.h"
+#include "snapshot_platform_switch.h"
 
 #if 0 // todo
 

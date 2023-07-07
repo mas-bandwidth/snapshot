@@ -3,39 +3,39 @@
     Commercial licenses under different terms are available. Contact licensing@mas-bandwidth.com for details.
 */
 
-#include "common.h"
+#include "snapshot_common.h"
 
 #if 0 // todo
 
-#ifndef NEXT_PS4_H
-#define NEXT_PS4_H
+#ifndef NEXT_LINUX_H
+#define NEXT_LINUX_H
 
-#if NEXT_PLATFORM == NEXT_PLATFORM_PS4
+#if NEXT_PLATFORM == NEXT_PLATFORM_LINUX
 
-#include <kernel.h>
-#include <net.h>
+#include <pthread.h>
+#include <unistd.h>
+#include <sched.h>
 
 #define NEXT_PLATFORM_SOCKET_NON_BLOCKING       0
 #define NEXT_PLATFORM_SOCKET_BLOCKING           1
 
 // -------------------------------------
 
-typedef SceNetId next_platform_socket_handle_t;
+typedef int next_platform_socket_handle_t;
 
 struct next_platform_socket_t
 {
-    next_platform_socket_handle_t handle;
-    int type;
-    float timeout_seconds;
     void * context;
+    int type;
+    next_platform_socket_handle_t handle;
 };
 
 // -------------------------------------
 
 struct next_platform_thread_t
 {
-    ScePthread handle;
     void * context;
+    pthread_t handle;
 };
 
 // -------------------------------------
@@ -43,13 +43,13 @@ struct next_platform_thread_t
 struct next_platform_mutex_t
 {
     bool ok;
-    ScePthreadMutex handle;
+    pthread_mutex_t handle;
 };
 
 // -------------------------------------
 
-#endif // #if NEXT_PLATFORM == NEXT_PLATFORM_PS4
+#endif // #if NEXT_PLATFORM == NEXT_PLATFORM_LINUX
 
-#endif // #ifndef NEXT_PS4_H
+#endif // #ifndef NEXT_LINUX_H
 
 #endif // todo
