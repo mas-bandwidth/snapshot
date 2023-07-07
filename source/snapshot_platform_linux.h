@@ -1,9 +1,9 @@
 /*
-    Snapshot SDK Copyright © 2023 Network Next, Inc. This source code is licensed under GPL version 3 or any later version.
-    Commercial licenses under different terms are available. Contact licensing@mas-bandwidth.com for details.
+    Snapshot SDK Copyright © 2023 Mas Bandwidth LLC. This source code is licensed under GPL version 3 or any later version.
+    Commercial licenses under different terms are available. Email licensing@mas-bandwidth.com for details.
 */
 
-#include "snapshot_common.h"
+#include "snapshot.h"
 
 #if 0 // todo
 
