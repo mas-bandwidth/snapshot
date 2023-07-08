@@ -1,6 +1,6 @@
 /*
     Snapshot SDK Copyright © 2023 Mas Bandwidth LLC. This source code is licensed under GPL version 3 or any later version.
-    Commercial licenses under different terms are available. Email licensing@mas-bandwidth.com for details.
+    Commercial licensing under different terms is available. Please email licensing@mas-bandwidth.com for details.
 */
 
 #ifndef SNAPSHOT_H
@@ -12,6 +12,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdio.h>
 
 #if !defined(SNAPSHOT_DEVELOPMENT)
 
@@ -109,7 +110,77 @@ void snapshot_term();
 
 // -----------------------------------------
 
+// todo
+#include <assert.h>
+#include <memory.h>
+#define snapshot_assert assert
+
+// -----------------------------------------
+
+void snapshot_copy_string( char * dest, const char * source, size_t dest_size );
+
+// -----------------------------------------
+
+void snapshot_printf( const char * format, ... );
+
+void snapshot_printf( int level, const char * format, ... );
+
+// -----------------------------------------
+
+void * snapshot_malloc( void * context, size_t bytes );
+
+void snapshot_free( void * context, void * p );
+
+// -----------------------------------------
+
+// todo
+/*
+extern void (*next_assert_function_pointer)( const char * condition, const char * function, const char * file, int line );
+
+#ifndef NEXT_ASSERTS
+    #ifdef NDEBUG
+        #define NEXT_ASSERTS 0
+    #else
+        #define NEXT_ASSERTS 1
+    #endif
+#endif
+
+#if NEXT_ASSERTS
+#define next_assert( condition )                                                            \
+do                                                                                          \
+{                                                                                           \
+    if ( !(condition) )                                                                     \
+    {                                                                                       \
+        next_assert_function_pointer( #condition, __FUNCTION__, __FILE__, __LINE__ );       \
+    }                                                                                       \
+} while(0)
+#else
+#define next_assert( ignore ) ((void)0)
+#endif
+*/
+
+/*
+NEXT_EXPORT_FUNC void next_quiet( NEXT_BOOL flag );
+
+NEXT_EXPORT_FUNC void next_log_level( int level );
+
+NEXT_EXPORT_FUNC void next_log_function( void (*function)( int level, const char * format, ... ) );
+
+NEXT_EXPORT_FUNC void next_assert_function( void (*function)( const char * condition, const char * function, const char * file, int line ) );
+
+NEXT_EXPORT_FUNC void next_allocator( void * (*malloc_function)( void * context, size_t bytes ), void (*free_function)( void * context, void * p ) );
+*/
+
+// -----------------------------------------
+
 #endif // #ifndef SNAPSHOT_H
+
+
+
+
+
+
+
 
 
 
@@ -117,10 +188,6 @@ void snapshot_term();
 // todo: work out where the rest of this belongs
 
 #if 0
-
-NEXT_EXPORT_FUNC double next_time();
-
-NEXT_EXPORT_FUNC void next_sleep( double time_seconds );
 
 NEXT_EXPORT_FUNC void next_printf( int level, const char * format, ... );
 
@@ -158,26 +225,6 @@ NEXT_EXPORT_FUNC void next_assert_function( void (*function)( const char * condi
 NEXT_EXPORT_FUNC void next_allocator( void * (*malloc_function)( void * context, size_t bytes ), void (*free_function)( void * context, void * p ) );
 
 NEXT_EXPORT_FUNC const char * next_user_id_string( uint64_t user_id, char * buffer, size_t buffer_size );
-
-// -----------------------------------------
-
-#if !NEXT_ADDRESS_ALREADY_DEFINED
-struct next_address_t
-{
-    union { uint8_t ipv4[4]; uint16_t ipv6[8]; } data;
-    uint16_t port;
-    uint8_t type;
-};
-#define NEXT_ADDRESS_ALREADY_DEFINED
-#endif // #if !NEXT_ADDRESS_ALREADY_DEFINED
-
-NEXT_EXPORT_FUNC int next_address_parse( struct next_address_t * address, const char * address_string );
-
-NEXT_EXPORT_FUNC const char * next_address_to_string( const struct next_address_t * address, char * buffer );
-
-NEXT_EXPORT_FUNC NEXT_BOOL next_address_equal( const struct next_address_t * a, const struct next_address_t * b );
-
-NEXT_EXPORT_FUNC void next_address_anonymize( struct next_address_t * address );
 
 // -----------------------------------------
 
@@ -219,11 +266,5 @@ struct next_mutex_helper_t
 #endif // #ifdef __cplusplus
 
 // -----------------------------------------
-
-NEXT_EXPORT_FUNC void next_copy_string( char * dest, const char * source, size_t dest_size );
-
-// -----------------------------------------
-
-NEXT_EXPORT_FUNC void next_test();      // IMPORTANT: only if compiled with tests. See #if NEXT_COMPILE_WITH_TESTS
 
 #endif // todo

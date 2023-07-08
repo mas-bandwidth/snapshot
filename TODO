@@ -10,13 +10,22 @@ DONE
 
 	Get snapshot_crypto.h/cpp compiling
 
-TODO
+	Get snapshot_address.h in
 
-	Get snapshot_address.h / cpp in
-
-	Get mac platform cut down and compiling
-
-	Setup snapshot_platform.h and snapshot_platform.cpp so there is an interface to platform stuff that multiple files can call
+	Setup snapshot_platform.h so there is one header interface for platform functions
 
 	Implement snapshot.cpp so we can init and term the library
 
+	Setup snapshot_address.cpp
+
+	Hack up snapshot_assert
+
+	Hack up snapshot_printf
+
+	Hack up snapshot_malloc/free
+
+TODO
+
+	Get mac platform cpp fully compiling and linking
+
+	Clean up and get stuff working properly no hax

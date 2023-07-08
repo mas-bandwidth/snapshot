@@ -1,14 +1,14 @@
 /*
     Snapshot SDK Copyright © 2023 Mas Bandwidth LLC. This source code is licensed under GPL version 3 or any later version.
-    Commercial licenses under different terms are available. Email licensing@mas-bandwidth.com for details.
+    Commercial licensing under different terms is available. Please email licensing@mas-bandwidth.com for details.
 */
 
 #include "snapshot_platform_mac.h"
 
 #if SNAPSHOT_PLATFORM == SNAPSHOT_PLATFORM_MAC
 
-// todo
-//#include "snapshot_address.h"
+#include "snapshot_platform.h"
+#include "snapshot_address.h"
 
 #include <netdb.h>
 #include <sys/types.h>
@@ -83,8 +83,8 @@ int snapshot_platform_inet_ntop6( const uint16_t * address, char * address_strin
     return inet_ntop( AF_INET6, (void*)address, address_string, socklen_t( address_string_size ) ) == NULL ? SNAPSHOT_ERROR : SNAPSHOT_OK;
 }
 
-// todo
-/*
+// ---------------------------------------------------
+
 int snapshot_platform_hostname_resolve( const char * hostname, const char * port, snapshot_address_t * address )
 {
     addrinfo hints;
@@ -100,9 +100,9 @@ int snapshot_platform_hostname_resolve( const char * hostname, const char * port
                 address->type = SNAPSHOT_ADDRESS_IPV6;
                 for ( int i = 0; i < 8; ++i )
                 {
-                    address->data.ipv6[i] = next_platform_ntohs( ( (uint16_t*) &addr_ipv6->sin6_addr ) [i] );
+                    address->data.ipv6[i] = snapshot_platform_ntohs( ( (uint16_t*) &addr_ipv6->sin6_addr ) [i] );
                 }
-                address->port = next_platform_ntohs( addr_ipv6->sin6_port );
+                address->port = snapshot_platform_ntohs( addr_ipv6->sin6_port );
                 freeaddrinfo( result );
                 return SNAPSHOT_OK;
             }
@@ -114,13 +114,13 @@ int snapshot_platform_hostname_resolve( const char * hostname, const char * port
                 address->data.ipv4[1] = (uint8_t) ( ( addr_ipv4->sin_addr.s_addr & 0x0000FF00 ) >> 8 );
                 address->data.ipv4[2] = (uint8_t) ( ( addr_ipv4->sin_addr.s_addr & 0x00FF0000 ) >> 16 );
                 address->data.ipv4[3] = (uint8_t) ( ( addr_ipv4->sin_addr.s_addr & 0xFF000000 ) >> 24 );
-                address->port = next_platform_ntohs( addr_ipv4->sin_port );
+                address->port = snapshot_platform_ntohs( addr_ipv4->sin_port );
                 freeaddrinfo( result );
                 return SNAPSHOT_OK;
             }
             else
             {
-                next_assert( 0 );
+                snapshot_assert( 0 );
                 freeaddrinfo( result );
                 return SNAPSHOT_ERROR;
             }
@@ -129,40 +129,37 @@ int snapshot_platform_hostname_resolve( const char * hostname, const char * port
 
     return SNAPSHOT_ERROR;
 }
-*/
 
-int next_platform_id()
+// ---------------------------------------------------
+
+int snapshot_platform_id()
 {
     return SNAPSHOT_PLATFORM_MAC;
 }
 
-// ---------------------------------------------------
-
-double next_platform_time()
+double snapshot_platform_time()
 {
     uint64_t current = mach_absolute_time();
     return ( (double) ( current - time_start ) ) * ( (double) timebase_info.numer ) / ( (double) timebase_info.denom ) / 1000000000.0;
 }
 
-void next_platform_sleep( double time )
+void snapshot_platform_sleep( double time )
 {
     usleep( (int) ( time * 1000000 ) );
 }
 
 // ---------------------------------------------------
 
-#if 0 // todo
+void snapshot_platform_socket_destroy( snapshot_platform_socket_t * socket );
 
-void next_platform_socket_destroy( next_platform_socket_t * socket );
-
-next_platform_socket_t * next_platform_socket_create( void * context, next_address_t * address, int socket_type, float timeout_seconds, int send_buffer_size, int receive_buffer_size )
+snapshot_platform_socket_t * snapshot_platform_socket_create( void * context, snapshot_address_t * address, int socket_type, float timeout_seconds, int send_buffer_size, int receive_buffer_size )
 {
-    next_assert( address );
-    next_assert( address->type != SNAPSHOT_ADDRESS_NONE );
+    snapshot_assert( address );
+    snapshot_assert( address->type != SNAPSHOT_ADDRESS_NONE );
 
-    next_platform_socket_t * socket = (next_platform_socket_t*) next_malloc( context, sizeof( next_platform_socket_t ) );
+    snapshot_platform_socket_t * socket = (snapshot_platform_socket_t*) snapshot_malloc( context, sizeof( snapshot_platform_socket_t ) );
 
-    next_assert( socket );
+    snapshot_assert( socket );
 
     socket->context = context;
 
@@ -172,8 +169,8 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
 
     if ( socket->handle < 0 )
     {
-        next_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to create socket" );
-        next_free( context, socket );
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to create socket" );
+        snapshot_free( context, socket );
         return NULL;
     }
 
@@ -184,8 +181,8 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
         int yes = 1;
         if ( setsockopt( socket->handle, IPPROTO_IPV6, IPV6_V6ONLY, (char*)( &yes ), sizeof( yes ) ) != 0 )
         {
-            next_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to set socket ipv6 only" );
-            next_platform_socket_destroy( socket );
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to set socket ipv6 only" );
+            snapshot_platform_socket_destroy( socket );
             return NULL;
         }
     }
@@ -194,14 +191,14 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
 
     if ( setsockopt( socket->handle, SOL_SOCKET, SO_SNDBUF, (char*)( &send_buffer_size ), sizeof( int ) ) != 0 )
     {
-        next_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to set socket send buffer size" );
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to set socket send buffer size" );
         return NULL;
     }
 
     if ( setsockopt( socket->handle, SOL_SOCKET, SO_RCVBUF, (char*)( &receive_buffer_size ), sizeof( int ) ) != 0 )
     {
-        next_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to set socket receive buffer size" );
-        next_platform_socket_destroy( socket );
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to set socket receive buffer size" );
+        snapshot_platform_socket_destroy( socket );
         return NULL;
     }
 
@@ -214,14 +211,14 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
         socket_address.sin6_family = AF_INET6;
         for ( int i = 0; i < 8; ++i )
         {
-            ( (uint16_t*) &socket_address.sin6_addr ) [i] = next_platform_htons( address->data.ipv6[i] );
+            ( (uint16_t*) &socket_address.sin6_addr ) [i] = snapshot_platform_htons( address->data.ipv6[i] );
         }
-        socket_address.sin6_port = next_platform_htons( address->port );
+        socket_address.sin6_port = snapshot_platform_htons( address->port );
 
         if ( bind( socket->handle, (sockaddr*) &socket_address, sizeof( socket_address ) ) < 0 )
         {
-            next_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to bind socket (ipv6)" );
-            next_platform_socket_destroy( socket );
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to bind socket (ipv6)" );
+            snapshot_platform_socket_destroy( socket );
             return NULL;
         }
     }
@@ -234,12 +231,12 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
                                          ( ( (uint32_t) address->data.ipv4[1] ) << 8 )  | 
                                          ( ( (uint32_t) address->data.ipv4[2] ) << 16 ) | 
                                          ( ( (uint32_t) address->data.ipv4[3] ) << 24 );
-        socket_address.sin_port = next_platform_htons( address->port );
+        socket_address.sin_port = snapshot_platform_htons( address->port );
 
         if ( bind( socket->handle, (sockaddr*) &socket_address, sizeof( socket_address ) ) < 0 )
         {
-            next_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to bind socket (ipv4)" );
-            next_platform_socket_destroy( socket );
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to bind socket (ipv4)" );
+            snapshot_platform_socket_destroy( socket );
             return NULL;
         }
     }
@@ -254,11 +251,11 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
             socklen_t len = sizeof( sin );
             if ( getsockname( socket->handle, (sockaddr*)( &sin ), &len ) == -1 )
             {
-                next_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to get socket port (ipv6)" );
-                next_platform_socket_destroy( socket );
+                snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to get socket port (ipv6)" );
+                snapshot_platform_socket_destroy( socket );
                 return NULL;
             }
-            address->port = next_platform_ntohs( sin.sin6_port );
+            address->port = snapshot_platform_ntohs( sin.sin6_port );
         }
         else
         {
@@ -266,11 +263,11 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
             socklen_t len = sizeof( sin );
             if ( getsockname( socket->handle, (sockaddr*)( &sin ), &len ) == -1 )
             {
-                next_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to get socket port (ipv4)" );
-                next_platform_socket_destroy( socket );
+                snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to get socket port (ipv4)" );
+                snapshot_platform_socket_destroy( socket );
                 return NULL;
             }
-            address->port = next_platform_ntohs( sin.sin_port );
+            address->port = snapshot_platform_ntohs( sin.sin_port );
         }
     }
 
@@ -281,8 +278,8 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
         // non-blocking
         if ( fcntl( socket->handle, F_SETFL, O_NONBLOCK, 1 ) == -1 )
         {
-            next_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to set socket to non-blocking" );
-            next_platform_socket_destroy( socket );
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to set socket to non-blocking" );
+            snapshot_platform_socket_destroy( socket );
             return NULL;
         }
     }
@@ -294,8 +291,8 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
         tv.tv_usec = (int) ( timeout_seconds * 1000000.0 );
         if ( setsockopt( socket->handle, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof( tv ) ) < 0 )
         {
-            next_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to set socket receive timeout" );
-            next_platform_socket_destroy( socket );
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to set socket receive timeout" );
+            snapshot_platform_socket_destroy( socket );
             return NULL;
         }
     }
@@ -307,45 +304,45 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
     return socket;
 }
 
-void next_platform_socket_destroy( next_platform_socket_t * socket )
+void snapshot_platform_socket_destroy( snapshot_platform_socket_t * socket )
 {
-    next_assert( socket );
+    snapshot_assert( socket );
 
     if ( socket->handle != 0 )
     {
         close( socket->handle );
     }
     
-    next_free( socket->context, socket );
+    snapshot_free( socket->context, socket );
 }
 
-void next_platform_socket_send_packet( next_platform_socket_t * socket, const next_address_t * to, const void * packet_data, int packet_bytes )
+void snapshot_platform_socket_send_packet( snapshot_platform_socket_t * socket, const snapshot_address_t * to, const void * packet_data, int packet_bytes )
 {
-    next_assert( socket );
-    next_assert( to );
-    next_assert( to->type == NEXT_ADDRESS_IPV6 || to->type == NEXT_ADDRESS_IPV4 );
-    next_assert( packet_data );
-    next_assert( packet_bytes > 0 );
+    snapshot_assert( socket );
+    snapshot_assert( to );
+    snapshot_assert( to->type == SNAPSHOT_ADDRESS_IPV6 || to->type == SNAPSHOT_ADDRESS_IPV4 );
+    snapshot_assert( packet_data );
+    snapshot_assert( packet_bytes > 0 );
 
-    if ( to->type == NEXT_ADDRESS_IPV6 )
+    if ( to->type == SNAPSHOT_ADDRESS_IPV6 )
     {
         sockaddr_in6 socket_address;
         memset( &socket_address, 0, sizeof( socket_address ) );
         socket_address.sin6_family = AF_INET6;
         for ( int i = 0; i < 8; ++i )
         {
-            ( (uint16_t*) &socket_address.sin6_addr ) [i] = next_platform_htons( to->data.ipv6[i] );
+            ( (uint16_t*) &socket_address.sin6_addr ) [i] = snapshot_platform_htons( to->data.ipv6[i] );
         }
-        socket_address.sin6_port = next_platform_htons( to->port );
+        socket_address.sin6_port = snapshot_platform_htons( to->port );
         int result = int( sendto( socket->handle, (char*)( packet_data ), packet_bytes, 0, (sockaddr*)( &socket_address ), sizeof(sockaddr_in6) ) );
         if ( result < 0 )
         {
-            char address_string[NEXT_MAX_ADDRESS_STRING_LENGTH];
-            next_address_to_string( to, address_string );
-            next_printf( NEXT_LOG_LEVEL_DEBUG, "sendto (%s) failed: %s", address_string, strerror( errno ) );
+            char address_string[SNAPSHOT_MAX_ADDRESS_STRING_LENGTH];
+            snapshot_address_to_string( to, address_string );
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "sendto (%s) failed: %s", address_string, strerror( errno ) );
         }
     }
-    else if ( to->type == NEXT_ADDRESS_IPV4 )
+    else if ( to->type == SNAPSHOT_ADDRESS_IPV4 )
     {
         sockaddr_in socket_address;
         memset( &socket_address, 0, sizeof( socket_address ) );
@@ -354,27 +351,27 @@ void next_platform_socket_send_packet( next_platform_socket_t * socket, const ne
                                          ( ( (uint32_t) to->data.ipv4[1] ) << 8 )   | 
                                          ( ( (uint32_t) to->data.ipv4[2] ) << 16 )  | 
                                          ( ( (uint32_t) to->data.ipv4[3] ) << 24 );
-        socket_address.sin_port = next_platform_htons( to->port );
+        socket_address.sin_port = snapshot_platform_htons( to->port );
         int result = int( sendto( socket->handle, (const char*)( packet_data ), packet_bytes, 0, (sockaddr*)( &socket_address ), sizeof(sockaddr_in) ) );
         if ( result < 0 )
         {
-            char address_string[NEXT_MAX_ADDRESS_STRING_LENGTH];
-            next_address_to_string( to, address_string );
-            next_printf( NEXT_LOG_LEVEL_DEBUG, "sendto (%s) failed: %s", address_string, strerror( errno ) );
+            char address_string[SNAPSHOT_MAX_ADDRESS_STRING_LENGTH];
+            snapshot_address_to_string( to, address_string );
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "sendto (%s) failed: %s", address_string, strerror( errno ) );
         }
     }
     else
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "invalid address type. could not send packet" );
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "invalid address type. could not send packet" );
     }
 }
 
-int next_platform_socket_receive_packet( next_platform_socket_t * socket, next_address_t * from, void * packet_data, int max_packet_size )
+int snapshot_platform_socket_receive_packet( snapshot_platform_socket_t * socket, snapshot_address_t * from, void * packet_data, int max_packet_size )
 {
-    next_assert( socket );
-    next_assert( from );
-    next_assert( packet_data );
-    next_assert( max_packet_size > 0 );
+    snapshot_assert( socket );
+    snapshot_assert( from );
+    snapshot_assert( packet_data );
+    snapshot_assert( max_packet_size > 0 );
 
     sockaddr_storage sockaddr_from;
     socklen_t from_length = sizeof( sockaddr_from );
@@ -388,7 +385,7 @@ int next_platform_socket_receive_packet( next_platform_socket_t * socket, next_a
             return 0;
         }
 
-        next_printf( NEXT_LOG_LEVEL_DEBUG, "recvfrom failed with error %d", errno );
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "recvfrom failed with error %d", errno );
         
         return 0;
     }
@@ -396,30 +393,30 @@ int next_platform_socket_receive_packet( next_platform_socket_t * socket, next_a
     if ( sockaddr_from.ss_family == AF_INET6 )
     {
         sockaddr_in6 * addr_ipv6 = (sockaddr_in6*) &sockaddr_from;
-        from->type = NEXT_ADDRESS_IPV6;
+        from->type = SNAPSHOT_ADDRESS_IPV6;
         for ( int i = 0; i < 8; ++i )
         {
-            from->data.ipv6[i] = next_platform_ntohs( ( (uint16_t*) &addr_ipv6->sin6_addr ) [i] );
+            from->data.ipv6[i] = snapshot_platform_ntohs( ( (uint16_t*) &addr_ipv6->sin6_addr ) [i] );
         }
-        from->port = next_platform_ntohs( addr_ipv6->sin6_port );
+        from->port = snapshot_platform_ntohs( addr_ipv6->sin6_port );
     }
     else if ( sockaddr_from.ss_family == AF_INET )
     {
         sockaddr_in * addr_ipv4 = (sockaddr_in*) &sockaddr_from;
-        from->type = NEXT_ADDRESS_IPV4;
+        from->type = SNAPSHOT_ADDRESS_IPV4;
         from->data.ipv4[0] = (uint8_t) ( ( addr_ipv4->sin_addr.s_addr & 0x000000FF ) );
         from->data.ipv4[1] = (uint8_t) ( ( addr_ipv4->sin_addr.s_addr & 0x0000FF00 ) >> 8 );
         from->data.ipv4[2] = (uint8_t) ( ( addr_ipv4->sin_addr.s_addr & 0x00FF0000 ) >> 16 );
         from->data.ipv4[3] = (uint8_t) ( ( addr_ipv4->sin_addr.s_addr & 0xFF000000 ) >> 24 );
-        from->port = next_platform_ntohs( addr_ipv4->sin_port );
+        from->port = snapshot_platform_ntohs( addr_ipv4->sin_port );
     }
     else
     {
-        next_assert( 0 );
+        snapshot_assert( 0 );
         return 0;
     }
   
-    next_assert( result >= 0 );
+    snapshot_assert( result >= 0 );
 
     return result;
 }
@@ -430,34 +427,34 @@ struct thread_shim_data_t
 {
     void * context;
     void * real_thread_data;
-    next_platform_thread_func_t real_thread_function;
+    snapshot_platform_thread_func_t real_thread_function;
 };
 
-static void* thread_function_shim( void * data )
+static void * thread_function_shim( void * data )
 {
-    next_assert( data );
+    snapshot_assert( data );
     thread_shim_data_t * shim_data = (thread_shim_data_t*) data;
     void * context = shim_data->context;
     void * real_thread_data = shim_data->real_thread_data;
-    next_platform_thread_func_t real_thread_function = shim_data->real_thread_function;
-    next_free( context, data );
+    snapshot_platform_thread_func_t real_thread_function = shim_data->real_thread_function;
+    snapshot_free( context, data );
     real_thread_function( real_thread_data );
     return NULL;
 }
 
-next_platform_thread_t * next_platform_thread_create( void * context, next_platform_thread_func_t thread_function, void * arg )
+snapshot_platform_thread_t * snapshot_platform_thread_create( void * context, snapshot_platform_thread_func_t thread_function, void * arg )
 {
-    next_platform_thread_t * thread = (next_platform_thread_t*) next_malloc( context, sizeof( next_platform_thread_t) );
+    snapshot_platform_thread_t * thread = (snapshot_platform_thread_t*) snapshot_malloc( context, sizeof( snapshot_platform_thread_t) );
 
-    next_assert( thread );
+    snapshot_assert( thread );
 
     thread->context = context;
 
-    thread_shim_data_t * shim_data = (thread_shim_data_t*) next_malloc( context, sizeof(thread_shim_data_t) );
-    next_assert( shim_data );
+    thread_shim_data_t * shim_data = (thread_shim_data_t*) snapshot_malloc( context, sizeof(thread_shim_data_t) );
+    snapshot_assert( shim_data );
     if ( !shim_data )
     {
-        next_free( context, thread );
+        snapshot_free( context, thread );
         return NULL;
     }
     shim_data->context = context;
@@ -466,27 +463,27 @@ next_platform_thread_t * next_platform_thread_create( void * context, next_platf
 
     if ( pthread_create( &thread->handle, NULL, thread_function_shim, shim_data ) != 0 )
     {
-        next_free( context, thread );
-        next_free( context, shim_data );
+        snapshot_free( context, thread );
+        snapshot_free( context, shim_data );
         return NULL;
     }
 
     return thread;
 }
 
-void next_platform_thread_join( next_platform_thread_t * thread )
+void snapshot_platform_thread_join( snapshot_platform_thread_t * thread )
 {
-    next_assert( thread );
+    snapshot_assert( thread );
     pthread_join( thread->handle, NULL );
 }
 
-void next_platform_thread_destroy( next_platform_thread_t * thread )
+void snapshot_platform_thread_destroy( snapshot_platform_thread_t * thread )
 {
-    next_assert( thread );
-    next_free( thread->context, thread );
+    snapshot_assert( thread );
+    snapshot_free( thread->context, thread );
 }
 
-bool next_platform_thread_high_priority( next_platform_thread_t * thread )
+bool snapshot_platform_thread_high_priority( snapshot_platform_thread_t * thread )
 {
     struct sched_param param;
     param.sched_priority = sched_get_priority_max( SCHED_FIFO );
@@ -495,11 +492,11 @@ bool next_platform_thread_high_priority( next_platform_thread_t * thread )
 
 // ---------------------------------------------------
 
-int next_platform_mutex_create( next_platform_mutex_t * mutex )
+int snapshot_platform_mutex_create( snapshot_platform_mutex_t * mutex )
 {
-    next_assert( mutex );
+    snapshot_assert( mutex );
 
-    memset( mutex, 0, sizeof(next_platform_mutex_t) );
+    memset( mutex, 0, sizeof(snapshot_platform_mutex_t) );
 
     pthread_mutexattr_t attr;
     pthread_mutexattr_init(&attr);
@@ -509,44 +506,42 @@ int next_platform_mutex_create( next_platform_mutex_t * mutex )
 
     if ( result != 0 )
     {
-        return NEXT_ERROR;
+        return SNAPSHOT_ERROR;
     }
 
     mutex->ok = true;
 
-    return NEXT_OK;
+    return SNAPSHOT_OK;
 }
 
-void next_platform_mutex_acquire( next_platform_mutex_t * mutex )
+void snapshot_platform_mutex_acquire( snapshot_platform_mutex_t * mutex )
 {
-    next_assert( mutex );
-    next_assert( mutex->ok );
+    snapshot_assert( mutex );
+    snapshot_assert( mutex->ok );
     pthread_mutex_lock( &mutex->handle );
 }
 
-void next_platform_mutex_release( next_platform_mutex_t * mutex )
+void snapshot_platform_mutex_release( snapshot_platform_mutex_t * mutex )
 {
-    next_assert( mutex );
-    next_assert( mutex->ok );
+    snapshot_assert( mutex );
+    snapshot_assert( mutex->ok );
     pthread_mutex_unlock( &mutex->handle );
 }
 
-void next_platform_mutex_destroy( next_platform_mutex_t * mutex )
+void snapshot_platform_mutex_destroy( snapshot_platform_mutex_t * mutex )
 {
-    next_assert( mutex );
+    snapshot_assert( mutex );
     if ( mutex->ok )
     {
         pthread_mutex_destroy( &mutex->handle );
-        memset( mutex, 0, sizeof(next_platform_mutex_t) );
+        memset( mutex, 0, sizeof(snapshot_platform_mutex_t) );
     }
 }
 
-#endif // todo
-
 // ---------------------------------------------------
 
-#else // #if NEXT_PLATFORM == NEXT_PLATFORM_MAC
+#else // #if SNAPSHOT_PLATFORM == SNAPSHOT_PLATFORM_MAC
 
 int snapshot_platform_mac_dummy_symbol = 0;
 
-#endif // #if NEXT_PLATFORM == NEXT_PLATFORM_MAC
+#endif // #if SNAPSHOT_PLATFORM == SNAPSHOT_PLATFORM_MAC
