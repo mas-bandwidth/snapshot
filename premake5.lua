@@ -81,7 +81,7 @@ project "test"
 	kind "ConsoleApp"
 	links { "snapshot", "sodium" }
 	files { "test.cpp" }
-	includedirs { "include" }
+	includedirs { "include", "source" }
 	filter "system:windows"
 		disablewarnings { "4324" }
 	filter "system:not windows"

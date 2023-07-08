@@ -38,6 +38,7 @@ TODO
 
 	Bring across some basic platform tests
 
+		0. time
 		1. address
 		2. sockets
 		3. threads
@@ -45,7 +46,7 @@ TODO
 
 	---------------------------
 
-	Verify tests pass on windows, mac and linux.
+	Verify tests pass on mac.
 
 	---------------------------
 
@@ -59,6 +60,20 @@ TODO
 
 	Incorporate netcode.io source code
 
+	Update license to include netcode.io source code
+
+	---------------------------
+
+	Incorporate reliable.io source code
+
+	Update license to include netcode.io source code
+
+	---------------------------
+
+	Verify tests pass on linux.
+
+	Verify tests pass on windows.
+
 	---------------------------	
 
 	Get to the point where we have a working snapshot_client and snapshot_server using netcode
@@ -67,6 +82,24 @@ TODO
 
 	A command channel with messages, bidirectional between client and server. For sure.
 
+	Packet fragmentation and re-assembly...
 
+	Reliability header and acks.
+
+	Unreliable messages stuck at the back of the packets (when there is room).
+
+	Choke.
+
+	Server loop w. tick rate.
+
+	Server sim objects.
+
+	Player frames sim w. inputs dt.
+
+	Schema
+
+	What sort of properties are needed?
+
+	Send uncompressed snapshots down.
 
 	---------------------------

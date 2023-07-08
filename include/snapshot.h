@@ -104,6 +104,65 @@
 #define SNAPSHOT_PLATFORM_CAN_RUN_SERVER 1
 #endif // #if SNAPSHOT_PLATFORM != SNAPSHOT_PLATFORM_XBOX_ONE && SNAPSHOT_PLATFORM != SNAPSHOT_PLATFORM_GDK
 
+#if !defined ( SNAPSHOT_LITTLE_ENDIAN ) && !defined( SNAPSHOT_BIG_ENDIAN )
+
+  #ifdef __BYTE_ORDER__
+    #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+      #define SNAPSHOT_LITTLE_ENDIAN 1
+    #elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+      #define SNAPSHOT_BIG_ENDIAN 1
+    #else
+      #error Unknown machine endianess detected. Please define SNAPSHOT_LITTLE_ENDIAN or SNAPSHOT_BIG_ENDIAN.
+    #endif // __BYTE_ORDER__
+
+  // Detect with GLIBC's endian.h
+  #elif defined(__GLIBC__)
+    #include <endian.h>
+    #if (__BYTE_ORDER == __LITTLE_ENDIAN)
+      #define SNAPSHOT_LITTLE_ENDIAN 1
+    #elif (__BYTE_ORDER == __BIG_ENDIAN)
+      #define SNAPSHOT_BIG_ENDIAN 1
+    #else
+      #error Unknown machine endianess detected. Please define SNAPSHOT_LITTLE_ENDIAN or SNAPSHOT_BIG_ENDIAN.
+    #endif // __BYTE_ORDER
+
+  // Detect with _LITTLE_ENDIAN and _BIG_ENDIAN macro
+  #elif defined(_LITTLE_ENDIAN) && !defined(_BIG_ENDIAN)
+    #define SNAPSHOT_LITTLE_ENDIAN 1
+  #elif defined(_BIG_ENDIAN) && !defined(_LITTLE_ENDIAN)
+    #define SNAPSHOT_BIG_ENDIAN 1
+
+  // Detect with architecture macros
+  #elif    defined(__sparc)     || defined(__sparc__)                           \
+        || defined(_POWER)      || defined(__powerpc__)                         \
+        || defined(__ppc__)     || defined(__hpux)      || defined(__hppa)      \
+        || defined(_MIPSEB)     || defined(_POWER)      || defined(__s390__)
+    #define SNAPSHOT_BIG_ENDIAN 1
+  #elif    defined(__i386__)    || defined(__alpha__)   || defined(__ia64)      \
+        || defined(__ia64__)    || defined(_M_IX86)     || defined(_M_IA64)     \
+        || defined(_M_ALPHA)    || defined(__amd64)     || defined(__amd64__)   \
+        || defined(_M_AMD64)    || defined(__x86_64)    || defined(__x86_64__)  \
+        || defined(_M_X64)      || defined(__bfin__)
+    #define SNAPSHOT_LITTLE_ENDIAN 1
+  #elif defined(_MSC_VER) && defined(_M_ARM)
+    #define SNAPSHOT_LITTLE_ENDIAN 1
+  #else
+    #error Unknown machine endianess detected. Please define SNAPSHOT_LITTLE_ENDIAN or SNAPSHOT_BIG_ENDIAN.
+  #endif
+
+#endif
+
+#if defined( _MSC_VER ) && _MSC_VER < 1700
+typedef __int32 int32_t;
+typedef __int64 int64_t;
+#define PRId64 "I64d"
+#define SCNd64 "I64d"
+#define PRIx64 "I64x"
+#define SCNx64 "I64x"
+#else
+#include <inttypes.h>
+#endif
+
 // -----------------------------------------
 
 int snapshot_init();
