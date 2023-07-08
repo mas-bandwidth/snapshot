@@ -5,48 +5,43 @@
 
 #include "snapshot.h"
 
-#if 0
+#ifndef SNAPSHOT_WINDOWS_H
+#define SNAPSHOT_WINDOWS_H
 
-#ifndef NEXT_WINDOWS_H
-#define NEXT_WINDOWS_H
+#if SNAPSHOT_PLATFORM == SNAPSHOT_PLATFORM_WINDOWS
 
-#if NEXT_PLATFORM == NEXT_PLATFORM_WINDOWS
-
-#if NEXT_UNREAL_ENGINE
+#if SNAPSHOT_UNREAL_ENGINE
 #include "Windows/AllowWindowsPlatformTypes.h"
 #include "Windows/PreWindowsApi.h"
-#endif // #if NEXT_UNREAL_ENGINE
+#endif // #if SNAPSHOT_UNREAL_ENGINE
 
-#ifndef NEXT_UNREAL_ENGINE
+#ifndef SNAPSHOT_UNREAL_ENGINE
 #define _WINSOCKAPI_
 #include <windows.h>
 #include <winsock2.h>
-#else // #ifndef NEXT_UNREAL_ENGINE
+#else // #ifndef SNAPSHOT_UNREAL_ENGINE
 #include "Windows/MinWindows.h"
-#endif // #ifndef NEXT_UNREAL_ENGINE
-
-#define NEXT_PLATFORM_SOCKET_NON_BLOCKING       0
-#define NEXT_PLATFORM_SOCKET_BLOCKING           1
+#endif // #ifndef SNAPSHOT_UNREAL_ENGINE
 
 // -------------------------------------
 
 #pragma warning(disable:4996)
 
 #if _WIN64
-typedef uint64_t next_platform_socket_handle_t;
+typedef uint64_t snapshot_platform_socket_handle_t;
 #else
-typedef _W64 unsigned int next_platform_socket_handle_t;
+typedef _W64 unsigned int snapshot_platform_socket_handle_t;
 #endif
 
-struct next_platform_socket_t
+struct snapshot_platform_socket_t
 {
     void * context;
-    next_platform_socket_handle_t handle;
+    snapshot_platform_socket_handle_t handle;
 };
 
 // -------------------------------------
 
-struct next_platform_thread_t
+struct snapshot_platform_thread_t
 {
     void * context;
     HANDLE handle;
@@ -54,7 +49,7 @@ struct next_platform_thread_t
 
 // -------------------------------------
 
-struct next_platform_mutex_t
+struct snapshot_platform_mutex_t
 {
     bool ok;
     CRITICAL_SECTION handle;
@@ -62,13 +57,11 @@ struct next_platform_mutex_t
 
 // -------------------------------------
 
-#if NEXT_UNREAL_ENGINE
+#if SNAPSHOT_UNREAL_ENGINE
 #include "Windows/PostWindowsApi.h"
 #include "Windows/HideWindowsPlatformTypes.h"
-#endif // #if NEXT_UNREAL_ENGINE
+#endif // #if SNAPSHOT_UNREAL_ENGINE
 
-#endif // #if NEXT_PLATFORM == NEXT_PLATFORM_WINDOWS
+#endif // #if SNAPSHOT_PLATFORM == SNAPSHOT_PLATFORM_WINDOWS
 
-#endif // #ifndef NEXT_WINDOWS_H
-
-#endif // todo
+#endif // #ifndef SNAPSHOT_WINDOWS_H

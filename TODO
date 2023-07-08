@@ -30,17 +30,43 @@ DONE
 
 	Fix up linux platform
 
-TODO
+	Drop the other platforms for now. They can be brought back later easily.
 
 	Fix windows platform
 
-	Drop the other platforms for now. They can be brought back later easily.
+TODO
 
 	Bring across some basic platform tests
+
+		1. address
+		2. sockets
+		3. threads
+		4. mutex
+
+	---------------------------
+
+	Verify tests pass on windows, mac and linux.
+
+	---------------------------
+
+	Bring across bitpacker and serialize from yojimbo
+
+	Update license to include yojimbo license
+
+	Bring across bitpacker and serialize tests
 
 	---------------------------
 
 	Incorporate netcode.io source code
 
+	---------------------------	
+
+	Get to the point where we have a working snapshot_client and snapshot_server using netcode
+
+	Now think what are the essential other things?
+
+	A command channel with messages, bidirectional between client and server. For sure.
+
+
+
 	---------------------------
-	
