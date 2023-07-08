@@ -83,12 +83,11 @@ void test()
         RUN_TEST( test_endian );
 
         /*
-        RUN_TEST( test_base64 );
-        RUN_TEST( test_fnv1a );
+        RUN_TEST( test_address );
+        RUN_TEST( test_read_and_write );
         RUN_TEST( test_bitpacker );
         RUN_TEST( test_bits_required );
         RUN_TEST( test_stream );
-        RUN_TEST( test_address );
 
         RUN_TEST( test_random_bytes );
         RUN_TEST( test_random_float );
@@ -99,17 +98,9 @@ void test()
         RUN_TEST( test_crypto_sign_detached );
         RUN_TEST( test_crypto_key_exchange );
 
-        RUN_TEST( test_basic_read_and_write );
-        RUN_TEST( test_address_read_and_write );
         RUN_TEST( test_platform_socket );
         RUN_TEST( test_platform_thread );
         RUN_TEST( test_platform_mutex );
-
-        RUN_TEST( test_address_data_none );
-        RUN_TEST( test_address_data_ipv4 );
-#if defined(NEXT_PLATFORM_HAS_IPV6)
-        RUN_TEST( test_address_data_ipv6 );
-#endif // #if defined(NEXT_PLATFORM_HAS_IPV6)
         */
     }
 }
