@@ -171,6 +171,10 @@ void snapshot_term();
 
 // -----------------------------------------
 
+#ifndef NDEBUG
+#define SNAPSHOT_ASSERTS 1
+#endif
+
 #define snapshot_assert assert
 
 void snapshot_printf( const char * format, ... );

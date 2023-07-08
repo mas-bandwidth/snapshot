@@ -10,6 +10,7 @@
 #include "snapshot_platform.h"
 #include "snapshot_address.h"
 #include "snapshot_read_write.h"
+#include "snapshot_bitpacker.h"
 
 static void snapshot_check_handler( const char * condition,
                                     const char * function,
@@ -285,6 +286,67 @@ void test_read_and_write()
     snapshot_check( snapshot_address_equal( &address_c, &read_address_c ) );
 }
 
+using namespace snapshot;
+
+void test_bitpacker()
+{
+    const int BufferSize = 256;
+
+    uint8_t buffer[BufferSize];
+
+    BitWriter writer( buffer, BufferSize );
+
+    snapshot_check( writer.GetData() == buffer );
+    snapshot_check( writer.GetBitsWritten() == 0 );
+    snapshot_check( writer.GetBytesWritten() == 0 );
+    snapshot_check( writer.GetBitsAvailable() == BufferSize * 8 );
+
+    writer.WriteBits( 0, 1 );
+    writer.WriteBits( 1, 1 );
+    writer.WriteBits( 10, 8 );
+    writer.WriteBits( 255, 8 );
+    writer.WriteBits( 1000, 10 );
+    writer.WriteBits( 50000, 16 );
+    writer.WriteBits( 9999999, 32 );
+    writer.FlushBits();
+
+    const int bitsWritten = 1 + 1 + 8 + 8 + 10 + 16 + 32;
+
+    snapshot_check( writer.GetBytesWritten() == 10 );
+    snapshot_check( writer.GetBitsWritten() == bitsWritten );
+    snapshot_check( writer.GetBitsAvailable() == BufferSize * 8 - bitsWritten );
+
+    const int bytesWritten = writer.GetBytesWritten();
+
+    snapshot_check( bytesWritten == 10 );
+
+    memset( buffer + bytesWritten, 0, size_t(BufferSize) - bytesWritten );
+
+    BitReader reader( buffer, bytesWritten );
+
+    snapshot_check( reader.GetBitsRead() == 0 );
+    snapshot_check( reader.GetBitsRemaining() == bytesWritten * 8 );
+
+    uint32_t a = reader.ReadBits( 1 );
+    uint32_t b = reader.ReadBits( 1 );
+    uint32_t c = reader.ReadBits( 8 );
+    uint32_t d = reader.ReadBits( 8 );
+    uint32_t e = reader.ReadBits( 10 );
+    uint32_t f = reader.ReadBits( 16 );
+    uint32_t g = reader.ReadBits( 32 );
+
+    snapshot_check( a == 0 );
+    snapshot_check( b == 1 );
+    snapshot_check( c == 10 );
+    snapshot_check( d == 255 );
+    snapshot_check( e == 1000 );
+    snapshot_check( f == 50000 );
+    snapshot_check( g == 9999999 );
+
+    snapshot_check( reader.GetBitsRead() == bitsWritten );
+    snapshot_check( reader.GetBitsRemaining() == bytesWritten * 8 - bitsWritten );
+}
+
 #define RUN_TEST( test_function )                                           \
     do                                                                      \
     {                                                                       \
@@ -302,9 +364,9 @@ void test()
         RUN_TEST( test_endian );
         RUN_TEST( test_address );
         RUN_TEST( test_read_and_write );
+        RUN_TEST( test_bitpacker );
 
         /*
-        RUN_TEST( test_bitpacker );
         RUN_TEST( test_bits_required );
         RUN_TEST( test_stream );
 

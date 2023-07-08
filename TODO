@@ -34,17 +34,23 @@ DONE
 
 	Fix windows platform
 
+	Bring across basic tests for time, address.
+
+	Bring across simple read/write methods.
+
 TODO
 
-	Bring across some basic platform tests
+	Bring across bitpacker.
 
-		0. time
-		1. address
-		2. sockets
-		3. threads
-		4. mutex
+	Bring across stream.
 
 	---------------------------
+
+	Bring across tests for sockets.
+
+	Bring across tests for thread.
+
+	Bring across tests for mutex.
 
 	Verify tests pass on mac.
 
