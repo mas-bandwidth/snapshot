@@ -1,5 +1,5 @@
 /*
-    Snapshot SDK Copyright © 2023 Mas Bandwidth LLC. This source code is licensed under GPL version 3 or any later version.
+    Snapshot Copyright © 2023 Mas Bandwidth LLC. This source code is licensed under GPL version 3 or any later version.
     Commercial licensing under different terms is available. Please email licensing@mas-bandwidth.com for details.
 */
 
@@ -12,7 +12,9 @@
 #define SNAPSHOT_MUTEX_BYTES                      256
 
 struct snapshot_address_t;
+struct snapshot_platform_socket_t;
 struct snapshot_platform_thread_t;
+struct snapshot_platform_mutex_t;
 
 typedef void (*snapshot_platform_thread_func_t)(void*);
 
@@ -32,8 +34,6 @@ void snapshot_platform_sleep( double time );
 
 const char * snapshot_platform_getenv( const char * var );
 
-// ----------------------------------------------------------------
-
 uint16_t snapshot_platform_ntohs( uint16_t in );
 
 uint16_t snapshot_platform_htons( uint16_t in );
@@ -44,9 +44,17 @@ int snapshot_platform_inet_pton6( const char * address_string, uint16_t * addres
 
 int snapshot_platform_inet_ntop6( const uint16_t * address, char * address_string, size_t address_string_size );
 
+int snapshot_platform_hostname_resolve( const char * hostname, const char * port, snapshot_address_t * address );
+
 // ----------------------------------------------------------------
 
-int snapshot_platform_hostname_resolve( const char * hostname, const char * port, snapshot_address_t * address );
+snapshot_platform_socket_t * snapshot_platform_socket_create( void * context, snapshot_address_t * address, int socket_type, float timeout_seconds, int send_buffer_size, int receive_buffer_size );
+
+void snapshot_platform_socket_destroy( snapshot_platform_socket_t * socket );
+
+void snapshot_platform_socket_send_packet( snapshot_platform_socket_t * socket, const snapshot_address_t * to, const void * packet_data, int packet_bytes );
+
+int snapshot_platform_socket_receive_packet( snapshot_platform_socket_t * socket, snapshot_address_t * from, void * packet_data, int max_packet_size );
 
 // ----------------------------------------------------------------
 

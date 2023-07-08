@@ -26,6 +26,30 @@ DONE
 
 	Get mac platform cpp fully compiling and linking
 
+	Clean up pass to make sure what's there doesn't suck
+
+	Fix up linux platform
+
 TODO
 
-	Clean up pass to make sure what's there doesn't suck
+	Fix windows platform
+
+	Fix ps4 platform
+
+	Fix ps5 platform
+
+	Fix xbox one platform
+
+	Fix xbox gdk platform
+
+	Fix ios platform
+
+	Fix switch platform
+
+	---------------------------
+
+	Bring across some basic platform tests
+
+	---------------------------
+
+	
