@@ -34,22 +34,13 @@ TODO
 
 	Fix windows platform
 
-	Fix ps4 platform
-
-	Fix ps5 platform
-
-	Fix xbox one platform
-
-	Fix xbox gdk platform
-
-	Fix ios platform
-
-	Fix switch platform
-
-	---------------------------
+	Drop the other platforms for now. They can be brought back later easily.
 
 	Bring across some basic platform tests
 
 	---------------------------
 
+	Incorporate netcode.io source code
+
+	---------------------------
 	
