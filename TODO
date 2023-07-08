@@ -38,13 +38,11 @@ DONE
 
 	Bring across simple read/write methods.
 
-TODO
-
 	Bring across bitpacker.
 
 	Bring across stream.
 
-	---------------------------
+	Bring across crypto tests.
 
 	Bring across tests for sockets.
 
@@ -54,25 +52,25 @@ TODO
 
 	Verify tests pass on mac.
 
-	---------------------------
-
-	Bring across bitpacker and serialize from yojimbo
-
-	Update license to include yojimbo license
-
-	Bring across bitpacker and serialize tests
-
-	---------------------------
-
-	Incorporate netcode.io source code
+TODO
 
 	Update license to include netcode.io source code
+
+	Incorporate netcode server as snapshot_server_t
+
+	Incorporate netcode client as snapshot_client_t
+
+	Create a client.cpp and server.cpp and add to makefile
+
+	Get the client successfully connecting to the server and exchanging packets
 
 	---------------------------
 
 	Incorporate reliable.io source code
 
 	Update license to include netcode.io source code
+
+	Integrate reliable so we have packet fragmentation and re-assembly, and sequence numbers and acks.
 
 	---------------------------
 
@@ -82,15 +80,11 @@ TODO
 
 	---------------------------	
 
-	Get to the point where we have a working snapshot_client and snapshot_server using netcode
-
 	Now think what are the essential other things?
 
 	A command channel with messages, bidirectional between client and server. For sure.
 
-	Packet fragmentation and re-assembly...
-
-	Reliability header and acks.
+	The same command channel with in-line large blocks of data sent down (eg. snapshot baselines...)
 
 	Unreliable messages stuck at the back of the packets (when there is room).
 
@@ -98,9 +92,9 @@ TODO
 
 	Server loop w. tick rate.
 
-	Server sim objects.
+	Server sim objects step forward together.
 
-	Player frames sim w. inputs dt.
+	Player commands with input and dt sent redundantly all unacked.
 
 	Schema
 

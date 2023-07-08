@@ -26,7 +26,7 @@ int snapshot_crypto_init()
     return sodium_init();
 }
 
-void snapshot_randombytes_buf( uint8_t * buffer, int bytes )
+void snapshot_crypto_random_bytes( uint8_t * buffer, int bytes )
 {
     randombytes_buf( buffer, bytes );
 }

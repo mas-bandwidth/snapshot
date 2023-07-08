@@ -509,6 +509,317 @@ void test_stream()
     snapshot_check( readObject == writeObject );
 }
 
+void test_crypto_random_bytes()
+{
+    const int BufferSize = 64;
+    uint8_t buffer[BufferSize];
+    snapshot_crypto_random_bytes( buffer, BufferSize );
+    for ( int i = 0; i < 100; ++i )
+    {
+        uint8_t buffer2[BufferSize];
+        snapshot_crypto_random_bytes( buffer2, BufferSize );
+        snapshot_check( memcmp( buffer, buffer2, BufferSize ) != 0 );
+        memcpy( buffer, buffer2, BufferSize );
+    }
+}
+
+void test_crypto_box()
+{
+    #define CRYPTO_BOX_MESSAGE (const unsigned char *) "test"
+    #define CRYPTO_BOX_MESSAGE_LEN 4
+    #define CRYPTO_BOX_CIPHERTEXT_LEN ( SNAPSHOT_CRYPTO_BOX_MACBYTES + CRYPTO_BOX_MESSAGE_LEN )
+
+    unsigned char sender_publickey[SNAPSHOT_CRYPTO_BOX_PUBLICKEYBYTES];
+    unsigned char sender_secretkey[SNAPSHOT_CRYPTO_BOX_SECRETKEYBYTES];
+    snapshot_crypto_box_keypair( sender_publickey, sender_secretkey );
+
+    unsigned char receiver_publickey[SNAPSHOT_CRYPTO_BOX_PUBLICKEYBYTES];
+    unsigned char receiver_secretkey[SNAPSHOT_CRYPTO_BOX_SECRETKEYBYTES];
+    snapshot_crypto_box_keypair( receiver_publickey, receiver_secretkey );
+
+    unsigned char nonce[SNAPSHOT_CRYPTO_BOX_NONCEBYTES];
+    unsigned char ciphertext[CRYPTO_BOX_CIPHERTEXT_LEN];
+    snapshot_crypto_random_bytes( nonce, sizeof nonce );
+    snapshot_check( snapshot_crypto_box_easy( ciphertext, CRYPTO_BOX_MESSAGE, CRYPTO_BOX_MESSAGE_LEN, nonce, receiver_publickey, sender_secretkey ) == 0 );
+
+    unsigned char decrypted[CRYPTO_BOX_MESSAGE_LEN];
+    snapshot_check( snapshot_crypto_box_open_easy( decrypted, ciphertext, CRYPTO_BOX_CIPHERTEXT_LEN, nonce, sender_publickey, receiver_secretkey ) == 0 );
+
+    snapshot_check( memcmp( decrypted, CRYPTO_BOX_MESSAGE, CRYPTO_BOX_MESSAGE_LEN ) == 0 );
+}
+
+void test_crypto_secret_box()
+{
+    #define CRYPTO_SECRET_BOX_MESSAGE ((const unsigned char *) "test")
+    #define CRYPTO_SECRET_BOX_MESSAGE_LEN 4
+    #define CRYPTO_SECRET_BOX_CIPHERTEXT_LEN (SNAPSHOT_CRYPTO_SECRETBOX_MACBYTES + CRYPTO_SECRET_BOX_MESSAGE_LEN)
+
+    unsigned char key[SNAPSHOT_CRYPTO_SECRETBOX_KEYBYTES];
+    unsigned char nonce[SNAPSHOT_CRYPTO_SECRETBOX_NONCEBYTES];
+    unsigned char ciphertext[CRYPTO_SECRET_BOX_CIPHERTEXT_LEN];
+
+    snapshot_crypto_secretbox_keygen( key );
+    snapshot_crypto_random_bytes( nonce, SNAPSHOT_CRYPTO_SECRETBOX_NONCEBYTES );
+    snapshot_crypto_secretbox_easy( ciphertext, CRYPTO_SECRET_BOX_MESSAGE, CRYPTO_SECRET_BOX_MESSAGE_LEN, nonce, key );
+
+    unsigned char decrypted[CRYPTO_SECRET_BOX_MESSAGE_LEN];
+    snapshot_check( snapshot_crypto_secretbox_open_easy( decrypted, ciphertext, CRYPTO_SECRET_BOX_CIPHERTEXT_LEN, nonce, key ) == 0 );
+}
+
+void test_crypto_aead()
+{
+    #define CRYPTO_AEAD_MESSAGE (const unsigned char *) "test"
+    #define CRYPTO_AEAD_MESSAGE_LEN 4
+    #define CRYPTO_AEAD_ADDITIONAL_DATA (const unsigned char *) "123456"
+    #define CRYPTO_AEAD_ADDITIONAL_DATA_LEN 6
+
+    unsigned char nonce[SNAPSHOT_CRYPTO_AEAD_CHACHA20POLY1305_NPUBBYTES];
+    unsigned char key[SNAPSHOT_CRYPTO_AEAD_CHACHA20POLY1305_KEYBYTES];
+    unsigned char ciphertext[CRYPTO_AEAD_MESSAGE_LEN + SNAPSHOT_CRYPTO_AEAD_CHACHA20POLY1305_ABYTES];
+    unsigned long long ciphertext_len;
+
+    snapshot_crypto_aead_chacha20poly1305_keygen( key );
+    snapshot_crypto_random_bytes( nonce, sizeof(nonce) );
+
+    snapshot_crypto_aead_chacha20poly1305_encrypt( ciphertext, &ciphertext_len,
+                                                   CRYPTO_AEAD_MESSAGE, CRYPTO_AEAD_MESSAGE_LEN,
+                                                   CRYPTO_AEAD_ADDITIONAL_DATA, CRYPTO_AEAD_ADDITIONAL_DATA_LEN,
+                                                   NULL, nonce, key );
+
+    unsigned char decrypted[CRYPTO_AEAD_MESSAGE_LEN];
+    unsigned long long decrypted_len;
+    snapshot_check( snapshot_crypto_aead_chacha20poly1305_decrypt( decrypted, &decrypted_len,
+                                                      NULL,
+                                                      ciphertext, ciphertext_len,
+                                                      CRYPTO_AEAD_ADDITIONAL_DATA,
+                                                      CRYPTO_AEAD_ADDITIONAL_DATA_LEN,
+                                                      nonce, key) == 0 );
+}
+
+void test_crypto_aead_ietf()
+{
+    #define CRYPTO_AEAD_IETF_MESSAGE (const unsigned char *) "test"
+    #define CRYPTO_AEAD_IETF_MESSAGE_LEN 4
+    #define CRYPTO_AEAD_IETF_ADDITIONAL_DATA (const unsigned char *) "123456"
+    #define CRYPTO_AEAD_IETF_ADDITIONAL_DATA_LEN 6
+
+    unsigned char nonce[SNAPSHOT_CRYPTO_AEAD_CHACHA20POLY1305_IETF_NPUBBYTES];
+    unsigned char key[SNAPSHOT_CRYPTO_AEAD_CHACHA20POLY1305_IETF_KEYBYTES];
+    unsigned char ciphertext[CRYPTO_AEAD_IETF_MESSAGE_LEN + SNAPSHOT_CRYPTO_AEAD_CHACHA20POLY1305_IETF_ABYTES];
+    unsigned long long ciphertext_len;
+
+    snapshot_crypto_aead_chacha20poly1305_ietf_keygen( key );
+    snapshot_crypto_random_bytes( nonce, sizeof(nonce) );
+
+    snapshot_crypto_aead_chacha20poly1305_ietf_encrypt( ciphertext, &ciphertext_len, CRYPTO_AEAD_IETF_MESSAGE, CRYPTO_AEAD_IETF_MESSAGE_LEN, CRYPTO_AEAD_IETF_ADDITIONAL_DATA, CRYPTO_AEAD_IETF_ADDITIONAL_DATA_LEN, NULL, nonce, key);
+
+    unsigned char decrypted[CRYPTO_AEAD_IETF_MESSAGE_LEN];
+    unsigned long long decrypted_len;
+    snapshot_check( snapshot_crypto_aead_chacha20poly1305_ietf_decrypt( decrypted, &decrypted_len, NULL, ciphertext, ciphertext_len, CRYPTO_AEAD_IETF_ADDITIONAL_DATA, CRYPTO_AEAD_IETF_ADDITIONAL_DATA_LEN, nonce, key ) == 0 );
+}
+
+void test_crypto_sign_detached()
+{
+    #define MESSAGE_PART1 ((const unsigned char *) "Arbitrary data to hash")
+    #define MESSAGE_PART1_LEN 22
+
+    #define MESSAGE_PART2 ((const unsigned char *) "is longer than expected")
+    #define MESSAGE_PART2_LEN 23
+
+    unsigned char public_key[SNAPSHOT_CRYPTO_SIGN_PUBLICKEYBYTES];
+    unsigned char private_key[SNAPSHOT_CRYPTO_SIGN_SECRETKEYBYTES];
+    snapshot_crypto_sign_keypair( public_key, private_key );
+
+    snapshot_crypto_sign_state_t state;
+
+    unsigned char signature[SNAPSHOT_CRYPTO_SIGN_BYTES];
+
+    snapshot_crypto_sign_init( &state );
+    snapshot_crypto_sign_update( &state, MESSAGE_PART1, MESSAGE_PART1_LEN );
+    snapshot_crypto_sign_update( &state, MESSAGE_PART2, MESSAGE_PART2_LEN );
+    snapshot_crypto_sign_final_create( &state, signature, NULL, private_key );
+
+    snapshot_crypto_sign_init( &state );
+    snapshot_crypto_sign_update( &state, MESSAGE_PART1, MESSAGE_PART1_LEN );
+    snapshot_crypto_sign_update( &state, MESSAGE_PART2, MESSAGE_PART2_LEN );
+    snapshot_check( snapshot_crypto_sign_final_verify( &state, signature, public_key ) == 0 );
+}
+
+void test_crypto_key_exchange()
+{
+    uint8_t client_public_key[SNAPSHOT_CRYPTO_KX_PUBLICKEYBYTES];
+    uint8_t client_private_key[SNAPSHOT_CRYPTO_KX_SECRETKEYBYTES];
+    snapshot_crypto_kx_keypair( client_public_key, client_private_key );
+
+    uint8_t server_public_key[SNAPSHOT_CRYPTO_KX_PUBLICKEYBYTES];
+    uint8_t server_private_key[SNAPSHOT_CRYPTO_KX_SECRETKEYBYTES];
+    snapshot_crypto_kx_keypair( server_public_key, server_private_key );
+
+    uint8_t client_send_key[SNAPSHOT_CRYPTO_KX_SESSIONKEYBYTES];
+    uint8_t client_receive_key[SNAPSHOT_CRYPTO_KX_SESSIONKEYBYTES];
+    snapshot_check( snapshot_crypto_kx_client_session_keys( client_receive_key, client_send_key, client_public_key, client_private_key, server_public_key ) == 0 );
+
+    uint8_t server_send_key[SNAPSHOT_CRYPTO_KX_SESSIONKEYBYTES];
+    uint8_t server_receive_key[SNAPSHOT_CRYPTO_KX_SESSIONKEYBYTES];
+    snapshot_check( snapshot_crypto_kx_server_session_keys( server_receive_key, server_send_key, server_public_key, server_private_key, client_public_key ) == 0 );
+
+    snapshot_check( memcmp( client_send_key, server_receive_key, SNAPSHOT_CRYPTO_KX_SESSIONKEYBYTES ) == 0 );
+    snapshot_check( memcmp( server_send_key, client_receive_key, SNAPSHOT_CRYPTO_KX_SESSIONKEYBYTES ) == 0 );
+}
+
+void test_platform_socket()
+{
+    // non-blocking socket (ipv4)
+    {
+        snapshot_address_t bind_address;
+        snapshot_address_t local_address;
+        snapshot_address_parse( &bind_address, "0.0.0.0" );
+        snapshot_address_parse( &local_address, "127.0.0.1" );
+        snapshot_platform_socket_t * socket = snapshot_platform_socket_create( NULL, &bind_address, SNAPSHOT_PLATFORM_SOCKET_NON_BLOCKING, 0, 64*1024, 64*1024 );
+        local_address.port = bind_address.port;
+        snapshot_check( socket );
+        uint8_t packet[256];
+        memset( packet, 0, sizeof(packet) );
+        snapshot_platform_socket_send_packet( socket, &local_address, packet, sizeof(packet) );
+        snapshot_address_t from;
+        while ( snapshot_platform_socket_receive_packet( socket, &from, packet, sizeof(packet) ) )
+        {
+            snapshot_check( snapshot_address_equal( &from, &local_address ) );
+        }
+        snapshot_platform_socket_destroy( socket );
+    }
+
+    // blocking socket with timeout (ipv4)
+    {
+        snapshot_address_t bind_address;
+        snapshot_address_t local_address;
+        snapshot_address_parse( &bind_address, "0.0.0.0" );
+        snapshot_address_parse( &local_address, "127.0.0.1" );
+        snapshot_platform_socket_t * socket = snapshot_platform_socket_create( NULL, &bind_address, SNAPSHOT_PLATFORM_SOCKET_BLOCKING, 0.01f, 64*1024, 64*1024 );
+        local_address.port = bind_address.port;
+        snapshot_check( socket );
+        uint8_t packet[256];
+        memset( packet, 0, sizeof(packet) );
+        snapshot_platform_socket_send_packet( socket, &local_address, packet, sizeof(packet) );
+        snapshot_address_t from;
+        while ( snapshot_platform_socket_receive_packet( socket, &from, packet, sizeof(packet) ) )
+        {
+            snapshot_check( snapshot_address_equal( &from, &local_address ) );
+        }
+        snapshot_platform_socket_destroy( socket );
+    }
+
+    // blocking socket with no timeout (ipv4)
+    {
+        snapshot_address_t bind_address;
+        snapshot_address_t local_address;
+        snapshot_address_parse( &bind_address, "0.0.0.0" );
+        snapshot_address_parse( &local_address, "127.0.0.1" );
+        snapshot_platform_socket_t * socket = snapshot_platform_socket_create( NULL, &bind_address, SNAPSHOT_PLATFORM_SOCKET_BLOCKING, -1.0f, 64*1024, 64*1024 );
+        local_address.port = bind_address.port;
+        snapshot_check( socket );
+        uint8_t packet[256];
+        memset( packet, 0, sizeof(packet) );
+        snapshot_platform_socket_send_packet( socket, &local_address, packet, sizeof(packet) );
+        snapshot_address_t from;
+        snapshot_platform_socket_receive_packet( socket, &from, packet, sizeof(packet) );
+        snapshot_check( snapshot_address_equal( &from, &local_address ) );
+        snapshot_platform_socket_destroy( socket );
+    }
+
+#if NEXT_PLATFORM_HAS_IPV6
+
+    // non-blocking socket (ipv6)
+    {
+        snapshot_address_t bind_address;
+        snapshot_address_t local_address;
+        snapshot_address_parse( &bind_address, "[::]" );
+        snapshot_address_parse( &local_address, "[::1]" );
+        snapshot_platform_socket_t * socket = snapshot_platform_socket_create( NULL, &bind_address, NEXT_PLATFORM_SOCKET_NON_BLOCKING, 0, 64*1024, 64*1024, true );
+        local_address.port = bind_address.port;
+        snapshot_check( socket );
+        uint8_t packet[256];
+        memset( packet, 0, sizeof(packet) );
+        snapshot_platform_socket_send_packet( socket, &local_address, packet, sizeof(packet) );
+        snapshot_address_t from;
+        while ( snapshot_platform_socket_receive_packet( socket, &from, packet, sizeof(packet) ) )
+        {
+            snapshot_check( snapshot_address_equal( &from, &local_address ) );
+        }
+        snapshot_platform_socket_destroy( socket );
+    }
+
+    // blocking socket with timeout (ipv6)
+    {
+        snapshot_address_t bind_address;
+        snapshot_address_t local_address;
+        snapshot_address_parse( &bind_address, "[::]" );
+        snapshot_address_parse( &local_address, "[::1]" );
+        snapshot_platform_socket_t * socket = snapshot_platform_socket_create( NULL, &bind_address, NEXT_PLATFORM_SOCKET_BLOCKING, 0.01f, 64*1024, 64*1024, true );
+        local_address.port = bind_address.port;
+        snapshot_check( socket );
+        uint8_t packet[256];
+        memset( packet, 0, sizeof(packet) );
+        snapshot_platform_socket_send_packet( socket, &local_address, packet, sizeof(packet) );
+        snapshot_address_t from;
+        while ( snapshot_platform_socket_receive_packet( socket, &from, packet, sizeof(packet) ) )
+        {
+            snapshot_check( snapshot_address_equal( &from, &local_address ) );
+        }
+        snapshot_platform_socket_destroy( socket );
+    }
+
+    // blocking socket with no timeout (ipv6)
+    {
+        snapshot_address_t bind_address;
+        snapshot_address_t local_address;
+        snapshot_address_parse( &bind_address, "[::]" );
+        snapshot_address_parse( &local_address, "[::1]" );
+        snapshot_platform_socket_t * socket = snapshot_platform_socket_create( NULL, &bind_address, NEXT_PLATFORM_SOCKET_BLOCKING, -1.0f, 64*1024, 64*1024, true );
+        local_address.port = bind_address.port;
+        snapshot_check( socket );
+        uint8_t packet[256];
+        memset( packet, 0, sizeof(packet) );
+        snapshot_platform_socket_send_packet( socket, &local_address, packet, sizeof(packet) );
+        snapshot_address_t from;
+        snapshot_platform_socket_receive_packet( socket, &from, packet, sizeof(packet) );
+        snapshot_check( snapshot_address_equal( &from, &local_address ) );
+        snapshot_platform_socket_destroy( socket );
+    }
+
+#endif
+}
+
+static bool threads_work = false;
+
+static void test_thread_function(void*)
+{
+    threads_work = true;
+}
+
+void test_platform_thread()
+{
+    snapshot_platform_thread_t * thread = snapshot_platform_thread_create( NULL, test_thread_function, NULL );
+    snapshot_check( thread );
+    snapshot_platform_thread_join( thread );
+    snapshot_platform_thread_destroy( thread );
+    snapshot_check( threads_work );
+}
+
+void test_platform_mutex()
+{
+    snapshot_platform_mutex_t mutex;
+    int result = snapshot_platform_mutex_create( &mutex );
+    snapshot_check( result == SNAPSHOT_OK );
+    snapshot_platform_mutex_acquire( &mutex );
+    snapshot_platform_mutex_release( &mutex );
+    {
+        snapshot_platform_mutex_guard( &mutex );
+        // ...
+    }
+    snapshot_platform_mutex_destroy( &mutex );
+}
+
 #define RUN_TEST( test_function )                                           \
     do                                                                      \
     {                                                                       \
@@ -529,21 +840,16 @@ void test()
         RUN_TEST( test_bitpacker );
         RUN_TEST( test_bits_required );
         RUN_TEST( test_stream );
-
-        /*
-        RUN_TEST( test_random_bytes );
-        RUN_TEST( test_random_float );
+        RUN_TEST( test_crypto_random_bytes );
         RUN_TEST( test_crypto_box );
         RUN_TEST( test_crypto_secret_box );
         RUN_TEST( test_crypto_aead );
         RUN_TEST( test_crypto_aead_ietf );
         RUN_TEST( test_crypto_sign_detached );
         RUN_TEST( test_crypto_key_exchange );
-
         RUN_TEST( test_platform_socket );
         RUN_TEST( test_platform_thread );
         RUN_TEST( test_platform_mutex );
-        */
     }
 }
 

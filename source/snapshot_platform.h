@@ -12,9 +12,10 @@
 #define SNAPSHOT_MUTEX_BYTES                      256
 
 struct snapshot_address_t;
-struct snapshot_platform_socket_t;
-struct snapshot_platform_thread_t;
-struct snapshot_platform_mutex_t;
+
+#include "snapshot_platform_mac.h"
+#include "snapshot_platform_linux.h"
+#include "snapshot_platform_windows.h"
 
 typedef void (*snapshot_platform_thread_func_t)(void*);
 
@@ -66,26 +67,24 @@ void snapshot_platform_thread_destroy( snapshot_platform_thread_t * thread );
 
 // ----------------------------------------------------------------
 
-struct snapshot_mutex_t { uint8_t dummy[SNAPSHOT_MUTEX_BYTES]; };
+int snapshot_platform_mutex_create( struct snapshot_platform_mutex_t * mutex );
 
-int snapshot_mutex_create( struct snapshot_mutex_t * mutex );
+void snapshot_platform_mutex_destroy( struct snapshot_platform_mutex_t * mutex );
 
-void snapshot_mutex_destroy( struct snapshot_mutex_t * mutex );
+void snapshot_platform_mutex_acquire( struct snapshot_platform_mutex_t * mutex );
 
-void snapshot_mutex_acquire( struct snapshot_mutex_t * mutex );
-
-void snapshot_mutex_release( struct snapshot_mutex_t * mutex );
+void snapshot_platform_mutex_release( struct snapshot_platform_mutex_t * mutex );
 
 #ifdef __cplusplus
 
-struct snapshot_mutex_helper_t
+struct snapshot_platform_mutex_helper_t
 {
-    struct snapshot_mutex_t * _mutex;
-    snapshot_mutex_helper_t( struct snapshot_mutex_t * mutex ) : _mutex( mutex ) { snapshot_assert( mutex ); snapshot_mutex_acquire( _mutex ); }
-    ~snapshot_mutex_helper_t() { snapshot_assert( _mutex ); snapshot_mutex_release( _mutex ); _mutex = NULL; }
+    struct snapshot_platform_mutex_t * _mutex;
+    snapshot_platform_mutex_helper_t( struct snapshot_platform_mutex_t * mutex ) : _mutex( mutex ) { snapshot_assert( mutex ); snapshot_platform_mutex_acquire( _mutex ); }
+    ~snapshot_platform_mutex_helper_t() { snapshot_assert( _mutex ); snapshot_platform_mutex_release( _mutex ); _mutex = NULL; }
 };
 
-#define snapshot_mutex_guard( _mutex ) snapshot_mutex_helper_t __mutex_helper( _mutex )
+#define snapshot_platform_mutex_guard( _mutex ) snapshot_platform_mutex_helper_t __mutex_helper( _mutex )
 
 #endif // #ifdef __cplusplus
 
