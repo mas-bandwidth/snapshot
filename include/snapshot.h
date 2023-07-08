@@ -13,6 +13,8 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <assert.h>
+#include <memory.h>
 
 #if !defined(SNAPSHOT_DEVELOPMENT)
 
@@ -110,26 +112,17 @@ void snapshot_term();
 
 // -----------------------------------------
 
-// todo
-#include <assert.h>
-#include <memory.h>
 #define snapshot_assert assert
-
-// -----------------------------------------
-
-void snapshot_copy_string( char * dest, const char * source, size_t dest_size );
-
-// -----------------------------------------
 
 void snapshot_printf( const char * format, ... );
 
 void snapshot_printf( int level, const char * format, ... );
 
-// -----------------------------------------
-
 void * snapshot_malloc( void * context, size_t bytes );
 
 void snapshot_free( void * context, void * p );
+
+void snapshot_copy_string( char * dest, const char * source, size_t dest_size );
 
 // -----------------------------------------
 

@@ -24,8 +24,8 @@ DONE
 
 	Hack up snapshot_malloc/free
 
-TODO
-
 	Get mac platform cpp fully compiling and linking
 
-	Clean up and get stuff working properly no hax
+TODO
+
+	Clean up pass to make sure what's there doesn't suck
