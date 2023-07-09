@@ -10,20 +10,20 @@
 
 // ----------------------------------------------------------------------
 
-void snapshot_write_uint8( uint8_t ** p, uint8_t value )
+inline void snapshot_write_uint8( uint8_t ** p, uint8_t value )
 {
     **p = value;
     ++(*p);
 }
 
-void snapshot_write_uint16( uint8_t ** p, uint16_t value )
+inline void snapshot_write_uint16( uint8_t ** p, uint16_t value )
 {
     (*p)[0] = value & 0xFF;
     (*p)[1] = value >> 8;
     *p += 2;
 }
 
-void snapshot_write_uint32( uint8_t ** p, uint32_t value )
+inline void snapshot_write_uint32( uint8_t ** p, uint32_t value )
 {
     (*p)[0] = value & 0xFF;
     (*p)[1] = ( value >> 8  ) & 0xFF;
@@ -32,7 +32,7 @@ void snapshot_write_uint32( uint8_t ** p, uint32_t value )
     *p += 4;
 }
 
-void snapshot_write_uint64( uint8_t ** p, uint64_t value )
+inline void snapshot_write_uint64( uint8_t ** p, uint64_t value )
 {
     (*p)[0] = value & 0xFF;
     (*p)[1] = ( value >> 8  ) & 0xFF;
@@ -45,7 +45,7 @@ void snapshot_write_uint64( uint8_t ** p, uint64_t value )
     *p += 8;
 }
 
-void snapshot_write_float32( uint8_t ** p, float value )
+inline void snapshot_write_float32( uint8_t ** p, float value )
 {
     uint32_t value_int = 0;
     char * p_value = (char*)(&value);
@@ -54,7 +54,7 @@ void snapshot_write_float32( uint8_t ** p, float value )
     snapshot_write_uint32( p, value_int);
 }
 
-void snapshot_write_float64( uint8_t ** p, double value )
+inline void snapshot_write_float64( uint8_t ** p, double value )
 {
     uint64_t value_int = 0;
     char * p_value = (char *)(&value);
@@ -63,7 +63,7 @@ void snapshot_write_float64( uint8_t ** p, double value )
     snapshot_write_uint64( p, value_int);
 }
 
-void snapshot_write_bytes( uint8_t ** p, const uint8_t * byte_array, int num_bytes )
+inline void snapshot_write_bytes( uint8_t ** p, const uint8_t * byte_array, int num_bytes )
 {
     for ( int i = 0; i < num_bytes; ++i )
     {
@@ -71,7 +71,7 @@ void snapshot_write_bytes( uint8_t ** p, const uint8_t * byte_array, int num_byt
     }
 }
 
-void snapshot_write_address( uint8_t ** buffer, const snapshot_address_t * address )
+inline void snapshot_write_address( uint8_t ** buffer, const snapshot_address_t * address )
 {
     snapshot_assert( buffer );
     snapshot_assert( *buffer );
@@ -103,14 +103,14 @@ void snapshot_write_address( uint8_t ** buffer, const snapshot_address_t * addre
 
 // ----------------------------------------------------------------------
 
-uint8_t snapshot_read_uint8( const uint8_t ** p )
+inline uint8_t snapshot_read_uint8( const uint8_t ** p )
 {
     uint8_t value = **p;
     ++(*p);
     return value;
 }
 
-uint16_t snapshot_read_uint16( const uint8_t ** p )
+inline uint16_t snapshot_read_uint16( const uint8_t ** p )
 {
     uint16_t value;
     value = (*p)[0];
@@ -119,7 +119,7 @@ uint16_t snapshot_read_uint16( const uint8_t ** p )
     return value;
 }
 
-uint32_t snapshot_read_uint32( const uint8_t ** p )
+inline uint32_t snapshot_read_uint32( const uint8_t ** p )
 {
     uint32_t value;
     value  = (*p)[0];
@@ -130,7 +130,7 @@ uint32_t snapshot_read_uint32( const uint8_t ** p )
     return value;
 }
 
-uint64_t snapshot_read_uint64( const uint8_t ** p )
+inline uint64_t snapshot_read_uint64( const uint8_t ** p )
 {
     uint64_t value;
     value  = (*p)[0];
@@ -145,7 +145,7 @@ uint64_t snapshot_read_uint64( const uint8_t ** p )
     return value;
 }
 
-float snapshot_read_float32( const uint8_t ** p )
+inline float snapshot_read_float32( const uint8_t ** p )
 {
     uint32_t value_int = snapshot_read_uint32( p );
     float value_float = 0.0f;
@@ -155,7 +155,7 @@ float snapshot_read_float32( const uint8_t ** p )
     return value_float;
 }
 
-double snapshot_read_float64( const uint8_t ** p )
+inline double snapshot_read_float64( const uint8_t ** p )
 {
     uint64_t value_int = snapshot_read_uint64( p );
     double value_float = 0.0;
@@ -165,7 +165,7 @@ double snapshot_read_float64( const uint8_t ** p )
     return value_float;
 }
 
-void snapshot_read_bytes( const uint8_t ** p, uint8_t * byte_array, int num_bytes )
+inline void snapshot_read_bytes( const uint8_t ** p, uint8_t * byte_array, int num_bytes )
 {
     for ( int i = 0; i < num_bytes; ++i )
     {
@@ -173,7 +173,7 @@ void snapshot_read_bytes( const uint8_t ** p, uint8_t * byte_array, int num_byte
     }
 }
 
-void snapshot_read_address( const uint8_t ** buffer, snapshot_address_t * address )
+inline void snapshot_read_address( const uint8_t ** buffer, snapshot_address_t * address )
 {
     memset( address, 0, sizeof(snapshot_address_t) );
 

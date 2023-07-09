@@ -16,8 +16,6 @@ DONE
 
 TODO
 
-	-------------
-
 	Stop and clean up. Especially, work out if we want to pass allocators into the read/write packets.
 
 	-------------
@@ -74,7 +72,7 @@ TODO
 
 
 
-	
+
 
 	---------------------------
 
