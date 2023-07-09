@@ -2,17 +2,15 @@ DONE
 
 	Bring across connect token into snapshot_connect_token.h
 
-TODO
-
 	Find corresponding snapshot_crypto_ function to replace "_bignonce"
 
 	Get "test_connect_token" compiling and passing
 
-	-------------
+	Bring across public and private connect token tests
 
-	Bring across challenge token
+	Bring across challenge token test
 
-	-------------
+TODO
 
 	Bring across packet types and tests
 
@@ -26,13 +24,13 @@ TODO
 
 	-------------
 
-	Bring across client implementation
+	Bring across netcode client as snapshot_client_t
 
-	Bring across server implementation
+	-------------
 
-	Incorporate netcode server as snapshot_server_t
+	Bring across netcode server as snapshot_server_t
 
-	Incorporate netcode client as snapshot_client_t
+	-------------
 
 	Create a client.cpp and server.cpp and add to makefile
 
@@ -56,11 +54,11 @@ TODO
 
 	Now think what are the essential other things?
 
-	A command channel with messages, bidirectional between client and server. For sure.
+	A reliable-ordered channel with messages, bidirectional between client and server. For sure.
 
 	The same command channel with in-line large blocks of data sent down (eg. snapshot baselines...)
 
-	Unreliable messages stuck at the back of the packets (when there is room).
+	Unreliable messages stuck at the back of the packets (when there is room) for sound effects, visual fx etc...
 
 	Choke.
 
@@ -75,5 +73,7 @@ TODO
 	What sort of properties are needed?
 
 	Send uncompressed snapshots down.
+
+	Send delta compressed snapshots down.
 
 	---------------------------

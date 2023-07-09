@@ -19,6 +19,7 @@
 #include "snapshot_server.h"
 #include "snapshot_connect_token.h"
 #include "snapshot_challenge_token.h"
+#include "snapshot_packets.h"
 
 static void snapshot_check_handler( const char * condition,
                                     const char * function,
@@ -828,15 +829,15 @@ void test_platform_mutex()
 
 void test_sequence()
 {
-    snapshot_check( snapshot::sequence_number_bytes_required( 0 ) == 1 );
-    snapshot_check( snapshot::sequence_number_bytes_required( 0x11 ) == 1 );
-    snapshot_check( snapshot::sequence_number_bytes_required( 0x1122 ) == 2 );
-    snapshot_check( snapshot::sequence_number_bytes_required( 0x112233 ) == 3 );
-    snapshot_check( snapshot::sequence_number_bytes_required( 0x11223344 ) == 4 );
-    snapshot_check( snapshot::sequence_number_bytes_required( 0x1122334455 ) == 5 );
-    snapshot_check( snapshot::sequence_number_bytes_required( 0x112233445566 ) == 6 );
-    snapshot_check( snapshot::sequence_number_bytes_required( 0x11223344556677 ) == 7 );
-    snapshot_check( snapshot::sequence_number_bytes_required( 0x1122334455667788 ) == 8 );
+    snapshot_check( snapshot_sequence_number_bytes_required( 0 ) == 1 );
+    snapshot_check( snapshot_sequence_number_bytes_required( 0x11 ) == 1 );
+    snapshot_check( snapshot_sequence_number_bytes_required( 0x1122 ) == 2 );
+    snapshot_check( snapshot_sequence_number_bytes_required( 0x112233 ) == 3 );
+    snapshot_check( snapshot_sequence_number_bytes_required( 0x11223344 ) == 4 );
+    snapshot_check( snapshot_sequence_number_bytes_required( 0x1122334455 ) == 5 );
+    snapshot_check( snapshot_sequence_number_bytes_required( 0x112233445566 ) == 6 );
+    snapshot_check( snapshot_sequence_number_bytes_required( 0x11223344556677 ) == 7 );
+    snapshot_check( snapshot_sequence_number_bytes_required( 0x1122334455667788 ) == 8 );
 }
 
 #define TEST_PROTOCOL_ID            0x1122334455667788ULL
@@ -1045,6 +1046,348 @@ void test_challenge_token()
     snapshot_check( memcmp( output_token.user_data, input_token.user_data, SNAPSHOT_USER_DATA_BYTES ) == 0 );
 }
 
+void test_connection_request_packet()
+{
+    // generate a connect token
+
+    struct snapshot_address_t server_address;
+    server_address.type = SNAPSHOT_ADDRESS_IPV4;
+    server_address.data.ipv4[0] = 127;
+    server_address.data.ipv4[1] = 0;
+    server_address.data.ipv4[2] = 0;
+    server_address.data.ipv4[3] = 1;
+    server_address.port = TEST_SERVER_PORT;
+
+    uint8_t user_data[SNAPSHOT_USER_DATA_BYTES];
+    snapshot_crypto_random_bytes( user_data, SNAPSHOT_USER_DATA_BYTES );
+
+    struct snapshot_connect_token_private_t input_token;
+
+    snapshot_generate_connect_token_private( &input_token, TEST_CLIENT_ID, TEST_TIMEOUT_SECONDS, 1, &server_address, user_data );
+
+    snapshot_check( input_token.client_id == TEST_CLIENT_ID );
+    snapshot_check( input_token.num_server_addresses == 1 );
+    snapshot_check( memcmp( input_token.user_data, user_data, SNAPSHOT_USER_DATA_BYTES ) == 0 );
+    snapshot_check( snapshot_address_equal( &input_token.server_addresses[0], &server_address ) );
+
+    // write the conect token to a buffer (non-encrypted)
+
+    uint8_t connect_token_data[SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES];
+
+    snapshot_write_connect_token_private( &input_token, connect_token_data, SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES );
+
+    // copy to a second buffer then encrypt it in place (we need the unencrypted token for verification later on)
+
+    uint8_t encrypted_connect_token_data[SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES];
+
+    memcpy( encrypted_connect_token_data, connect_token_data, SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES );
+
+    uint64_t connect_token_expire_timestamp = time( NULL ) + 30;
+    uint8_t connect_token_nonce[SNAPSHOT_CONNECT_TOKEN_NONCE_BYTES];
+    snapshot_crypto_random_bytes( connect_token_nonce, SNAPSHOT_CONNECT_TOKEN_NONCE_BYTES );
+    uint8_t connect_token_key[SNAPSHOT_KEY_BYTES];
+    snapshot_crypto_random_bytes( connect_token_key, SNAPSHOT_KEY_BYTES );
+
+    snapshot_check( snapshot_encrypt_connect_token_private( encrypted_connect_token_data, 
+                                                   SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES, 
+                                                   SNAPSHOT_VERSION_INFO, 
+                                                   TEST_PROTOCOL_ID, 
+                                                   connect_token_expire_timestamp, 
+                                                   connect_token_nonce, 
+                                                   connect_token_key ) == SNAPSHOT_OK );
+
+    // setup a connection request packet wrapping the encrypted connect token
+
+    struct snapshot_connection_request_packet_t input_packet;
+
+    input_packet.packet_type = SNAPSHOT_CONNECTION_REQUEST_PACKET;
+    memcpy( input_packet.version_info, SNAPSHOT_VERSION_INFO, SNAPSHOT_VERSION_INFO_BYTES );
+    input_packet.protocol_id = TEST_PROTOCOL_ID;
+    input_packet.connect_token_expire_timestamp = connect_token_expire_timestamp;
+    memcpy( input_packet.connect_token_nonce, connect_token_nonce, SNAPSHOT_CONNECT_TOKEN_NONCE_BYTES );
+    memcpy( input_packet.connect_token_data, encrypted_connect_token_data, SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES );
+
+    // write the connection request packet to a buffer
+
+    uint8_t buffer[2048];
+
+    uint8_t packet_key[SNAPSHOT_KEY_BYTES];
+    snapshot_crypto_random_bytes( packet_key, SNAPSHOT_KEY_BYTES );
+
+    int bytes_written = snapshot_write_packet( &input_packet, buffer, sizeof( buffer ), 1000, packet_key, TEST_PROTOCOL_ID );
+
+    snapshot_check( bytes_written > 0 );
+
+    // read the connection request packet back in from the buffer (the connect token data is decrypted as part of the read packet validation)
+
+    uint64_t sequence = 1000;
+
+    uint8_t allowed_packets[SNAPSHOT_CONNECTION_NUM_PACKETS];
+    memset( allowed_packets, 1, sizeof( allowed_packets ) );
+
+    struct snapshot_connection_request_packet_t * output_packet = (struct snapshot_connection_request_packet_t*)
+        snapshot_read_packet( buffer, bytes_written, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), connect_token_key, allowed_packets, NULL, NULL, NULL );
+
+    snapshot_check( output_packet );
+
+    // make sure the read packet matches what was written
+    
+    snapshot_check( output_packet->packet_type == SNAPSHOT_CONNECTION_REQUEST_PACKET );
+    snapshot_check( memcmp( output_packet->version_info, input_packet.version_info, SNAPSHOT_VERSION_INFO_BYTES ) == 0 );
+    snapshot_check( output_packet->protocol_id == input_packet.protocol_id );
+    snapshot_check( output_packet->connect_token_expire_timestamp == input_packet.connect_token_expire_timestamp );
+    snapshot_check( memcmp( output_packet->connect_token_nonce, input_packet.connect_token_nonce, SNAPSHOT_CONNECT_TOKEN_NONCE_BYTES ) == 0 );
+    snapshot_check( memcmp( output_packet->connect_token_data, connect_token_data, SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES - SNAPSHOT_MAC_BYTES ) == 0 );
+
+    free( output_packet );
+}
+
+void test_connection_denied_packet()
+{
+    // setup a connection denied packet
+
+    struct snapshot_connection_denied_packet_t input_packet;
+
+    input_packet.packet_type = SNAPSHOT_CONNECTION_DENIED_PACKET;
+
+    // write the packet to a buffer
+
+    uint8_t buffer[SNAPSHOT_MAX_PACKET_BYTES];
+
+    uint8_t packet_key[SNAPSHOT_KEY_BYTES];
+    snapshot_crypto_random_bytes( packet_key, SNAPSHOT_KEY_BYTES );
+
+    int bytes_written = snapshot_write_packet( &input_packet, buffer, sizeof( buffer ), 1000, packet_key, TEST_PROTOCOL_ID );
+
+    snapshot_check( bytes_written > 0 );
+
+    // read the packet back in from the buffer
+
+    uint64_t sequence;
+
+    uint8_t allowed_packet_types[SNAPSHOT_CONNECTION_NUM_PACKETS];
+    memset( allowed_packet_types, 1, sizeof( allowed_packet_types ) );
+
+    struct snapshot_connection_denied_packet_t * output_packet = (struct snapshot_connection_denied_packet_t*) 
+        snapshot_read_packet( buffer, bytes_written, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, NULL, NULL, NULL );
+
+    snapshot_check( output_packet );
+
+    // make sure the read packet matches what was written
+    
+    snapshot_check( output_packet->packet_type == SNAPSHOT_CONNECTION_DENIED_PACKET );
+
+    free( output_packet );
+}
+
+void test_connection_challenge_packet()
+{
+    // setup a connection challenge packet
+
+    struct snapshot_connection_challenge_packet_t input_packet;
+
+    input_packet.packet_type = SNAPSHOT_CONNECTION_CHALLENGE_PACKET;
+    input_packet.challenge_token_sequence = 0;
+    snapshot_crypto_random_bytes( input_packet.challenge_token_data, SNAPSHOT_CHALLENGE_TOKEN_BYTES );
+
+    // write the packet to a buffer
+
+    uint8_t buffer[SNAPSHOT_MAX_PACKET_BYTES];
+
+    uint8_t packet_key[SNAPSHOT_KEY_BYTES];
+    snapshot_crypto_random_bytes( packet_key, SNAPSHOT_KEY_BYTES );
+
+    int bytes_written = snapshot_write_packet( &input_packet, buffer, sizeof( buffer ), 1000, packet_key, TEST_PROTOCOL_ID );
+
+    snapshot_check( bytes_written > 0 );
+
+    // read the packet back in from the buffer
+
+    uint64_t sequence;
+
+    uint8_t allowed_packet_types[SNAPSHOT_CONNECTION_NUM_PACKETS];
+    memset( allowed_packet_types, 1, sizeof( allowed_packet_types ) );
+
+    struct snapshot_connection_challenge_packet_t * output_packet = (struct snapshot_connection_challenge_packet_t*) 
+        snapshot_read_packet( buffer, bytes_written, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, NULL, NULL, NULL );
+
+    snapshot_check( output_packet );
+
+    // make sure the read packet packet matches what was written
+    
+    snapshot_check( output_packet->packet_type == SNAPSHOT_CONNECTION_CHALLENGE_PACKET );
+    snapshot_check( output_packet->challenge_token_sequence == input_packet.challenge_token_sequence );
+    snapshot_check( memcmp( output_packet->challenge_token_data, input_packet.challenge_token_data, SNAPSHOT_CHALLENGE_TOKEN_BYTES ) == 0 );
+
+    free( output_packet );
+}
+
+void test_connection_response_packet()
+{
+    // setup a connection response packet
+
+    struct snapshot_connection_response_packet_t input_packet;
+
+    input_packet.packet_type = SNAPSHOT_CONNECTION_RESPONSE_PACKET;
+    input_packet.challenge_token_sequence = 0;
+    snapshot_crypto_random_bytes( input_packet.challenge_token_data, SNAPSHOT_CHALLENGE_TOKEN_BYTES );
+
+    // write the packet to a buffer
+
+    uint8_t buffer[SNAPSHOT_MAX_PACKET_BYTES];
+
+    uint8_t packet_key[SNAPSHOT_KEY_BYTES];
+    snapshot_crypto_random_bytes( packet_key, SNAPSHOT_KEY_BYTES );
+    
+    int bytes_written = snapshot_write_packet( &input_packet, buffer, sizeof( buffer ), 1000, packet_key, TEST_PROTOCOL_ID );
+
+    snapshot_check( bytes_written > 0 );
+
+    // read the packet back in from the buffer
+
+    uint64_t sequence;
+
+    uint8_t allowed_packet_types[SNAPSHOT_CONNECTION_NUM_PACKETS];
+    memset( allowed_packet_types, 1, sizeof( allowed_packet_types ) );
+
+    struct snapshot_connection_response_packet_t * output_packet = (struct snapshot_connection_response_packet_t*) 
+        snapshot_read_packet( buffer, bytes_written, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, NULL, NULL, NULL );
+
+    snapshot_check( output_packet );
+
+    // make sure the read packet matches what was written
+    
+    snapshot_check( output_packet->packet_type == SNAPSHOT_CONNECTION_RESPONSE_PACKET );
+    snapshot_check( output_packet->challenge_token_sequence == input_packet.challenge_token_sequence );
+    snapshot_check( memcmp( output_packet->challenge_token_data, input_packet.challenge_token_data, SNAPSHOT_CHALLENGE_TOKEN_BYTES ) == 0 );
+
+    free( output_packet );
+}
+
+void test_connection_keep_alive_packet()
+{
+    // setup a connection keep alive packet
+
+    struct snapshot_connection_keep_alive_packet_t input_packet;
+
+    input_packet.packet_type = SNAPSHOT_CONNECTION_KEEP_ALIVE_PACKET;
+    input_packet.client_index = 10;
+    input_packet.max_clients = 16;
+
+    // write the packet to a buffer
+
+    uint8_t buffer[SNAPSHOT_MAX_PACKET_BYTES];
+
+    uint8_t packet_key[SNAPSHOT_KEY_BYTES];
+    snapshot_crypto_random_bytes( packet_key, SNAPSHOT_KEY_BYTES );
+
+    int bytes_written = snapshot_write_packet( &input_packet, buffer, sizeof( buffer ), 1000, packet_key, TEST_PROTOCOL_ID );
+
+    snapshot_check( bytes_written > 0 );
+
+    // read the packet back in from the buffer
+
+    uint64_t sequence;
+
+    uint8_t allowed_packet_types[SNAPSHOT_CONNECTION_NUM_PACKETS];
+    memset( allowed_packet_types, 1, sizeof( allowed_packet_types ) );
+    
+    struct snapshot_connection_keep_alive_packet_t * output_packet = (struct snapshot_connection_keep_alive_packet_t*) 
+        snapshot_read_packet( buffer, bytes_written, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, NULL, NULL, NULL );
+
+    snapshot_check( output_packet );
+
+    // make sure the read packet matches what was written
+    
+    snapshot_check( output_packet->packet_type == SNAPSHOT_CONNECTION_KEEP_ALIVE_PACKET );
+    snapshot_check( output_packet->client_index == input_packet.client_index );
+    snapshot_check( output_packet->max_clients == input_packet.max_clients );
+
+    free( output_packet );
+}
+
+void test_connection_payload_packet()
+{
+    // setup a connection payload packet
+
+    struct snapshot_connection_payload_packet_t * input_packet = snapshot_create_payload_packet( SNAPSHOT_MAX_PAYLOAD_BYTES, NULL, NULL );
+
+    snapshot_check( input_packet->packet_type == SNAPSHOT_CONNECTION_PAYLOAD_PACKET );
+    snapshot_check( input_packet->payload_bytes == SNAPSHOT_MAX_PAYLOAD_BYTES );
+
+    snapshot_crypto_random_bytes( input_packet->payload_data, SNAPSHOT_MAX_PAYLOAD_BYTES );
+    
+    // write the packet to a buffer
+
+    uint8_t buffer[SNAPSHOT_MAX_PACKET_BYTES];
+
+    uint8_t packet_key[SNAPSHOT_KEY_BYTES];
+    snapshot_crypto_random_bytes( packet_key, SNAPSHOT_KEY_BYTES );
+
+    int bytes_written = snapshot_write_packet( input_packet, buffer, sizeof( buffer ), 1000, packet_key, TEST_PROTOCOL_ID );
+
+    snapshot_check( bytes_written > 0 );
+
+    // read the packet back in from the buffer
+
+    uint64_t sequence;
+
+    uint8_t allowed_packet_types[SNAPSHOT_CONNECTION_NUM_PACKETS];
+    memset( allowed_packet_types, 1, sizeof( allowed_packet_types ) );
+
+    struct snapshot_connection_payload_packet_t * output_packet = (struct snapshot_connection_payload_packet_t*) 
+        snapshot_read_packet( buffer, bytes_written, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, NULL, NULL, NULL );
+
+    snapshot_check( output_packet );
+
+    // make sure the read packet matches what was written
+    
+    snapshot_check( output_packet->packet_type == SNAPSHOT_CONNECTION_PAYLOAD_PACKET );
+    snapshot_check( output_packet->payload_bytes == input_packet->payload_bytes );
+    snapshot_check( memcmp( output_packet->payload_data, input_packet->payload_data, SNAPSHOT_MAX_PAYLOAD_BYTES ) == 0 );
+
+    free( input_packet );
+    free( output_packet );
+}
+
+void test_connection_disconnect_packet()
+{
+    // setup a connection disconnect packet
+
+    struct snapshot_connection_disconnect_packet_t input_packet;
+
+    input_packet.packet_type = SNAPSHOT_CONNECTION_DISCONNECT_PACKET;
+
+    // write the packet to a buffer
+
+    uint8_t buffer[SNAPSHOT_MAX_PACKET_BYTES];
+
+    uint8_t packet_key[SNAPSHOT_KEY_BYTES];
+    snapshot_crypto_random_bytes( packet_key, SNAPSHOT_KEY_BYTES );
+
+    int bytes_written = snapshot_write_packet( &input_packet, buffer, sizeof( buffer ), 1000, packet_key, TEST_PROTOCOL_ID );
+
+    snapshot_check( bytes_written > 0 );
+
+    // read the packet back in from the buffer
+
+    uint64_t sequence;
+
+    uint8_t allowed_packet_types[SNAPSHOT_CONNECTION_NUM_PACKETS];
+    memset( allowed_packet_types, 1, sizeof( allowed_packet_types ) );
+
+    struct snapshot_connection_disconnect_packet_t * output_packet = (struct snapshot_connection_disconnect_packet_t*) 
+        snapshot_read_packet( buffer, bytes_written, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, NULL, NULL, NULL );
+
+    snapshot_check( output_packet );
+
+    // make sure the read packet matches what was written
+    
+    snapshot_check( output_packet->packet_type == SNAPSHOT_CONNECTION_DISCONNECT_PACKET );
+
+    free( output_packet );
+}
+
 #define RUN_TEST( test_function )                                           \
     do                                                                      \
     {                                                                       \
@@ -1080,7 +1423,6 @@ void test()
         RUN_TEST( test_connect_token_public );
         RUN_TEST( test_challenge_token );
 
-        /*
         RUN_TEST( test_connection_request_packet );
         RUN_TEST( test_connection_denied_packet );
         RUN_TEST( test_connection_challenge_packet );
@@ -1088,6 +1430,7 @@ void test()
         RUN_TEST( test_connection_payload_packet );
         RUN_TEST( test_connection_disconnect_packet );
 
+        /*
         RUN_TEST( test_encryption_manager );
         RUN_TEST( test_replay_protection );
         RUN_TEST( test_client_create );
