@@ -883,43 +883,39 @@ void test_connect_token()
     uint8_t key[SNAPSHOT_KEY_BYTES];
     snapshot_crypto_random_bytes( key, SNAPSHOT_KEY_BYTES );    
 
-    // todo
-    (void) expire_timestamp;
-    /*
-    check( snapshot_encrypt_connect_token_private( buffer, 
-                                                   SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES, 
-                                                   SNAPSHOT_VERSION_INFO, 
-                                                   TEST_PROTOCOL_ID, 
-                                                   expire_timestamp, 
-                                                   nonce, 
-                                                   key ) == SNAPSHOT_OK );
+    snapshot_check( snapshot_encrypt_connect_token_private( buffer, 
+                                                            SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES, 
+                                                            SNAPSHOT_VERSION_INFO, 
+                                                            TEST_PROTOCOL_ID, 
+                                                            expire_timestamp, 
+                                                            nonce, 
+                                                            key ) == SNAPSHOT_OK );
 
     // decrypt the buffer
 
-    check( snapshot_decrypt_connect_token_private( buffer,
-                                                   SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES, 
-                                                   SNAPSHOT_VERSION_INFO, 
-                                                   TEST_PROTOCOL_ID, 
-                                                   expire_timestamp, 
-                                                   nonce, 
-                                                   key ) == SNAPSHOT_OK );
+    snapshot_check( snapshot_decrypt_connect_token_private( buffer,
+                                                            SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES, 
+                                                            SNAPSHOT_VERSION_INFO, 
+                                                            TEST_PROTOCOL_ID, 
+                                                            expire_timestamp, 
+                                                            nonce, 
+                                                            key ) == SNAPSHOT_OK );
 
     // read the connect token back in
 
     struct snapshot_connect_token_private_t output_token;
 
-    check( snapshot_read_connect_token_private( buffer, SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES, &output_token ) == SNAPSHOT_OK );
+    snapshot_check( snapshot_read_connect_token_private( buffer, SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES, &output_token ) == SNAPSHOT_OK );
 
     // make sure that everything matches the original connect token
 
-    check( output_token.client_id == input_token.client_id );
-    check( output_token.timeout_seconds == input_token.timeout_seconds );
-    check( output_token.num_server_addresses == input_token.num_server_addresses );
-    check( snapshot_address_equal( &output_token.server_addresses[0], &input_token.server_addresses[0] ) );
-    check( memcmp( output_token.client_to_server_key, input_token.client_to_server_key, SNAPSHOT_KEY_BYTES ) == 0 );
-    check( memcmp( output_token.server_to_client_key, input_token.server_to_client_key, SNAPSHOT_KEY_BYTES ) == 0 );
-    check( memcmp( output_token.user_data, input_token.user_data, SNAPSHOT_USER_DATA_BYTES ) == 0 );
-    */
+    snapshot_check( output_token.client_id == input_token.client_id );
+    snapshot_check( output_token.timeout_seconds == input_token.timeout_seconds );
+    snapshot_check( output_token.num_server_addresses == input_token.num_server_addresses );
+    snapshot_check( snapshot_address_equal( &output_token.server_addresses[0], &input_token.server_addresses[0] ) );
+    snapshot_check( memcmp( output_token.client_to_server_key, input_token.client_to_server_key, SNAPSHOT_KEY_BYTES ) == 0 );
+    snapshot_check( memcmp( output_token.server_to_client_key, input_token.server_to_client_key, SNAPSHOT_KEY_BYTES ) == 0 );
+    snapshot_check( memcmp( output_token.user_data, input_token.user_data, SNAPSHOT_USER_DATA_BYTES ) == 0 );
 }
 
 #define RUN_TEST( test_function )                                           \
@@ -952,7 +948,6 @@ void test()
         RUN_TEST( test_platform_socket );
         RUN_TEST( test_platform_thread );
         RUN_TEST( test_platform_mutex );
-
         RUN_TEST( test_sequence );
         RUN_TEST( test_connect_token );
 
