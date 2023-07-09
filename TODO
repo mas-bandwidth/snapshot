@@ -14,17 +14,17 @@ DONE
 
 	Get packet type tests passing
 
-TODO
-
 	Stop and clean up. Especially, work out if we want to pass allocators into the read/write packets.
 
-	-------------
+TODO
 
 	Bring across encryption manager
 
 	-------------
 
 	Bring across replay protection
+
+	Check replay protection to make sure it is correct
 
 	-------------
 
@@ -42,7 +42,9 @@ TODO
 
 	-------------
 
+	Make changes to read packet and packet processing to get things zero copy.
 
+	-------------
 
 
 

@@ -20,6 +20,7 @@
 #include "snapshot_connect_token.h"
 #include "snapshot_challenge_token.h"
 #include "snapshot_packets.h"
+#include "snapshot_encryption_manager.h"
 
 static void snapshot_check_handler( const char * condition,
                                     const char * function,
@@ -1386,6 +1387,224 @@ void test_connection_disconnect_packet()
     free( output_packet );
 }
 
+void test_encryption_manager()
+{
+    struct snapshot_encryption_manager_t encryption_manager;
+
+    snapshot_encryption_manager_reset( &encryption_manager );
+
+    double time = 100.0;
+
+    // generate some test encryption mappings
+
+    struct encryption_mapping_t
+    {
+        struct snapshot_address_t address;
+        uint8_t send_key[SNAPSHOT_KEY_BYTES];
+        uint8_t receive_key[SNAPSHOT_KEY_BYTES];
+    };
+
+    #define NUM_ENCRYPTION_MAPPINGS 5
+
+    struct encryption_mapping_t encryption_mapping[NUM_ENCRYPTION_MAPPINGS];
+    memset( encryption_mapping, 0, sizeof( encryption_mapping ) );
+    int i;
+    for ( i = 0; i < NUM_ENCRYPTION_MAPPINGS; ++i )
+    {
+        encryption_mapping[i].address.type = SNAPSHOT_ADDRESS_IPV6;
+        encryption_mapping[i].address.data.ipv6[7] = 1;
+        encryption_mapping[i].address.port = ( uint16_t) ( 20000 + i );
+        snapshot_crypto_random_bytes( encryption_mapping[i].send_key, SNAPSHOT_KEY_BYTES );
+        snapshot_crypto_random_bytes( encryption_mapping[i].receive_key, SNAPSHOT_KEY_BYTES );
+    }
+
+    // add the encryption mappings to the manager and make sure they can be looked up by address
+
+    for ( i = 0; i < NUM_ENCRYPTION_MAPPINGS; ++i )
+    {
+        int encryption_index = snapshot_encryption_manager_find_encryption_mapping( &encryption_manager, &encryption_mapping[i].address, time );
+
+        snapshot_check( encryption_index == -1 );
+
+        snapshot_check( snapshot_encryption_manager_get_send_key( &encryption_manager, encryption_index ) == NULL );
+        snapshot_check( snapshot_encryption_manager_get_receive_key( &encryption_manager, encryption_index ) == NULL );
+
+        snapshot_check( snapshot_encryption_manager_add_encryption_mapping( &encryption_manager, 
+                                                                  &encryption_mapping[i].address, 
+                                                                  encryption_mapping[i].send_key, 
+                                                                  encryption_mapping[i].receive_key, 
+                                                                  time, 
+                                                                  -1.0,
+                                                                  TEST_TIMEOUT_SECONDS ) );
+
+        encryption_index = snapshot_encryption_manager_find_encryption_mapping( &encryption_manager, &encryption_mapping[i].address, time );
+
+        uint8_t * send_key = snapshot_encryption_manager_get_send_key( &encryption_manager, encryption_index );
+        uint8_t * receive_key = snapshot_encryption_manager_get_receive_key( &encryption_manager, encryption_index );
+
+        snapshot_check( send_key );
+        snapshot_check( receive_key );
+
+        snapshot_check( memcmp( send_key, encryption_mapping[i].send_key, SNAPSHOT_KEY_BYTES ) == 0 );
+        snapshot_check( memcmp( receive_key, encryption_mapping[i].receive_key, SNAPSHOT_KEY_BYTES ) == 0 );
+    }
+
+    // removing an encryption mapping that doesn't exist should return 0
+    {
+        struct snapshot_address_t address;
+        address.type = SNAPSHOT_ADDRESS_IPV6;
+        address.data.ipv6[7] = 1;
+        address.port = 50000;
+
+        snapshot_check( snapshot_encryption_manager_remove_encryption_mapping( &encryption_manager, &address, time ) == 0 );
+    }
+
+    // remove the first and last encryption mappings
+
+    snapshot_check( snapshot_encryption_manager_remove_encryption_mapping( &encryption_manager, &encryption_mapping[0].address, time ) == 1 );
+
+    snapshot_check( snapshot_encryption_manager_remove_encryption_mapping( &encryption_manager, &encryption_mapping[NUM_ENCRYPTION_MAPPINGS-1].address, time ) == 1 );
+
+    // make sure the encryption mappings that were removed can no longer be looked up by address
+
+    for ( i = 0; i < NUM_ENCRYPTION_MAPPINGS; ++i )
+    {
+        int encryption_index = snapshot_encryption_manager_find_encryption_mapping( &encryption_manager, &encryption_mapping[i].address, time );
+
+        uint8_t * send_key = snapshot_encryption_manager_get_send_key( &encryption_manager, encryption_index );
+        uint8_t * receive_key = snapshot_encryption_manager_get_receive_key( &encryption_manager, encryption_index );
+
+        if ( i != 0 && i != NUM_ENCRYPTION_MAPPINGS - 1 )
+        {
+            snapshot_check( send_key );
+            snapshot_check( receive_key );
+
+            snapshot_check( memcmp( send_key, encryption_mapping[i].send_key, SNAPSHOT_KEY_BYTES ) == 0 );
+            snapshot_check( memcmp( receive_key, encryption_mapping[i].receive_key, SNAPSHOT_KEY_BYTES ) == 0 );
+        }
+        else
+        {
+            snapshot_check( !send_key );
+            snapshot_check( !receive_key );
+        }
+    }
+
+    // add the encryption mappings back in
+    
+    snapshot_check( snapshot_encryption_manager_add_encryption_mapping( &encryption_manager, 
+                                                                        &encryption_mapping[0].address, 
+                                                                        encryption_mapping[0].send_key, 
+                                                                        encryption_mapping[0].receive_key, 
+                                                                        time, 
+                                                                        -1.0,
+                                                                        TEST_TIMEOUT_SECONDS ) );
+    
+    snapshot_check( snapshot_encryption_manager_add_encryption_mapping( &encryption_manager, 
+                                                                        &encryption_mapping[NUM_ENCRYPTION_MAPPINGS-1].address, 
+                                                                        encryption_mapping[NUM_ENCRYPTION_MAPPINGS-1].send_key, 
+                                                                        encryption_mapping[NUM_ENCRYPTION_MAPPINGS-1].receive_key, 
+                                                                        time, 
+                                                                        -1.0,
+                                                                        TEST_TIMEOUT_SECONDS ) );
+
+    // all encryption mappings should be able to be looked up by address again
+
+    for ( i = 0; i < NUM_ENCRYPTION_MAPPINGS; ++i )
+    {
+        int encryption_index = snapshot_encryption_manager_find_encryption_mapping( &encryption_manager, &encryption_mapping[i].address, time );
+
+        uint8_t * send_key = snapshot_encryption_manager_get_send_key( &encryption_manager, encryption_index );
+        uint8_t * receive_key = snapshot_encryption_manager_get_receive_key( &encryption_manager, encryption_index );
+
+        snapshot_check( send_key );
+        snapshot_check( receive_key );
+
+        snapshot_check( memcmp( send_key, encryption_mapping[i].send_key, SNAPSHOT_KEY_BYTES ) == 0 );
+        snapshot_check( memcmp( receive_key, encryption_mapping[i].receive_key, SNAPSHOT_KEY_BYTES ) == 0 );
+    }
+
+    // check that encryption mappings time out properly
+
+    time += TEST_TIMEOUT_SECONDS * 2;
+
+    for ( i = 0; i < NUM_ENCRYPTION_MAPPINGS; ++i )
+    {
+        int encryption_index = snapshot_encryption_manager_find_encryption_mapping( &encryption_manager, &encryption_mapping[i].address, time );
+
+        uint8_t * send_key = snapshot_encryption_manager_get_send_key( &encryption_manager, encryption_index );
+        uint8_t * receive_key = snapshot_encryption_manager_get_receive_key( &encryption_manager, encryption_index );
+
+        snapshot_check( !send_key );
+        snapshot_check( !receive_key );
+    }
+
+    // add the same encryption mappings after timeout
+
+    for ( i = 0; i < NUM_ENCRYPTION_MAPPINGS; ++i )
+    {
+        int encryption_index = snapshot_encryption_manager_find_encryption_mapping( &encryption_manager, &encryption_mapping[i].address, time );
+
+        snapshot_check( encryption_index == -1 );
+
+        snapshot_check( snapshot_encryption_manager_get_send_key( &encryption_manager, encryption_index ) == NULL );
+        snapshot_check( snapshot_encryption_manager_get_receive_key( &encryption_manager, encryption_index ) == NULL );
+
+        snapshot_check( snapshot_encryption_manager_add_encryption_mapping( &encryption_manager, 
+                                                                  &encryption_mapping[i].address, 
+                                                                  encryption_mapping[i].send_key, 
+                                                                  encryption_mapping[i].receive_key, 
+                                                                  time, 
+                                                                  -1.0,
+                                                                  TEST_TIMEOUT_SECONDS ) );
+
+        encryption_index = snapshot_encryption_manager_find_encryption_mapping( &encryption_manager, &encryption_mapping[i].address, time );
+
+        uint8_t * send_key = snapshot_encryption_manager_get_send_key( &encryption_manager, encryption_index );
+        uint8_t * receive_key = snapshot_encryption_manager_get_receive_key( &encryption_manager, encryption_index );
+
+        snapshot_check( send_key );
+        snapshot_check( receive_key );
+
+        snapshot_check( memcmp( send_key, encryption_mapping[i].send_key, SNAPSHOT_KEY_BYTES ) == 0 );
+        snapshot_check( memcmp( receive_key, encryption_mapping[i].receive_key, SNAPSHOT_KEY_BYTES ) == 0 );
+    }
+
+    // reset the encryption mapping and verify that all encryption mappings have been removed
+
+    snapshot_encryption_manager_reset( &encryption_manager );
+
+    for ( i = 0; i < NUM_ENCRYPTION_MAPPINGS; ++i )
+    {
+        int encryption_index = snapshot_encryption_manager_find_encryption_mapping( &encryption_manager, &encryption_mapping[i].address, time );
+
+        uint8_t * send_key = snapshot_encryption_manager_get_send_key( &encryption_manager, encryption_index );
+        uint8_t * receive_key = snapshot_encryption_manager_get_receive_key( &encryption_manager, encryption_index );
+
+        snapshot_check( !send_key );
+        snapshot_check( !receive_key );
+    }
+
+    // test the expire time for encryption mapping works as expected
+
+    snapshot_check( snapshot_encryption_manager_add_encryption_mapping( &encryption_manager, 
+                                                                        &encryption_mapping[0].address, 
+                                                                        encryption_mapping[0].send_key, 
+                                                                        encryption_mapping[0].receive_key, 
+                                                                        time, 
+                                                                        time + 1.0,
+                                                                        TEST_TIMEOUT_SECONDS ) );
+
+    int encryption_index = snapshot_encryption_manager_find_encryption_mapping( &encryption_manager, &encryption_mapping[0].address, time );
+
+    snapshot_check( encryption_index != -1 );
+
+    snapshot_check( snapshot_encryption_manager_find_encryption_mapping( &encryption_manager, &encryption_mapping[0].address, time + 1.1f ) == -1 );
+
+    snapshot_encryption_manager_set_expire_time( &encryption_manager, encryption_index, -1.0 );
+
+    snapshot_check( snapshot_encryption_manager_find_encryption_mapping( &encryption_manager, &encryption_mapping[0].address, time ) == encryption_index );
+}
+
 #define RUN_TEST( test_function )                                           \
     do                                                                      \
     {                                                                       \
@@ -1420,16 +1639,16 @@ void test()
         RUN_TEST( test_connect_token_private );
         RUN_TEST( test_connect_token_public );
         RUN_TEST( test_challenge_token );
-
         RUN_TEST( test_connection_request_packet );
         RUN_TEST( test_connection_denied_packet );
         RUN_TEST( test_connection_challenge_packet );
         RUN_TEST( test_connection_response_packet );
         RUN_TEST( test_connection_payload_packet );
         RUN_TEST( test_connection_disconnect_packet );
+        
+        RUN_TEST( test_encryption_manager );
 
         /*
-        RUN_TEST( test_encryption_manager );
         RUN_TEST( test_replay_protection );
         RUN_TEST( test_client_create );
         RUN_TEST( test_server_create );
