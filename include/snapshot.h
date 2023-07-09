@@ -34,6 +34,31 @@
 
 #endif // !defined(SNAPSHOT_DEVELOPMENT)
 
+#define SNAPSHOT_CONNECT_TOKEN_BYTES                           2048
+#define SNAPSHOT_KEY_BYTES                                       32
+#define SNAPSHOT_MAC_BYTES                                       16
+#define SNAPSHOT_USER_DATA_BYTES                                256
+#define SNAPSHOT_MAX_SERVERS_PER_CONNECT                         32
+
+#define SNAPSHOT_CLIENT_STATE_CONNECT_TOKEN_EXPIRED              -6
+#define SNAPSHOT_CLIENT_STATE_INVALID_CONNECT_TOKEN              -5
+#define SNAPSHOT_CLIENT_STATE_CONNECTION_TIMED_OUT               -4
+#define SNAPSHOT_CLIENT_STATE_CONNECTION_RESPONSE_TIMED_OUT      -3
+#define SNAPSHOT_CLIENT_STATE_CONNECTION_REQUEST_TIMED_OUT       -2
+#define SNAPSHOT_CLIENT_STATE_CONNECTION_DENIED                  -1
+#define SNAPSHOT_CLIENT_STATE_DISCONNECTED                        0
+#define SNAPSHOT_CLIENT_STATE_SENDING_CONNECTION_REQUEST          1
+#define SNAPSHOT_CLIENT_STATE_SENDING_CONNECTION_RESPONSE         2
+#define SNAPSHOT_CLIENT_STATE_CONNECTED                           3
+
+#define SNAPSHOT_CONNECT_TOKEN_NONCE_BYTES                       24
+#define SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES                   1024
+
+#define SNAPSHOT_VERSION_INFO ( (uint8_t*) "SNAPSHOT" )
+#define SNAPSHOT_VERSION_INFO_BYTES                               9
+
+#define SNAPSHOT_MAX_SERVERS_PER_CONNECT                         32
+
 #define SNAPSHOT_BOOL                                           int
 #define SNAPSHOT_TRUE                                             1
 #define SNAPSHOT_FALSE                                            0

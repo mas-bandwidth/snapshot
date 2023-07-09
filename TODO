@@ -52,7 +52,25 @@ DONE
 
 	Verify tests pass on mac.
 
+	Sketch out snapshot_server.h
+
+	Sketch out snapshot_client.h
+
+	Bring across connect token into snapshot_connect_token.h
+
 TODO
+
+	Get "test_connect_token" compiling and passing
+
+	-------------
+
+	Bring across challenge token
+
+	-------------
+
+	Bring across client implementation
+
+	Bring across server implementation
 
 	Incorporate netcode server as snapshot_server_t
 

@@ -218,6 +218,26 @@ namespace snapshot
     }
 
     /**
+        Determine how many bytes we need to write out a compressed version of a uint64 sequence number, where only non-zero bytes are written.
+        The top 8 bits of the sequence number are used for the mask, the other 7 bytes are optionally written if non-zero.
+        @param sequence The sequence number
+        @returns The number of bytes required for the sequence number
+     */
+
+    int sequence_number_bytes_required( uint64_t sequence )
+    {
+        int i;
+        uint64_t mask = 0xFF00000000000000UL;
+        for ( i = 0; i < 7; ++i )
+        {
+            if ( sequence & mask )
+                break;
+            mask >>= 8;
+        }
+        return 8 - i;
+    }
+
+    /**
         Bitpacks unsigned integer values to a buffer.
         Integer bit values are written to a 64 bit scratch value from right to left.
         Once the low 32 bits of the scratch is filled with bits it is flushed to memory as a dword and the scratch value is shifted right by 32.
