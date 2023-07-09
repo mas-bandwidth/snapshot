@@ -13,6 +13,9 @@
 #include "snapshot_bitpacker.h"
 #include "snapshot_stream.h"
 #include "snapshot_serialize.h"
+#include "snapshot_network_simulator.h"
+#include "snapshot_client.h"
+#include "snapshot_server.h"
 
 static void snapshot_check_handler( const char * condition,
                                     const char * function,

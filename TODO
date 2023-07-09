@@ -54,8 +54,6 @@ DONE
 
 TODO
 
-	Update license to include netcode.io source code
-
 	Incorporate netcode server as snapshot_server_t
 
 	Incorporate netcode client as snapshot_client_t
