@@ -1,70 +1,28 @@
 DONE
 
-	Import basic platform files
-
-	Get compiling with premake and stub test.cpp
-
-	Prefix all files with snapshot_
-
-	Setup snapshot.h with definitions needed by all files (eg. platform detection, endianness, asserts etc...)
-
-	Get snapshot_crypto.h/cpp compiling
-
-	Get snapshot_address.h in
-
-	Setup snapshot_platform.h so there is one header interface for platform functions
-
-	Implement snapshot.cpp so we can init and term the library
-
-	Setup snapshot_address.cpp
-
-	Hack up snapshot_assert
-
-	Hack up snapshot_printf
-
-	Hack up snapshot_malloc/free
-
-	Get mac platform cpp fully compiling and linking
-
-	Clean up pass to make sure what's there doesn't suck
-
-	Fix up linux platform
-
-	Drop the other platforms for now. They can be brought back later easily.
-
-	Fix windows platform
-
-	Bring across basic tests for time, address.
-
-	Bring across simple read/write methods.
-
-	Bring across bitpacker.
-
-	Bring across stream.
-
-	Bring across crypto tests.
-
-	Bring across tests for sockets.
-
-	Bring across tests for thread.
-
-	Bring across tests for mutex.
-
-	Verify tests pass on mac.
-
-	Sketch out snapshot_server.h
-
-	Sketch out snapshot_client.h
-
 	Bring across connect token into snapshot_connect_token.h
 
 TODO
+
+	Find corresponding snapshot_crypto_ function to replace "_bignonce"
 
 	Get "test_connect_token" compiling and passing
 
 	-------------
 
 	Bring across challenge token
+
+	-------------
+
+	Bring across packet types and tests
+
+	-------------
+
+	Bring across encryption manager
+
+	-------------
+
+	Bring across replay protection
 
 	-------------
 

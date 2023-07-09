@@ -861,16 +861,12 @@ void test_connect_token()
 
     struct snapshot_connect_token_private_t input_token;
 
-    // todo
-    (void) input_token;
-    
-    /*
     snapshot_generate_connect_token_private( &input_token, TEST_CLIENT_ID, TEST_TIMEOUT_SECONDS, 1, &server_address, user_data );
 
-    check( input_token.client_id == TEST_CLIENT_ID );
-    check( input_token.num_server_addresses == 1 );
-    check( memcmp( input_token.user_data, user_data, SNAPSHOT_USER_DATA_BYTES ) == 0 );
-    check( snapshot_address_equal( &input_token.server_addresses[0], &server_address ) );
+    snapshot_check( input_token.client_id == TEST_CLIENT_ID );
+    snapshot_check( input_token.num_server_addresses == 1 );
+    snapshot_check( memcmp( input_token.user_data, user_data, SNAPSHOT_USER_DATA_BYTES ) == 0 );
+    snapshot_check( snapshot_address_equal( &input_token.server_addresses[0], &server_address ) );
 
     // write it to a buffer
 
@@ -882,10 +878,14 @@ void test_connect_token()
 
     uint64_t expire_timestamp = time( NULL ) + 30;
     uint8_t nonce[SNAPSHOT_CONNECT_TOKEN_NONCE_BYTES];
-    snapshot_generate_nonce( nonce );
+    snapshot_crypto_random_bytes( nonce, SNAPSHOT_CONNECT_TOKEN_NONCE_BYTES );
+    
     uint8_t key[SNAPSHOT_KEY_BYTES];
-    snapshot_generate_key( key );    
+    snapshot_crypto_random_bytes( key, SNAPSHOT_KEY_BYTES );    
 
+    // todo
+    (void) expire_timestamp;
+    /*
     check( snapshot_encrypt_connect_token_private( buffer, 
                                                    SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES, 
                                                    SNAPSHOT_VERSION_INFO, 
