@@ -844,9 +844,9 @@ void test_sequence()
 #define TEST_CONNECT_TOKEN_EXPIRY   30
 #define TEST_TIMEOUT_SECONDS        15
 
-void test_connect_token()
+void test_connect_token_private()
 {
-    // generate a connect token
+    // generate a private connect token
 
     struct snapshot_address_t server_address;
     server_address.type = SNAPSHOT_ADDRESS_IPV4;
@@ -918,6 +918,93 @@ void test_connect_token()
     snapshot_check( memcmp( output_token.user_data, input_token.user_data, SNAPSHOT_USER_DATA_BYTES ) == 0 );
 }
 
+void test_connect_token_public()
+{
+    // generate a private connect token
+
+    struct snapshot_address_t server_address;
+    server_address.type = SNAPSHOT_ADDRESS_IPV4;
+    server_address.data.ipv4[0] = 127;
+    server_address.data.ipv4[1] = 0;
+    server_address.data.ipv4[2] = 0;
+    server_address.data.ipv4[3] = 1;
+    server_address.port = TEST_SERVER_PORT;
+
+    uint8_t user_data[SNAPSHOT_USER_DATA_BYTES];
+    snapshot_crypto_random_bytes( user_data, SNAPSHOT_USER_DATA_BYTES );
+
+    struct snapshot_connect_token_private_t connect_token_private;
+
+    snapshot_generate_connect_token_private( &connect_token_private, TEST_CLIENT_ID, TEST_TIMEOUT_SECONDS, 1, &server_address, user_data );
+
+    snapshot_check( connect_token_private.client_id == TEST_CLIENT_ID );
+    snapshot_check( connect_token_private.num_server_addresses == 1 );
+    snapshot_check( memcmp( connect_token_private.user_data, user_data, SNAPSHOT_USER_DATA_BYTES ) == 0 );
+    snapshot_check( snapshot_address_equal( &connect_token_private.server_addresses[0], &server_address ) );
+
+    // write it to a buffer
+
+    uint8_t connect_token_private_data[SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES];
+    snapshot_write_connect_token_private( &connect_token_private, connect_token_private_data, SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES );
+
+    // encrypt the buffer
+
+    uint64_t create_timestamp = time( NULL );
+    uint64_t expire_timestamp = create_timestamp + 30;
+    uint8_t connect_token_nonce[SNAPSHOT_CONNECT_TOKEN_NONCE_BYTES];
+    snapshot_crypto_random_bytes( connect_token_nonce, SNAPSHOT_CONNECT_TOKEN_NONCE_BYTES );
+    uint8_t key[SNAPSHOT_KEY_BYTES];
+    snapshot_crypto_random_bytes( key, SNAPSHOT_KEY_BYTES );
+    snapshot_check( snapshot_encrypt_connect_token_private( connect_token_private_data, 
+                                                            SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES, 
+                                                            SNAPSHOT_VERSION_INFO, 
+                                                            TEST_PROTOCOL_ID, 
+                                                            expire_timestamp, 
+                                                            connect_token_nonce, 
+                                                            key ) == SNAPSHOT_OK );
+
+    // wrap a public connect token around the private connect token data
+
+    struct snapshot_connect_token_t input_connect_token;
+    memset( &input_connect_token, 0, sizeof( struct snapshot_connect_token_t ) );
+    memcpy( input_connect_token.version_info, SNAPSHOT_VERSION_INFO, SNAPSHOT_VERSION_INFO_BYTES );
+    input_connect_token.protocol_id = TEST_PROTOCOL_ID;
+    input_connect_token.create_timestamp = create_timestamp;
+    input_connect_token.expire_timestamp = expire_timestamp;
+    memcpy( input_connect_token.nonce, connect_token_nonce, SNAPSHOT_CONNECT_TOKEN_NONCE_BYTES );
+    memcpy( input_connect_token.private_data, connect_token_private_data, SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES );
+    input_connect_token.num_server_addresses = 1;
+    input_connect_token.server_addresses[0] = server_address;
+    memcpy( input_connect_token.client_to_server_key, connect_token_private.client_to_server_key, SNAPSHOT_KEY_BYTES );
+    memcpy( input_connect_token.server_to_client_key, connect_token_private.server_to_client_key, SNAPSHOT_KEY_BYTES );
+    input_connect_token.timeout_seconds = (int) TEST_TIMEOUT_SECONDS;
+
+    // write the connect token to a buffer
+
+    uint8_t buffer[SNAPSHOT_CONNECT_TOKEN_BYTES];
+    snapshot_write_connect_token( &input_connect_token, buffer, SNAPSHOT_CONNECT_TOKEN_BYTES );
+
+    // read the buffer back in
+
+    struct snapshot_connect_token_t output_connect_token;
+    memset( &output_connect_token, 0, sizeof( struct snapshot_connect_token_t ) );
+    snapshot_check( snapshot_read_connect_token( buffer, SNAPSHOT_CONNECT_TOKEN_BYTES, &output_connect_token ) == SNAPSHOT_OK );
+
+    // make sure the public connect token matches what was written
+
+    snapshot_check( memcmp( output_connect_token.version_info, input_connect_token.version_info, SNAPSHOT_VERSION_INFO_BYTES ) == 0 );
+    snapshot_check( output_connect_token.protocol_id == input_connect_token.protocol_id );
+    snapshot_check( output_connect_token.create_timestamp == input_connect_token.create_timestamp );
+    snapshot_check( output_connect_token.expire_timestamp == input_connect_token.expire_timestamp );
+    snapshot_check( memcmp( output_connect_token.nonce, input_connect_token.nonce, SNAPSHOT_CONNECT_TOKEN_NONCE_BYTES ) == 0 );
+    snapshot_check( memcmp( output_connect_token.private_data, input_connect_token.private_data, SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES ) == 0 );
+    snapshot_check( output_connect_token.num_server_addresses == input_connect_token.num_server_addresses );
+    snapshot_check( snapshot_address_equal( &output_connect_token.server_addresses[0], &input_connect_token.server_addresses[0] ) );
+    snapshot_check( memcmp( output_connect_token.client_to_server_key, input_connect_token.client_to_server_key, SNAPSHOT_KEY_BYTES ) == 0 );
+    snapshot_check( memcmp( output_connect_token.server_to_client_key, input_connect_token.server_to_client_key, SNAPSHOT_KEY_BYTES ) == 0 );
+    snapshot_check( output_connect_token.timeout_seconds == input_connect_token.timeout_seconds );
+}
+
 #define RUN_TEST( test_function )                                           \
     do                                                                      \
     {                                                                       \
@@ -949,7 +1036,8 @@ void test()
         RUN_TEST( test_platform_thread );
         RUN_TEST( test_platform_mutex );
         RUN_TEST( test_sequence );
-        RUN_TEST( test_connect_token );
+        RUN_TEST( test_connect_token_private );
+        RUN_TEST( test_connect_token_public );
 
         /*
         RUN_TEST( test_challenge_token );
