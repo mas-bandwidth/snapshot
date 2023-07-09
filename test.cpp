@@ -1335,8 +1335,7 @@ void test_connection_payload_packet()
     uint8_t allowed_packet_types[SNAPSHOT_CONNECTION_NUM_PACKETS];
     memset( allowed_packet_types, 1, sizeof( allowed_packet_types ) );
 
-    struct snapshot_connection_payload_packet_t * output_packet = (struct snapshot_connection_payload_packet_t*) 
-        snapshot_read_packet( buffer, bytes_written, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, NULL, NULL, NULL );
+    struct snapshot_connection_payload_packet_t * output_packet = (struct snapshot_connection_payload_packet_t*) snapshot_read_packet( buffer, bytes_written, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, NULL, NULL, NULL );
 
     snapshot_check( output_packet );
 
