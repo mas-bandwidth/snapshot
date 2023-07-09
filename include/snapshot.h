@@ -16,6 +16,8 @@
 #include <assert.h>
 #include <memory.h>
 
+#define SNAPSHOT_MAX_CLIENTS                                    256
+
 #if !defined(SNAPSHOT_DEVELOPMENT)
 
     #define SNAPSHOT_VERSION_FULL                            "0.0.1"
