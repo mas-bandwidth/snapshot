@@ -1125,8 +1125,7 @@ void test_connection_request_packet()
     uint8_t allowed_packets[SNAPSHOT_CONNECTION_NUM_PACKETS];
     memset( allowed_packets, 1, sizeof( allowed_packets ) );
 
-    struct snapshot_connection_request_packet_t * output_packet = (struct snapshot_connection_request_packet_t*)
-        snapshot_read_packet( buffer, bytes_written, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), connect_token_key, allowed_packets, NULL, NULL, NULL );
+    struct snapshot_connection_request_packet_t * output_packet = (struct snapshot_connection_request_packet_t*) snapshot_read_packet( NULL, buffer, bytes_written, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), connect_token_key, allowed_packets, NULL );
 
     snapshot_check( output_packet );
 
@@ -1169,7 +1168,7 @@ void test_connection_denied_packet()
     memset( allowed_packet_types, 1, sizeof( allowed_packet_types ) );
 
     struct snapshot_connection_denied_packet_t * output_packet = (struct snapshot_connection_denied_packet_t*) 
-        snapshot_read_packet( buffer, bytes_written, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, NULL, NULL, NULL );
+        snapshot_read_packet( NULL, buffer, bytes_written, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, NULL );
 
     snapshot_check( output_packet );
 
@@ -1209,7 +1208,7 @@ void test_connection_challenge_packet()
     memset( allowed_packet_types, 1, sizeof( allowed_packet_types ) );
 
     struct snapshot_connection_challenge_packet_t * output_packet = (struct snapshot_connection_challenge_packet_t*) 
-        snapshot_read_packet( buffer, bytes_written, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, NULL, NULL, NULL );
+        snapshot_read_packet( NULL, buffer, bytes_written, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, NULL );
 
     snapshot_check( output_packet );
 
@@ -1251,7 +1250,7 @@ void test_connection_response_packet()
     memset( allowed_packet_types, 1, sizeof( allowed_packet_types ) );
 
     struct snapshot_connection_response_packet_t * output_packet = (struct snapshot_connection_response_packet_t*) 
-        snapshot_read_packet( buffer, bytes_written, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, NULL, NULL, NULL );
+        snapshot_read_packet( NULL, buffer, bytes_written, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, NULL );
 
     snapshot_check( output_packet );
 
@@ -1293,7 +1292,7 @@ void test_connection_keep_alive_packet()
     memset( allowed_packet_types, 1, sizeof( allowed_packet_types ) );
     
     struct snapshot_connection_keep_alive_packet_t * output_packet = (struct snapshot_connection_keep_alive_packet_t*) 
-        snapshot_read_packet( buffer, bytes_written, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, NULL, NULL, NULL );
+        snapshot_read_packet( NULL, buffer, bytes_written, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, NULL );
 
     snapshot_check( output_packet );
 
@@ -1310,7 +1309,7 @@ void test_connection_payload_packet()
 {
     // setup a connection payload packet
 
-    struct snapshot_connection_payload_packet_t * input_packet = snapshot_create_payload_packet( SNAPSHOT_MAX_PAYLOAD_BYTES, NULL, NULL );
+    struct snapshot_connection_payload_packet_t * input_packet = snapshot_create_payload_packet( NULL, SNAPSHOT_MAX_PAYLOAD_BYTES );
 
     snapshot_check( input_packet->packet_type == SNAPSHOT_CONNECTION_PAYLOAD_PACKET );
     snapshot_check( input_packet->payload_bytes == SNAPSHOT_MAX_PAYLOAD_BYTES );
@@ -1335,7 +1334,7 @@ void test_connection_payload_packet()
     uint8_t allowed_packet_types[SNAPSHOT_CONNECTION_NUM_PACKETS];
     memset( allowed_packet_types, 1, sizeof( allowed_packet_types ) );
 
-    struct snapshot_connection_payload_packet_t * output_packet = (struct snapshot_connection_payload_packet_t*) snapshot_read_packet( buffer, bytes_written, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, NULL, NULL, NULL );
+    struct snapshot_connection_payload_packet_t * output_packet = (struct snapshot_connection_payload_packet_t*) snapshot_read_packet( NULL, buffer, bytes_written, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, NULL );
 
     snapshot_check( output_packet );
 
@@ -1376,7 +1375,7 @@ void test_connection_disconnect_packet()
     memset( allowed_packet_types, 1, sizeof( allowed_packet_types ) );
 
     struct snapshot_connection_disconnect_packet_t * output_packet = (struct snapshot_connection_disconnect_packet_t*) 
-        snapshot_read_packet( buffer, bytes_written, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, NULL, NULL, NULL );
+        snapshot_read_packet( NULL, buffer, bytes_written, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, NULL );
 
     snapshot_check( output_packet );
 

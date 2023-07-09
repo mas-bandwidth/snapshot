@@ -129,8 +129,7 @@ const char * snapshot_address_to_string( const snapshot_address_t * address, cha
         {
             if ( snprintf( buffer, SNAPSHOT_MAX_ADDRESS_STRING_LENGTH, "[%s]:%hu", address_string, address->port ) < 0 )
             {
-                // todo
-//                snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "address string truncated: [%s]:%hu", address_string, address->port );
+                snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "address string truncated: [%s]:%hu", address_string, address->port );
             }
             return buffer;
         }

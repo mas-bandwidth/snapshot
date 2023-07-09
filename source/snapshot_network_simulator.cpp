@@ -35,32 +35,15 @@ struct snapshot_network_simulator_t
     struct snapshot_network_simulator_packet_entry_t pending_receive_packets[SNAPSHOT_NETWORK_SIMULATOR_NUM_PENDING_RECEIVE_PACKETS];
 };
 
-struct snapshot_network_simulator_t * snapshot_network_simulator_create( void * allocator_context, 
-                                                                         void * (*allocate_function)(void*,uint64_t), 
-                                                                         void (*free_function)(void*,void*) )
+struct snapshot_network_simulator_t * snapshot_network_simulator_create( void * allocator_context )
 {
-    // todo
-    /*
-    if ( allocate_function == NULL )
-    {
-        allocate_function = snapshot_default_allocate_function;
-    }
-
-    if ( free_function == NULL )
-    {
-        free_function = snapshot_default_free_function;
-    }
-    */
-
-    struct snapshot_network_simulator_t * network_simulator = (struct snapshot_network_simulator_t*) allocate_function( allocator_context, sizeof( struct snapshot_network_simulator_t ) );
+    struct snapshot_network_simulator_t * network_simulator = (struct snapshot_network_simulator_t*) snapshot_malloc( allocator_context, sizeof( struct snapshot_network_simulator_t ) );
 
     snapshot_assert( network_simulator );
 
     memset( network_simulator, 0, sizeof( struct snapshot_network_simulator_t ) );
 
     network_simulator->allocator_context = allocator_context;
-    network_simulator->allocate_function = allocate_function;
-    network_simulator->free_function = free_function;
 
     return network_simulator;
 }

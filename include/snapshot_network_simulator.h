@@ -8,9 +8,7 @@
 
 #include "snapshot.h"
 
-struct snapshot_network_simulator_t * snapshot_network_simulator_create( void * allocator_context, 
-                                                                         void * (*allocate_function)(void*,uint64_t), 
-                                                                         void (*free_function)(void*,void*) );
+struct snapshot_network_simulator_t * snapshot_network_simulator_create( void * context );
 
 void snapshot_network_simulator_reset( struct snapshot_network_simulator_t * network_simulator );
 

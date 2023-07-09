@@ -10,11 +10,8 @@
 
 struct snapshot_client_config_t
 {
-    void * allocator_context;
-    void * (*allocate_function)(void*,uint64_t);
-    void (*free_function)(void*,void*);
+    void * context;
     struct snapshot_network_simulator_t * network_simulator;
-    void * callback_context;
     void (*state_change_callback)(void*,int,int);
     void (*send_loopback_packet_callback)(void*,int,const uint8_t*,int,uint64_t);
     int override_send_and_receive;

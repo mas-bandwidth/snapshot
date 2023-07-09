@@ -82,21 +82,12 @@ struct snapshot_connection_disconnect_packet_t
     uint8_t packet_type;
 };
 
-struct snapshot_connection_payload_packet_t * snapshot_create_payload_packet( int payload_bytes, void * allocator_context, void* (*allocate_function)(void*,uint64_t) )
+struct snapshot_connection_payload_packet_t * snapshot_create_payload_packet( void * context, int payload_bytes )
 {
     snapshot_assert( payload_bytes >= 0 );
     snapshot_assert( payload_bytes <= SNAPSHOT_MAX_PAYLOAD_BYTES );
 
-    // todo: i want this to become zero copy
-    (void) allocate_function;
-    /*
-    if ( allocate_function == NULL )
-    {
-        allocate_function = snapshot_default_allocate_function;
-    }
-    */
-
-    struct snapshot_connection_payload_packet_t * packet = (struct snapshot_connection_payload_packet_t*) snapshot_malloc( allocator_context, sizeof( struct snapshot_connection_payload_packet_t ) + payload_bytes );
+    struct snapshot_connection_payload_packet_t * packet = (struct snapshot_connection_payload_packet_t*) snapshot_malloc( context, sizeof( struct snapshot_connection_payload_packet_t ) + payload_bytes );
 
     if ( !packet )
         return NULL;
@@ -267,7 +258,8 @@ int snapshot_write_packet( void * packet, uint8_t * buffer, int buffer_length, u
     }
 }
 
-void * snapshot_read_packet( uint8_t * buffer, 
+void * snapshot_read_packet( void * context, 
+                             uint8_t * buffer, 
                              int buffer_length, 
                              uint64_t * sequence, 
                              uint8_t * read_packet_key, 
@@ -275,9 +267,7 @@ void * snapshot_read_packet( uint8_t * buffer,
                              uint64_t current_timestamp, 
                              uint8_t * private_key, 
                              uint8_t * allowed_packets, 
-                             struct snapshot_replay_protection_t * replay_protection, 
-                             void * allocator_context, 
-                             void* (*allocate_function)(void*,uint64_t) )
+                             struct snapshot_replay_protection_t * replay_protection )
 {
     snapshot_assert( sequence );
     snapshot_assert( allowed_packets );
@@ -286,14 +276,6 @@ void * snapshot_read_packet( uint8_t * buffer,
 
     // todo
     (void) replay_protection;
-
-    // todo
-    /*
-    if ( allocate_function == NULL )
-    {
-        allocate_function = snapshot_default_allocate_function;
-    }
-    */
 
     if ( buffer_length < 1 )
     {
@@ -376,13 +358,7 @@ void * snapshot_read_packet( uint8_t * buffer,
             return NULL;
         }
 
-        // todo
-        /*
-        struct snapshot_connection_request_packet_t * packet = (struct snapshot_connection_request_packet_t*) 
-            allocate_function( allocator_context, sizeof( struct snapshot_connection_request_packet_t ) );
-            */
-
-        struct snapshot_connection_request_packet_t * packet = (struct snapshot_connection_request_packet_t*) snapshot_malloc( allocator_context, sizeof( struct snapshot_connection_request_packet_t ) );
+        struct snapshot_connection_request_packet_t * packet = (struct snapshot_connection_request_packet_t*) snapshot_malloc( context, sizeof( struct snapshot_connection_request_packet_t ) );
 
         if ( !packet )
         {
@@ -527,12 +503,7 @@ void * snapshot_read_packet( uint8_t * buffer,
                     return NULL;
                 }
 
-                // todo
-                /*
-                struct snapshot_connection_denied_packet_t * packet = (struct snapshot_connection_denied_packet_t*) 
-                    allocate_function( allocator_context, sizeof( struct snapshot_connection_denied_packet_t ) );
-                    */
-                struct snapshot_connection_denied_packet_t * packet = (struct snapshot_connection_denied_packet_t*) snapshot_malloc( allocator_context, sizeof( struct snapshot_connection_denied_packet_t ) );
+                struct snapshot_connection_denied_packet_t * packet = (struct snapshot_connection_denied_packet_t*) snapshot_malloc( context, sizeof( struct snapshot_connection_denied_packet_t ) );
 
                 if ( !packet )
                 {
@@ -554,12 +525,7 @@ void * snapshot_read_packet( uint8_t * buffer,
                     return NULL;
                 }
 
-                // todo
-                /*
-                struct snapshot_connection_challenge_packet_t * packet = (struct snapshot_connection_challenge_packet_t*) 
-                    allocate_function( allocator_context, sizeof( struct snapshot_connection_challenge_packet_t ) );
-                    */
-                struct snapshot_connection_challenge_packet_t * packet = (struct snapshot_connection_challenge_packet_t*) snapshot_malloc( allocator_context, sizeof( struct snapshot_connection_challenge_packet_t ) );
+                struct snapshot_connection_challenge_packet_t * packet = (struct snapshot_connection_challenge_packet_t*) snapshot_malloc( context, sizeof( struct snapshot_connection_challenge_packet_t ) );
 
                 if ( !packet )
                 {
@@ -583,12 +549,7 @@ void * snapshot_read_packet( uint8_t * buffer,
                     return NULL;
                 }
 
-                // todo
-                /*
-                struct snapshot_connection_response_packet_t * packet = (struct snapshot_connection_response_packet_t*) 
-                    allocate_function( allocator_context, sizeof( struct snapshot_connection_response_packet_t ) );
-                */
-                struct snapshot_connection_response_packet_t * packet = (struct snapshot_connection_response_packet_t*) snapshot_malloc( allocator_context, sizeof( struct snapshot_connection_response_packet_t ) );
+                struct snapshot_connection_response_packet_t * packet = (struct snapshot_connection_response_packet_t*) snapshot_malloc( context, sizeof( struct snapshot_connection_response_packet_t ) );
 
                 if ( !packet )
                 {
@@ -612,11 +573,7 @@ void * snapshot_read_packet( uint8_t * buffer,
                     return NULL;
                 }
 
-                /*
-                struct snapshot_connection_keep_alive_packet_t * packet = (struct snapshot_connection_keep_alive_packet_t*) 
-                    allocate_function( allocator_context, sizeof( struct snapshot_connection_keep_alive_packet_t ) );
-                */
-                struct snapshot_connection_keep_alive_packet_t * packet = (struct snapshot_connection_keep_alive_packet_t*) snapshot_malloc( allocator_context, sizeof( struct snapshot_connection_keep_alive_packet_t ) );
+                struct snapshot_connection_keep_alive_packet_t * packet = (struct snapshot_connection_keep_alive_packet_t*) snapshot_malloc( context, sizeof( struct snapshot_connection_keep_alive_packet_t ) );
 
                 if ( !packet )
                 {
@@ -646,7 +603,8 @@ void * snapshot_read_packet( uint8_t * buffer,
                     return NULL;
                 }
 
-                struct snapshot_connection_payload_packet_t * packet = snapshot_create_payload_packet( decrypted_bytes, allocator_context, allocate_function );
+                // todo: i want this to become zero copy
+                struct snapshot_connection_payload_packet_t * packet = snapshot_create_payload_packet( context, decrypted_bytes );
 
                 if ( !packet )
                 {
@@ -668,7 +626,7 @@ void * snapshot_read_packet( uint8_t * buffer,
                     return NULL;
                 }
 
-                struct snapshot_connection_disconnect_packet_t * packet = (struct snapshot_connection_disconnect_packet_t*) snapshot_malloc( allocator_context, sizeof( struct snapshot_connection_disconnect_packet_t ) );
+                struct snapshot_connection_disconnect_packet_t * packet = (struct snapshot_connection_disconnect_packet_t*) snapshot_malloc( context, sizeof( struct snapshot_connection_disconnect_packet_t ) );
 
                 if ( !packet )
                 {
