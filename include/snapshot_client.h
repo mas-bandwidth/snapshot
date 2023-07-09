@@ -14,12 +14,8 @@ struct snapshot_client_config_t
     struct snapshot_network_simulator_t * network_simulator;
     void (*state_change_callback)(void*,int,int);
     void (*send_loopback_packet_callback)(void*,int,const uint8_t*,int,uint64_t);
-    int override_send_and_receive;
-    void (*send_packet_override)(void*,struct snapshot_address_t*,const uint8_t*,int);
-    int (*receive_packet_override)(void*,struct snapshot_address_t*,uint8_t*,int);
 };
 
-/*
 void snapshot_default_client_config( struct snapshot_client_config_t * config );
 
 struct snapshot_client_t * snapshot_client_create( const char * address, const struct snapshot_client_config_t * config, double time );
@@ -59,6 +55,5 @@ void snapshot_client_process_loopback_packet( struct snapshot_client_t * client,
 uint16_t snapshot_client_get_port( struct snapshot_client_t * client );
 
 struct snapshot_address_t * snapshot_client_server_address( struct snapshot_client_t * client );
-*/
 
 #endif // #ifndef SNAPSHOT_CLIENT_H

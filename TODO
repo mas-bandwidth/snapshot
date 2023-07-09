@@ -16,17 +16,11 @@ DONE
 
 	Stop and clean up. Especially, work out if we want to pass allocators into the read/write packets.
 
-TODO
-
 	Bring across encryption manager
-
-	-------------
 
 	Bring across replay protection
 
-	Check replay protection to make sure it is correct
-
-	-------------
+TODO
 
 	Bring across netcode client as snapshot_client_t
 
@@ -42,7 +36,7 @@ TODO
 
 	-------------
 
-	Make changes to read packet and packet processing to get things zero copy.
+	Make changes to read packet and packet processing to get payload packet zero copy and zero allocations per-read packet.
 
 	-------------
 
