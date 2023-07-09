@@ -18,6 +18,7 @@
 #include "snapshot_client.h"
 #include "snapshot_server.h"
 #include "snapshot_connect_token.h"
+#include "snapshot_challenge_token.h"
 
 static void snapshot_check_handler( const char * condition,
                                     const char * function,
@@ -1005,6 +1006,45 @@ void test_connect_token_public()
     snapshot_check( output_connect_token.timeout_seconds == input_connect_token.timeout_seconds );
 }
 
+void test_challenge_token()
+{
+    // generate a challenge token
+
+    struct snapshot_challenge_token_t input_token;
+
+    input_token.client_id = TEST_CLIENT_ID;
+    snapshot_crypto_random_bytes( input_token.user_data, SNAPSHOT_USER_DATA_BYTES );
+
+    // write it to a buffer
+
+    uint8_t buffer[SNAPSHOT_CHALLENGE_TOKEN_BYTES];
+
+    snapshot_write_challenge_token( &input_token, buffer, SNAPSHOT_CHALLENGE_TOKEN_BYTES );
+
+    // encrypt the buffer
+
+    uint64_t sequence = 1000;
+    uint8_t key[SNAPSHOT_KEY_BYTES]; 
+    snapshot_crypto_random_bytes( key, SNAPSHOT_KEY_BYTES );
+
+    snapshot_check( snapshot_encrypt_challenge_token( buffer, SNAPSHOT_CHALLENGE_TOKEN_BYTES, sequence, key ) == SNAPSHOT_OK );
+
+    // decrypt the buffer
+
+    snapshot_check( snapshot_decrypt_challenge_token( buffer, SNAPSHOT_CHALLENGE_TOKEN_BYTES, sequence, key ) == SNAPSHOT_OK );
+
+    // read the challenge token back in
+
+    struct snapshot_challenge_token_t output_token;
+
+    snapshot_check( snapshot_read_challenge_token( buffer, SNAPSHOT_CHALLENGE_TOKEN_BYTES, &output_token ) == SNAPSHOT_OK );
+
+    // make sure that everything matches the original challenge token
+
+    snapshot_check( output_token.client_id == input_token.client_id );
+    snapshot_check( memcmp( output_token.user_data, input_token.user_data, SNAPSHOT_USER_DATA_BYTES ) == 0 );
+}
+
 #define RUN_TEST( test_function )                                           \
     do                                                                      \
     {                                                                       \
@@ -1038,16 +1078,16 @@ void test()
         RUN_TEST( test_sequence );
         RUN_TEST( test_connect_token_private );
         RUN_TEST( test_connect_token_public );
+        RUN_TEST( test_challenge_token );
 
         /*
-        RUN_TEST( test_challenge_token );
         RUN_TEST( test_connection_request_packet );
         RUN_TEST( test_connection_denied_packet );
         RUN_TEST( test_connection_challenge_packet );
         RUN_TEST( test_connection_response_packet );
         RUN_TEST( test_connection_payload_packet );
         RUN_TEST( test_connection_disconnect_packet );
-        RUN_TEST( test_connect_token_public );
+
         RUN_TEST( test_encryption_manager );
         RUN_TEST( test_replay_protection );
         RUN_TEST( test_client_create );
