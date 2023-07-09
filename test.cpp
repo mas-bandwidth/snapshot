@@ -1644,8 +1644,7 @@ void test()
         RUN_TEST( test_connection_challenge_packet );
         RUN_TEST( test_connection_response_packet );
         RUN_TEST( test_connection_payload_packet );
-        RUN_TEST( test_connection_disconnect_packet );
-        
+        RUN_TEST( test_connection_disconnect_packet );        
         RUN_TEST( test_encryption_manager );
 
         /*
