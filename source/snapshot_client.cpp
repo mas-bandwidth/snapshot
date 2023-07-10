@@ -10,6 +10,7 @@
 #include "snapshot_challenge_token.h"
 #include "snapshot_replay_protection.h"
 #include "snapshot_packets.h"
+#include "snapshot_network_simulator.h"
 
 const char * snapshot_client_state_name( int client_state )
 {
@@ -232,9 +233,21 @@ void snapshot_client_connect( struct snapshot_client_t * client, uint8_t * conne
     snapshot_client_set_state( client, SNAPSHOT_CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 }
 
-// todo: i'd like to structure so I can process packets in place
-/*
-void snapshot_client_process_packet_internal( struct snapshot_client_t * client, struct snapshot_address_t * from, uint8_t * packet, uint64_t sequence )
+void snapshot_client_process_payload( struct snapshot_client_t * client, uint64_t sequence, uint8_t * data, int bytes )
+{
+    snapshot_assert( client );
+    snapshot_assert( data );
+    snapshot_assert( bytes > 0 );
+    snapshot_assert( bytes <= SNAPSHOT_MAX_PAYLOAD_BYTES );
+
+    // todo
+    (void) client;
+    (void) sequence;
+    (void) data;
+    (void) bytes;
+}
+
+void snapshot_client_process_packet( struct snapshot_client_t * client, struct snapshot_address_t * from, uint8_t * packet, uint64_t sequence )
 {
     snapshot_assert( client );
     snapshot_assert( packet );
@@ -307,7 +320,9 @@ void snapshot_client_process_packet_internal( struct snapshot_client_t * client,
             {
                 snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client received connection payload packet from server\n" );
 
-                snapshot_packet_queue_push( &client->packet_receive_queue, packet, sequence );
+                struct snapshot_connection_payload_packet_t * p = (struct snapshot_connection_payload_packet_t*) packet;
+
+                snapshot_client_process_payload( client, sequence, p->payload_data, p->payload_bytes );
 
                 client->last_packet_receive_time = client->time;
 
@@ -332,49 +347,6 @@ void snapshot_client_process_packet_internal( struct snapshot_client_t * client,
         default:
             break;
     }
-
-    client->config.free_function( client->config.allocator_context, packet );    
-}
-*/
-
-void snapshot_client_process_packet( struct snapshot_client_t * client, struct snapshot_address_t * from, uint8_t * packet_data, int packet_bytes )
-{
-    (void) client;
-    (void) from;
-    (void) packet_data;
-    (void) packet_bytes;
-
-    // todo
-    /*
-    uint8_t allowed_packets[SNAPSHOT_CONNECTION_NUM_PACKETS];
-    memset( allowed_packets, 0, sizeof( allowed_packets ) );
-    allowed_packets[SNAPSHOT_CONNECTION_DENIED_PACKET] = 1;
-    allowed_packets[SNAPSHOT_CONNECTION_CHALLENGE_PACKET] = 1;
-    allowed_packets[SNAPSHOT_CONNECTION_KEEP_ALIVE_PACKET] = 1;
-    allowed_packets[SNAPSHOT_CONNECTION_PAYLOAD_PACKET] = 1;
-    allowed_packets[SNAPSHOT_CONNECTION_DISCONNECT_PACKET] = 1;
-
-    uint64_t current_timestamp = (uint64_t) time( NULL );
-
-    uint64_t sequence;
-
-    void * packet = snapshot_read_packet( packet_data, 
-                                          packet_bytes, 
-                                          &sequence, 
-                                          client->context.read_packet_key, 
-                                          client->connect_token.protocol_id, 
-                                          current_timestamp, 
-                                          NULL, 
-                                          allowed_packets, 
-                                          &client->replay_protection, 
-                                          client->config.allocator_context, 
-                                          client->config.allocate_function );
-
-    if ( !packet )
-        return;
-    
-    snapshot_client_process_packet_internal( client, from, (uint8_t*)packet, sequence );
-    */
 }
 
 void snapshot_client_receive_packets( struct snapshot_client_t * client )
@@ -407,6 +379,7 @@ void snapshot_client_receive_packets( struct snapshot_client_t * client )
             uint8_t out_packet_buffer[1024];
 
             uint64_t sequence;
+
             void * packet = snapshot_read_packet( packet_data, 
                                                   packet_bytes, 
                                                   &sequence, 
@@ -421,8 +394,7 @@ void snapshot_client_receive_packets( struct snapshot_client_t * client )
             if ( !packet )
                 continue;
 
-            // todo
-            //snapshot_client_process_packet_internal( client, &from, (uint8_t*)packet, sequence );
+            snapshot_client_process_packet( client, &from, (uint8_t*)packet, sequence );
         }
     }
     else
@@ -466,6 +438,39 @@ void snapshot_client_receive_packets( struct snapshot_client_t * client )
     }
 }
 
+void snapshot_client_inject_packet( struct snapshot_client_t * client, struct snapshot_address_t * from, uint8_t * packet_data, int packet_bytes )
+{
+    uint8_t allowed_packets[SNAPSHOT_CONNECTION_NUM_PACKETS];
+    memset( allowed_packets, 0, sizeof( allowed_packets ) );
+    allowed_packets[SNAPSHOT_CONNECTION_DENIED_PACKET] = 1;
+    allowed_packets[SNAPSHOT_CONNECTION_CHALLENGE_PACKET] = 1;
+    allowed_packets[SNAPSHOT_CONNECTION_KEEP_ALIVE_PACKET] = 1;
+    allowed_packets[SNAPSHOT_CONNECTION_PAYLOAD_PACKET] = 1;
+    allowed_packets[SNAPSHOT_CONNECTION_DISCONNECT_PACKET] = 1;
+
+    uint64_t current_timestamp = (uint64_t) time( NULL );
+
+    uint64_t sequence;
+
+    uint8_t out_packet_data[1024];
+
+    void * packet = snapshot_read_packet( packet_data, 
+                                          packet_bytes, 
+                                          &sequence, 
+                                          client->read_packet_key, 
+                                          client->connect_token.protocol_id, 
+                                          current_timestamp, 
+                                          NULL, 
+                                          allowed_packets, 
+                                          out_packet_data,
+                                          &client->replay_protection );
+
+    if ( !packet )
+        return;
+    
+    snapshot_client_process_packet( client, from, (uint8_t*)packet, sequence );
+}
+
 void snapshot_client_send_packet_to_server_internal( struct snapshot_client_t * client, void * packet )
 {
     snapshot_assert( client );
@@ -484,8 +489,7 @@ void snapshot_client_send_packet_to_server_internal( struct snapshot_client_t * 
 
     if ( client->config.network_simulator )
     {
-        // todo
-//        snapshot_network_simulator_send_packet( client->config.network_simulator, &client->address, &client->server_address, packet_data, packet_bytes );
+        snapshot_network_simulator_send_packet( client->config.network_simulator, &client->address, &client->server_address, packet_data, packet_bytes );
     }
     else
     {
