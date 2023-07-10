@@ -10,23 +10,33 @@ DONE
 
 	Get the payload packet test working
 
+	Bring across netcode server as snapshot_server_t
+
 TODO
 
-	Bring across netcode server as snapshot_server_t
+	Bring across the connect token manager, it's needed by the server
+
+	Fix up the commented out functions in snapshot_server.cpp
 
 	-------------
 
 	Create a client.cpp and server.cpp and add to makefile
 
-	Get the client successfully connecting to the server and exchanging packets
+	Get the client successfully connecting to the server and exchanging payload packets
 
 	-------------
 
-	Zero copy on packet write.
+	Zero copy on payload packet write.
 
 	-------------
 
+	Get the loopback stuff working
 
+	-------------
+
+	Get the network simulator working
+
+	-------------
 
 
 

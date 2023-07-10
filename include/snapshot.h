@@ -23,6 +23,9 @@
 #define SNAPSHOT_CLIENT_SOCKET_SNDBUF_SIZE           ( 256 * 1024 )
 #define SNAPSHOT_CLIENT_SOCKET_RCVBUF_SIZE           ( 256 * 1024 )
 
+#define SNAPSHOT_SERVER_SOCKET_SNDBUF_SIZE          ( 1024 * 1024 )
+#define SNAPSHOT_SERVER_SOCKET_RCVBUF_SIZE          ( 1024 * 1024 )
+
 #if !defined(SNAPSHOT_DEVELOPMENT)
 
     #define SNAPSHOT_VERSION_FULL                            "0.0.1"

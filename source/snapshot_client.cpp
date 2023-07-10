@@ -95,11 +95,18 @@ struct snapshot_client_t * snapshot_client_create( const char * address_string,
 
     if ( !config->network_simulator )
     {
-        if ( snapshot_platform_socket_create( &socket, &address, 0.0f, SNAPSHOT_PLATFORM_SOCKET_NON_BLOCKING, SNAPSHOT_CLIENT_SOCKET_SNDBUF_SIZE, SNAPSHOT_CLIENT_SOCKET_RCVBUF_SIZE ) != SNAPSHOT_OK )
+        snapshot_address_t bind_address;
+        memset( &bind_address, 0, sizeof(bind_address) );
+
+        // todo: bind to 0.0.0.0:[portnum]?
+
+        if ( snapshot_platform_socket_create( &socket, &bind_address, 0.0f, SNAPSHOT_PLATFORM_SOCKET_NON_BLOCKING, SNAPSHOT_CLIENT_SOCKET_SNDBUF_SIZE, SNAPSHOT_CLIENT_SOCKET_RCVBUF_SIZE ) != SNAPSHOT_OK )
         {
             snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "error: failed to create client socket\n" );
             return NULL;
         }
+
+        // todo: get port from bind address and stash on address?
     }
     else
     {

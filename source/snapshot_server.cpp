@@ -17,6 +17,78 @@
 #define SNAPSHOT_MAX_CONNECT_TOKEN_ENTRIES            ( SNAPSHOT_MAX_CLIENTS * 4 )
 #define SNAPSHOT_SERVER_MAX_SIM_RECEIVE_PACKETS     ( 256 * SNAPSHOT_MAX_CLIENTS )
 
+// ------------------------------------------------------------------------------------------
+
+struct snapshot_connect_token_entry_t
+{
+    double time;
+    uint8_t mac[SNAPSHOT_MAC_BYTES];
+    struct snapshot_address_t address;
+};
+
+void snapshot_connect_token_entries_reset( struct snapshot_connect_token_entry_t * connect_token_entries )
+{
+    int i;
+    for ( i = 0; i < SNAPSHOT_MAX_CONNECT_TOKEN_ENTRIES; ++i )
+    {
+        connect_token_entries[i].time = -1000.0;
+        memset( connect_token_entries[i].mac, 0, SNAPSHOT_MAC_BYTES );
+        memset( &connect_token_entries[i].address, 0, sizeof( struct snapshot_address_t ) );
+    }
+}
+
+int snapshot_connect_token_entries_find_or_add( struct snapshot_connect_token_entry_t * connect_token_entries, 
+                                                struct snapshot_address_t * address, 
+                                                uint8_t * mac, 
+                                                double time )
+{
+    snapshot_assert( connect_token_entries );
+    snapshot_assert( address );
+    snapshot_assert( mac );
+
+    // find the matching entry for the token mac and the oldest token entry. constant time worst case. This is intentional!
+
+    int matching_token_index = -1;
+    int oldest_token_index = -1;
+    double oldest_token_time = 0.0;
+
+    int i;
+    for ( i = 0; i < SNAPSHOT_MAX_CONNECT_TOKEN_ENTRIES; ++i )
+    {
+        if ( memcmp( mac, connect_token_entries[i].mac, SNAPSHOT_MAC_BYTES ) == 0 )
+            matching_token_index = i;
+        
+        if ( oldest_token_index == -1 || connect_token_entries[i].time < oldest_token_time )
+        {
+            oldest_token_time = connect_token_entries[i].time;
+            oldest_token_index = i;
+        }
+    }
+
+    // if no entry is found with the mac, this is a new connect token. replace the oldest token entry.
+
+    snapshot_assert( oldest_token_index != -1 );
+
+    if ( matching_token_index == -1 )
+    {
+        connect_token_entries[oldest_token_index].time = time;
+        connect_token_entries[oldest_token_index].address = *address;
+        memcpy( connect_token_entries[oldest_token_index].mac, mac, SNAPSHOT_MAC_BYTES );
+        return 1;
+    }
+
+    // allow connect tokens we have already seen from the same address
+
+    snapshot_assert( matching_token_index >= 0 );
+    snapshot_assert( matching_token_index < SNAPSHOT_MAX_CONNECT_TOKEN_ENTRIES );
+    if ( snapshot_address_equal( &connect_token_entries[matching_token_index].address, address ) )
+        return 1;
+
+    return 0;
+}
+
+// ------------------------------------------------------------------------------------------
+
 struct snapshot_server_t
 {
     struct snapshot_server_config_t config;
@@ -42,122 +114,76 @@ struct snapshot_server_t
     uint8_t client_user_data[SNAPSHOT_MAX_CLIENTS][SNAPSHOT_USER_DATA_BYTES];
     struct snapshot_replay_protection_t client_replay_protection[SNAPSHOT_MAX_CLIENTS];
     struct snapshot_address_t client_address[SNAPSHOT_MAX_CLIENTS];
-    // todo: connect token entries (pending connects)
-    // struct snapshot_connect_token_entry_t connect_token_entries[SNAPSHOT_MAX_CONNECT_TOKEN_ENTRIES];
+    struct snapshot_connect_token_entry_t connect_token_entries[SNAPSHOT_MAX_CONNECT_TOKEN_ENTRIES];
     struct snapshot_encryption_manager_t encryption_manager;
     uint8_t * sim_receive_packet_data[SNAPSHOT_SERVER_MAX_SIM_RECEIVE_PACKETS];
     int sim_receive_packet_bytes[SNAPSHOT_SERVER_MAX_SIM_RECEIVE_PACKETS];
     struct snapshot_address_t sim_receive_from[SNAPSHOT_SERVER_MAX_SIM_RECEIVE_PACKETS];
 };
 
-// todo: naff function
-/*
-int snapshot_server_socket_create( struct snapshot_platform_socket_t * socket,
-                                   struct snapshot_address_t * address,
-                                   int send_buffer_size,
-                                   int receive_buffer_size,
-                                   const struct snapshot_server_config_t * config )
-{
-    snapshot_assert( socket );
-    snapshot_assert( address );
-    snapshot_assert( config );
-
-    if ( !config->network_simulator )
-    {
-        if ( snapshot_platform_socket_create( socket, address, SNAPSHOT_PLATFORM_SOCKET_NON_BLOCKING, send_buffer_size, receive_buffer_size ) != SNAPSHOT_OK )
-        {
-            return 0;
-        }
-    }
-
-    return 1;
-}
-*/
-
 struct snapshot_server_t * snapshot_server_create( const char * server_address_string, const struct snapshot_server_config_t * config, double time )
 {  
-    // todo
-    (void) server_address_string;
-    (void) config;
-    (void) time;
-
-    /*
     snapshot_assert( config );
-    snapshot_assert( snapshot.initialized );
 
-    struct snapshot_address_t server_address1;
-    struct snapshot_address_t server_address2;
-
-    memset( &server_address1, 0, sizeof( server_address1 ) );
-    memset( &server_address2, 0, sizeof( server_address2 ) );
-
-    if ( snapshot_parse_address( server_address1_string, &server_address1 ) != SNAPSHOT_OK )
+    struct snapshot_address_t server_address;
+    memset( &server_address, 0, sizeof( server_address ) );
+    if ( snapshot_address_parse( &server_address, server_address_string ) != SNAPSHOT_OK )
     {
         snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "error: failed to parse server public address\n" );
         return NULL;
     }
 
-    if ( server_address2_string != NULL && snapshot_parse_address( server_address2_string, &server_address2 ) != SNAPSHOT_OK )
-    {
-        snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "error: failed to parse server public address2\n" );
-        return NULL;
-    }
-
-    struct snapshot_address_t bind_address_ipv4;
-    struct snapshot_address_t bind_address_ipv6;
-
-    memset( &bind_address_ipv4, 0, sizeof( bind_address_ipv4 ) );
-    memset( &bind_address_ipv6, 0, sizeof( bind_address_ipv6 ) );
-
     struct snapshot_platform_socket_t socket;
 
-    memset( &socket_ipv4, 0, sizeof( socket ) );
-
-    // todo: blargh
-
-    if ( server_address1.type == SNAPSHOT_ADDRESS_IPV4 || server_address2.type == SNAPSHOT_ADDRESS_IPV4 )
-    {
-        bind_address_ipv4.type = SNAPSHOT_ADDRESS_IPV4;
-        bind_address_ipv4.port = server_address1.type == SNAPSHOT_ADDRESS_IPV4 ? server_address1.port : server_address2.port;
-
-        if ( !snapshot_server_socket_create( &socket_ipv4, &bind_address_ipv4, SNAPSHOT_SERVER_SOCKET_SNDBUF_SIZE, SNAPSHOT_SERVER_SOCKET_RCVBUF_SIZE, config ) )
-        {
-            return NULL;
-        }
-    }
-
-    if ( server_address1.type == SNAPSHOT_ADDRESS_IPV6 || server_address2.type == SNAPSHOT_ADDRESS_IPV6 )
-    {
-        bind_address_ipv6.type = SNAPSHOT_ADDRESS_IPV6;
-        bind_address_ipv6.port = server_address1.type == SNAPSHOT_ADDRESS_IPV6 ? server_address1.port : server_address2.port;
-
-        if ( !snapshot_server_socket_create( &socket_ipv6, &bind_address_ipv6, SNAPSHOT_SERVER_SOCKET_SNDBUF_SIZE, SNAPSHOT_SERVER_SOCKET_RCVBUF_SIZE, config ) )
-        {
-            return NULL;
-        }
-    }
-
-    struct snapshot_server_t * server = (struct snapshot_server_t*) config->allocate_function( config->allocator_context, sizeof( struct snapshot_server_t ) );
-    if ( !server )
-    {
-        snapshot_socket_destroy( &socket_ipv4 );
-        snapshot_socket_destroy( &socket_ipv6 );
-        return NULL;
-    }
+    memset( &socket, 0, sizeof( socket ) );
 
     if ( !config->network_simulator )
     {
-        snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "server listening on %s\n", server_address1_string );
+        struct snapshot_address_t bind_address;
+
+        memset( &bind_address, 0, sizeof( bind_address ) );
+
+        // todo: setup bind address to 0.0.0.0:portnum
+
+        if ( snapshot_platform_socket_create( &socket, &bind_address, 0.0f, SNAPSHOT_PLATFORM_SOCKET_NON_BLOCKING, SNAPSHOT_SERVER_SOCKET_SNDBUF_SIZE, SNAPSHOT_SERVER_SOCKET_RCVBUF_SIZE ) != SNAPSHOT_OK )
+        {
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "error: failed to create server socket\n" );
+            return NULL;
+        }
+
+        // todo: stash bind address port in server address
     }
     else
     {
-        snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "server listening on %s (network simulator)\n", server_address1_string );
+        if ( server_address.port == 0 )
+        {
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "error: must bind to a specific port when using network simulator\n" );
+            return NULL;
+        }
+    }
+
+    struct snapshot_server_t * server = (struct snapshot_server_t*) snapshot_malloc( config->context, sizeof( struct snapshot_server_t ) );
+    if ( !server )
+    {
+        snapshot_platform_socket_destroy( &socket );
+        snapshot_platform_socket_destroy( &socket );
+        return NULL;
+    }
+
+     memset( server, 0, sizeof(snapshot_server_t) );
+
+    if ( !config->network_simulator )
+    {
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "server listening on %s\n", server_address_string );
+    }
+    else
+    {
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "server listening on %s (network simulator)\n", server_address_string );
     }
 
     server->config = *config;
-    server->socket_holder.ipv4 = socket_ipv4;
-    server->socket_holder.ipv6 = socket_ipv6;
-    server->address = server_address1;
+    server->socket = socket;
+    server->address = server_address;
     server->flags = 0;
     server->time = time;
     server->running = 0;
@@ -175,23 +201,21 @@ struct snapshot_server_t * snapshot_server_create( const char * server_address_s
     memset( server->client_address, 0, sizeof( server->client_address ) );
     memset( server->client_user_data, 0, sizeof( server->client_user_data ) );
 
-    int i;
-    for ( i = 0; i < SNAPSHOT_MAX_CLIENTS; ++i )
+    for ( int i = 0; i < SNAPSHOT_MAX_CLIENTS; ++i )
+    {
         server->client_encryption_index[i] = -1;
+    }
 
     snapshot_connect_token_entries_reset( server->connect_token_entries );
 
     snapshot_encryption_manager_reset( &server->encryption_manager );
 
-    for ( i = 0; i < SNAPSHOT_MAX_CLIENTS; ++i )
+    for ( int i = 0; i < SNAPSHOT_MAX_CLIENTS; ++i )
+    {
         snapshot_replay_protection_reset( &server->client_replay_protection[i] );
-
-    memset( &server->client_packet_queue, 0, sizeof( server->client_packet_queue ) );
+    }
 
     return server;
-    */
-
-    return NULL;
 }
 
 void snapshot_server_stop( struct snapshot_server_t * server );
@@ -358,19 +382,6 @@ void snapshot_server_disconnect_client_internal( struct snapshot_server_t * serv
         }
     }
 
-    // todo: don't want to use queues, if possible
-    /*
-    while ( 1 )
-    {
-        void * packet = snapshot_packet_queue_pop( &server->client_packet_queue[client_index], NULL );
-        if ( !packet )
-            break;
-        server->config.free_function( server->config.allocator_context, packet );
-    }
-
-    snapshot_packet_queue_clear( &server->client_packet_queue[client_index] );
-    */
-
     snapshot_replay_protection_reset( &server->client_replay_protection[client_index] );
 
     server->encryption_manager.client_index[server->client_encryption_index[client_index]] = -1;
@@ -446,8 +457,7 @@ void snapshot_server_stop( struct snapshot_server_t * server )
     server->challenge_sequence = 0;
     memset( server->challenge_key, 0, SNAPSHOT_KEY_BYTES );
 
-    // todo: connect token entries
-//    snapshot_connect_token_entries_reset( server->connect_token_entries );
+    snapshot_connect_token_entries_reset( server->connect_token_entries );
 
     snapshot_encryption_manager_reset( &server->encryption_manager );
 
@@ -1279,3 +1289,5 @@ uint16_t snapshot_server_get_port( struct snapshot_server_t * server )
     snapshot_assert( server );
     return server->address.port;
 }
+
+// ------------------------------------------------------------------------------------------
