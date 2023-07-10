@@ -8,11 +8,9 @@ DONE
 
 	Work out how to prefix the packet data with the payload packet struct, eg. need offsetof(type, member)
 
-TODO
-
 	Get the payload packet test working
 
-	Make sure the snapshot client can send, receive and process payload packets, zero copy and alloc.
+TODO
 
 	-------------
 
@@ -26,7 +24,9 @@ TODO
 
 	-------------
 
+	Zero copy on packet write.
 
+	-------------
 
 
 
