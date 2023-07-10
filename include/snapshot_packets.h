@@ -9,6 +9,8 @@
 #include "snapshot.h"
 #include "snapshot_connect_token.h"
 #include "snapshot_challenge_token.h"
+#include "snapshot_read_write.h"
+#include "snapshot_replay_protection.h"
 
 #define SNAPSHOT_MAX_PAYLOAD_BYTES                1024
 
@@ -82,6 +84,7 @@ struct snapshot_connection_disconnect_packet_t
     uint8_t packet_type;
 };
 
+// todo: this should be turned into zero copy, eg. create the payload, with prefix bytes, then stick this header in front
 struct snapshot_connection_payload_packet_t * snapshot_create_payload_packet( void * context, int payload_bytes )
 {
     snapshot_assert( payload_bytes >= 0 );
@@ -258,8 +261,7 @@ int snapshot_write_packet( void * packet, uint8_t * buffer, int buffer_length, u
     }
 }
 
-void * snapshot_read_packet( void * context, 
-                             uint8_t * buffer, 
+void * snapshot_read_packet( uint8_t * buffer, 
                              int buffer_length, 
                              uint64_t * sequence, 
                              uint8_t * read_packet_key, 
@@ -267,6 +269,7 @@ void * snapshot_read_packet( void * context,
                              uint64_t current_timestamp, 
                              uint8_t * private_key, 
                              uint8_t * allowed_packets, 
+                             uint8_t * out_packet_buffer,
                              struct snapshot_replay_protection_t * replay_protection )
 {
     snapshot_assert( sequence );
@@ -274,12 +277,9 @@ void * snapshot_read_packet( void * context,
 
     *sequence = 0;
 
-    // todo
-    (void) replay_protection;
-
     if ( buffer_length < 1 )
     {
-        snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "ignored packet. buffer length is less than 1" );
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "ignored packet. read buffer length is less than 1" );
         return NULL;
     }
 
@@ -358,7 +358,7 @@ void * snapshot_read_packet( void * context,
             return NULL;
         }
 
-        struct snapshot_connection_request_packet_t * packet = (struct snapshot_connection_request_packet_t*) snapshot_malloc( context, sizeof( struct snapshot_connection_request_packet_t ) );
+        struct snapshot_connection_request_packet_t * packet = (struct snapshot_connection_request_packet_t*) out_packet_buffer;
 
         if ( !packet )
         {
@@ -434,8 +434,6 @@ void * snapshot_read_packet( void * context,
 
         // ignore the packet if it has already been received
 
-        // todo
-        /*
         if ( replay_protection && packet_type >= SNAPSHOT_CONNECTION_KEEP_ALIVE_PACKET )
         {
             if ( snapshot_replay_protection_already_received( replay_protection, *sequence ) )
@@ -444,7 +442,6 @@ void * snapshot_read_packet( void * context,
                 return NULL;
             }
         }
-        */
 
         // decrypt the per-packet type data
 
@@ -455,8 +452,6 @@ void * snapshot_read_packet( void * context,
             snapshot_write_uint64( &q, protocol_id );
             snapshot_write_uint8( &q, prefix_byte );
         }
-
-        // todo: we should probably add packet type to nonce
 
         uint8_t nonce[12];
         {
@@ -483,13 +478,10 @@ void * snapshot_read_packet( void * context,
 
         // update the latest replay protection sequence #
 
-        // todo
-        /*
         if ( replay_protection && packet_type >= SNAPSHOT_CONNECTION_KEEP_ALIVE_PACKET )
         {
             snapshot_replay_protection_advance_sequence( replay_protection, *sequence );
         }
-        */
 
         // process the per-packet type data that was just decrypted
         
@@ -503,7 +495,7 @@ void * snapshot_read_packet( void * context,
                     return NULL;
                 }
 
-                struct snapshot_connection_denied_packet_t * packet = (struct snapshot_connection_denied_packet_t*) snapshot_malloc( context, sizeof( struct snapshot_connection_denied_packet_t ) );
+                struct snapshot_connection_denied_packet_t * packet = (struct snapshot_connection_denied_packet_t*) out_packet_buffer;
 
                 if ( !packet )
                 {
@@ -525,7 +517,7 @@ void * snapshot_read_packet( void * context,
                     return NULL;
                 }
 
-                struct snapshot_connection_challenge_packet_t * packet = (struct snapshot_connection_challenge_packet_t*) snapshot_malloc( context, sizeof( struct snapshot_connection_challenge_packet_t ) );
+                struct snapshot_connection_challenge_packet_t * packet = (struct snapshot_connection_challenge_packet_t*) out_packet_buffer;
 
                 if ( !packet )
                 {
@@ -549,7 +541,7 @@ void * snapshot_read_packet( void * context,
                     return NULL;
                 }
 
-                struct snapshot_connection_response_packet_t * packet = (struct snapshot_connection_response_packet_t*) snapshot_malloc( context, sizeof( struct snapshot_connection_response_packet_t ) );
+                struct snapshot_connection_response_packet_t * packet = (struct snapshot_connection_response_packet_t*) out_packet_buffer;
 
                 if ( !packet )
                 {
@@ -573,7 +565,7 @@ void * snapshot_read_packet( void * context,
                     return NULL;
                 }
 
-                struct snapshot_connection_keep_alive_packet_t * packet = (struct snapshot_connection_keep_alive_packet_t*) snapshot_malloc( context, sizeof( struct snapshot_connection_keep_alive_packet_t ) );
+                struct snapshot_connection_keep_alive_packet_t * packet = (struct snapshot_connection_keep_alive_packet_t*) out_packet_buffer;
 
                 if ( !packet )
                 {
@@ -603,18 +595,7 @@ void * snapshot_read_packet( void * context,
                     return NULL;
                 }
 
-                // todo: i want this to become zero copy
-                struct snapshot_connection_payload_packet_t * packet = snapshot_create_payload_packet( context, decrypted_bytes );
-
-                if ( !packet )
-                {
-                    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "ignored connection payload packet. could not allocate packet struct" );
-                    return NULL;
-                }
-                
-                memcpy( packet->payload_data, p, decrypted_bytes );
-                
-                return packet;
+                return (void*)p;
             }
             break;
 
@@ -626,7 +607,7 @@ void * snapshot_read_packet( void * context,
                     return NULL;
                 }
 
-                struct snapshot_connection_disconnect_packet_t * packet = (struct snapshot_connection_disconnect_packet_t*) snapshot_malloc( context, sizeof( struct snapshot_connection_disconnect_packet_t ) );
+                struct snapshot_connection_disconnect_packet_t * packet = (struct snapshot_connection_disconnect_packet_t*) out_packet_buffer;
 
                 if ( !packet )
                 {

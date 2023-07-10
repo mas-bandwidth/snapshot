@@ -9,6 +9,7 @@
 #include "snapshot_connect_token.h"
 #include "snapshot_challenge_token.h"
 #include "snapshot_replay_protection.h"
+#include "snapshot_packets.h"
 
 const char * snapshot_client_state_name( int client_state )
 {
@@ -60,6 +61,8 @@ struct snapshot_client_t
     struct snapshot_replay_protection_t replay_protection;
     uint64_t challenge_token_sequence;
     uint8_t challenge_token_data[SNAPSHOT_CHALLENGE_TOKEN_BYTES];
+    uint8_t read_packet_key[SNAPSHOT_KEY_BYTES];
+    uint8_t write_packet_key[SNAPSHOT_KEY_BYTES];
     int loopback;
 };
 
@@ -102,6 +105,8 @@ struct snapshot_client_t * snapshot_client_create( const char * address_string,
 
     struct snapshot_client_t * client = (struct snapshot_client_t*) snapshot_malloc( config->context, sizeof( struct snapshot_client_t ) );
 
+    memset( client, 0, sizeof(snapshot_client_t) );
+
     if ( !client )
     {
         snapshot_platform_socket_destroy( &socket );
@@ -142,8 +147,6 @@ struct snapshot_client_t * snapshot_client_create( const char * address_string,
     return client;
 }
 
-#if 0 // todo
-
 void snapshot_client_destroy( struct snapshot_client_t * client )
 {
     snapshot_assert( client );
@@ -151,10 +154,8 @@ void snapshot_client_destroy( struct snapshot_client_t * client )
         snapshot_client_disconnect( client );
     else
         snapshot_client_disconnect_loopback( client );
-    snapshot_socket_destroy( &client->socket_holder.ipv4 );
-    snapshot_socket_destroy( &client->socket_holder.ipv6 );
-    snapshot_packet_queue_clear( &client->packet_receive_queue );
-    client->config.free_function( client->config.allocator_context, client );
+    snapshot_platform_socket_destroy( &client->socket );
+    snapshot_free( client->config.context, client );
 }
 
 void snapshot_client_set_state( struct snapshot_client_t * client, int client_state )
@@ -163,7 +164,7 @@ void snapshot_client_set_state( struct snapshot_client_t * client, int client_st
 
     if ( client->config.state_change_callback )
     {
-        client->config.state_change_callback( client->config.callback_context, client->state, client_state );
+        client->config.state_change_callback( client->config.context, client->state, client_state );
     }
 
     client->state = client_state;
@@ -195,23 +196,10 @@ void snapshot_client_reset_connection_data( struct snapshot_client_t * client, i
     client->server_address_index = 0;
     memset( &client->server_address, 0, sizeof( struct snapshot_address_t ) );
     memset( &client->connect_token, 0, sizeof( struct snapshot_connect_token_t ) );
-    memset( &client->context, 0, sizeof( struct snapshot_context_t ) );
 
     snapshot_client_set_state( client, client_state );
 
     snapshot_client_reset_before_next_connect( client );
-
-    // todo: i want to process packets in-place, instead of putting them on a queue
-    /*
-    while ( 1 )
-    {
-        void * packet = snapshot_packet_queue_pop( &client->packet_receive_queue, NULL );
-        if ( !packet )
-            break;
-        client->config.free_function( client->config.allocator_context, packet );
-    }
-    snapshot_packet_queue_clear( &client->packet_receive_queue );
-    */
 }
 
 void snapshot_client_disconnect_internal( struct snapshot_client_t * client, int destination_state, int send_disconnect_packets );
@@ -236,14 +224,16 @@ void snapshot_client_connect( struct snapshot_client_t * client, uint8_t * conne
 
     snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connecting to server %s [%d/%d]\n", snapshot_address_to_string( &client->server_address, server_address_string ), client->server_address_index + 1, client->connect_token.num_server_addresses );
 
-    memcpy( client->context.read_packet_key, client->connect_token.server_to_client_key, SNAPSHOT_KEY_BYTES );
-    memcpy( client->context.write_packet_key, client->connect_token.client_to_server_key, SNAPSHOT_KEY_BYTES );
+    memcpy( client->read_packet_key, client->connect_token.server_to_client_key, SNAPSHOT_KEY_BYTES );
+    memcpy( client->write_packet_key, client->connect_token.client_to_server_key, SNAPSHOT_KEY_BYTES );
 
     snapshot_client_reset_before_next_connect( client );
 
     snapshot_client_set_state( client, SNAPSHOT_CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 }
 
+// todo: i'd like to structure so I can process packets in place
+/*
 void snapshot_client_process_packet_internal( struct snapshot_client_t * client, struct snapshot_address_t * from, uint8_t * packet, uint64_t sequence )
 {
     snapshot_assert( client );
@@ -345,6 +335,7 @@ void snapshot_client_process_packet_internal( struct snapshot_client_t * client,
 
     client->config.free_function( client->config.allocator_context, packet );    
 }
+*/
 
 void snapshot_client_process_packet( struct snapshot_client_t * client, struct snapshot_address_t * from, uint8_t * packet_data, int packet_bytes )
 {
@@ -353,6 +344,8 @@ void snapshot_client_process_packet( struct snapshot_client_t * client, struct s
     (void) packet_data;
     (void) packet_bytes;
 
+    // todo
+    /*
     uint8_t allowed_packets[SNAPSHOT_CONNECTION_NUM_PACKETS];
     memset( allowed_packets, 0, sizeof( allowed_packets ) );
     allowed_packets[SNAPSHOT_CONNECTION_DENIED_PACKET] = 1;
@@ -381,6 +374,7 @@ void snapshot_client_process_packet( struct snapshot_client_t * client, struct s
         return;
     
     snapshot_client_process_packet_internal( client, from, (uint8_t*)packet, sequence );
+    */
 }
 
 void snapshot_client_receive_packets( struct snapshot_client_t * client )
@@ -406,47 +400,37 @@ void snapshot_client_receive_packets( struct snapshot_client_t * client )
         {
             struct snapshot_address_t from;
             uint8_t packet_data[SNAPSHOT_MAX_PACKET_BYTES];
-            int packet_bytes = 0;
-
-            if ( client->config.override_send_and_receive )
-            {
-                packet_bytes = client->config.receive_packet_override( client->config.callback_context, &from, packet_data, SNAPSHOT_MAX_PACKET_BYTES );
-            }
-            else if ( client->server_address.type == SNAPSHOT_ADDRESS_IPV4 )
-            {
-                packet_bytes = snapshot_socket_receive_packet( &client->socket_holder.ipv4, &from, packet_data, SNAPSHOT_MAX_PACKET_BYTES );
-            }
-            else if ( client->server_address.type == SNAPSHOT_ADDRESS_IPV6 )
-            {
-                packet_bytes = snapshot_socket_receive_packet( &client->socket_holder.ipv6, &from, packet_data, SNAPSHOT_MAX_PACKET_BYTES );
-            }
-
+            int packet_bytes = snapshot_platform_socket_receive_packet( &client->socket, &from, packet_data, SNAPSHOT_MAX_PACKET_BYTES );
             if ( packet_bytes == 0 )
                 break;
+
+            uint8_t out_packet_buffer[1024];
 
             uint64_t sequence;
             void * packet = snapshot_read_packet( packet_data, 
                                                   packet_bytes, 
                                                   &sequence, 
-                                                  client->context.read_packet_key, 
+                                                  client->read_packet_key, 
                                                   client->connect_token.protocol_id, 
                                                   current_timestamp, 
                                                   NULL, 
                                                   allowed_packets, 
-                                                  &client->replay_protection, 
-                                                  client->config.allocator_context, 
-                                                  client->config.allocate_function );
+                                                  out_packet_buffer,
+                                                  &client->replay_protection );
 
             if ( !packet )
                 continue;
 
-            snapshot_client_process_packet_internal( client, &from, (uint8_t*)packet, sequence );
+            // todo
+            //snapshot_client_process_packet_internal( client, &from, (uint8_t*)packet, sequence );
         }
     }
     else
     {
         // process packets received from network simulator
 
+        // todo: network simulator
+        /*
         int num_packets_received = snapshot_network_simulator_receive_packets( client->config.network_simulator, 
                                                                                &client->address, 
                                                                                SNAPSHOT_CLIENT_MAX_RECEIVE_PACKETS, 
@@ -478,6 +462,7 @@ void snapshot_client_receive_packets( struct snapshot_client_t * client )
 
             snapshot_client_process_packet_internal( client, &client->receive_from[i], (uint8_t*)packet, sequence );
         }
+        */
     }
 }
 
@@ -492,29 +477,19 @@ void snapshot_client_send_packet_to_server_internal( struct snapshot_client_t * 
                                               packet_data, 
                                               SNAPSHOT_MAX_PACKET_BYTES, 
                                               client->sequence++, 
-                                              client->context.write_packet_key, 
+                                              client->write_packet_key, 
                                               client->connect_token.protocol_id );
 
     snapshot_assert( packet_bytes <= SNAPSHOT_MAX_PACKET_BYTES );
 
     if ( client->config.network_simulator )
     {
-        snapshot_network_simulator_send_packet( client->config.network_simulator, &client->address, &client->server_address, packet_data, packet_bytes );
+        // todo
+//        snapshot_network_simulator_send_packet( client->config.network_simulator, &client->address, &client->server_address, packet_data, packet_bytes );
     }
     else
     {
-        if ( client->config.override_send_and_receive )
-        {
-            client->config.send_packet_override( client->config.callback_context, &client->server_address, packet_data, packet_bytes );
-        }
-        else if ( client->server_address.type == SNAPSHOT_ADDRESS_IPV4 )
-        {
-            snapshot_socket_send_packet( &client->socket_holder.ipv4, &client->server_address, packet_data, packet_bytes );
-        }
-        else if ( client->server_address.type == SNAPSHOT_ADDRESS_IPV6 )
-        {
-            snapshot_socket_send_packet( &client->socket_holder.ipv6, &client->server_address, packet_data, packet_bytes );
-        }
+        snapshot_platform_socket_send_packet( &client->socket, &client->server_address, packet_data, packet_bytes );
     }
 
     client->last_packet_send_time = client->time;
@@ -529,7 +504,7 @@ void snapshot_client_send_packets( struct snapshot_client_t * client )
     {
         case SNAPSHOT_CLIENT_STATE_SENDING_CONNECTION_REQUEST:
         {
-            if ( client->last_packet_send_time + ( 1.0 / SNAPSHOT_PACKET_SEND_RATE ) >= client->time )
+            if ( client->last_packet_send_time + 0.1 >= client->time )
                 return;
 
             snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client sent connection request packet to server\n" );
@@ -548,7 +523,7 @@ void snapshot_client_send_packets( struct snapshot_client_t * client )
 
         case SNAPSHOT_CLIENT_STATE_SENDING_CONNECTION_RESPONSE:
         {
-            if ( client->last_packet_send_time + ( 1.0 / SNAPSHOT_PACKET_SEND_RATE ) >= client->time )
+            if ( client->last_packet_send_time + 0.1 >= client->time )
                 return;
 
             snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client sent connection response packet to server\n" );
@@ -564,7 +539,7 @@ void snapshot_client_send_packets( struct snapshot_client_t * client )
 
         case SNAPSHOT_CLIENT_STATE_CONNECTED:
         {
-            if ( client->last_packet_send_time + ( 1.0 / SNAPSHOT_PACKET_SEND_RATE ) >= client->time )
+            if ( client->last_packet_send_time + 0.1 >= client->time )
                 return;
 
             snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client sent connection keep-alive packet to server\n" );
@@ -686,5 +661,3 @@ void snapshot_client_update( struct snapshot_client_t * client, double time )
             break;
     }
 }
-
-#endif // todo

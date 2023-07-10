@@ -20,9 +20,15 @@ DONE
 
 	Bring across replay protection
 
+	Bring across netcode client as snapshot_client.cpp
+
 TODO
 
-	Bring across netcode client as snapshot_client_t
+	Update snapshot_read_packet so it doesn't allocate or copy payload packet data
+
+	Update snapshot_client.cpp so it uses the new snapshot read packet stuff
+
+	Get snapshot_client.cpp network simulator code live
 
 	-------------
 
@@ -35,11 +41,6 @@ TODO
 	Get the client successfully connecting to the server and exchanging packets
 
 	-------------
-
-	Make changes to read packet and packet processing to get payload packet zero copy and zero allocations per-read packet.
-
-	-------------
-
 
 
 
