@@ -84,17 +84,47 @@ struct snapshot_connection_disconnect_packet_t
     uint8_t packet_type;
 };
 
-// todo: this should be turned into zero copy, eg. create the payload, with prefix bytes, then stick this header in front
 struct snapshot_connection_payload_packet_t * snapshot_create_payload_packet( void * context, int payload_bytes )
 {
     snapshot_assert( payload_bytes >= 0 );
     snapshot_assert( payload_bytes <= SNAPSHOT_MAX_PAYLOAD_BYTES );
 
-    struct snapshot_connection_payload_packet_t * packet = (struct snapshot_connection_payload_packet_t*) snapshot_malloc( context, sizeof( struct snapshot_connection_payload_packet_t ) + payload_bytes );
-
-    if ( !packet )
+    uint8_t * buffer = (uint8_t*) snapshot_malloc( context, sizeof( struct snapshot_connection_payload_packet_t ) + payload_bytes );
+    if ( !buffer )
+    {
         return NULL;
-    
+    }
+
+    size_t offset = offsetof(snapshot_connection_payload_packet_t, payload_data);
+
+    struct snapshot_connection_payload_packet_t * packet = (snapshot_connection_payload_packet_t*)( buffer + sizeof(snapshot_connection_payload_packet_t) - offset );
+
+    packet->packet_type = SNAPSHOT_CONNECTION_PAYLOAD_PACKET;
+    packet->payload_bytes = payload_bytes;
+
+    return packet;
+}
+
+void snapshot_destroy_payload_packet( void * context, snapshot_connection_payload_packet_t * packet )
+{
+    size_t offset = offsetof(snapshot_connection_payload_packet_t, payload_data);
+
+    uint8_t * buffer = ((uint8_t*)packet) + offset - sizeof(snapshot_connection_payload_packet_t);
+
+    snapshot_free( context, buffer );
+}
+
+struct snapshot_connection_payload_packet_t * snapshot_wrap_payload_packet( uint8_t * payload_data, int payload_bytes )
+{
+    snapshot_assert( payload_bytes >= 0 );
+    snapshot_assert( payload_bytes <= SNAPSHOT_MAX_PAYLOAD_BYTES );
+
+    size_t offset = offsetof(snapshot_connection_payload_packet_t, payload_data);
+
+    uint8_t * buffer = payload_data - offset;
+
+    struct snapshot_connection_payload_packet_t * packet = (snapshot_connection_payload_packet_t*) buffer;
+
     packet->packet_type = SNAPSHOT_CONNECTION_PAYLOAD_PACKET;
     packet->payload_bytes = payload_bytes;
 
@@ -595,7 +625,7 @@ void * snapshot_read_packet( uint8_t * buffer,
                     return NULL;
                 }
 
-                return (void*)p;
+                return snapshot_wrap_payload_packet( (uint8_t*)p, decrypted_bytes );
             }
             break;
 

@@ -6,13 +6,9 @@ DONE
 
 	Get snapshot_client.cpp network simulator receive packets code back up
 
+	Work out how to prefix the packet data with the payload packet struct, eg. need offsetof(type, member)
+
 TODO
-
-	-------------
-
-	Work out how to prefix the packet data with the payload packet struct, eg. need offset_of(member)?
-
-	Work out how to create payload packets, so they can be sent on the wire, zero copy as well. This means allocating the payload packet with prefix bytes (256?) so we can stash the packet header prior to the payload data.
 
 	Get the payload packet test working
 
