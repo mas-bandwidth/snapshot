@@ -18,6 +18,8 @@
 
 #define SNAPSHOT_MAX_CLIENTS                                    256
 
+#define SNAPSHOT_MAX_PACKET_BYTES                              4096
+
 #define SNAPSHOT_CLIENT_SOCKET_SNDBUF_SIZE           ( 256 * 1024 )
 #define SNAPSHOT_CLIENT_SOCKET_RCVBUF_SIZE           ( 256 * 1024 )
 
@@ -70,8 +72,6 @@
 #define SNAPSHOT_ERROR                                           -1
 
 #define SNAPSHOT_MTU                                           1300
-
-#define SNAPSHOT_MAX_PACKET_BYTES                              4096
 
 #define SNAPSHOT_LOG_LEVEL_NONE                                   0
 #define SNAPSHOT_LOG_LEVEL_ERROR                                  1

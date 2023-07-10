@@ -7,9 +7,13 @@
 #include "snapshot_address.h"
 #include "snapshot_platform.h"
 #include "snapshot_crypto.h"
+#include "snapshot_packets.h"
+#include "snapshot_connect_token.h"
 #include "snapshot_replay_protection.h"
 #include "snapshot_encryption_manager.h"
+#include "snapshot_network_simulator.h"
 
+#define SNAPSHOT_NUM_DISCONNECT_PACKETS                                         10
 #define SNAPSHOT_MAX_CONNECT_TOKEN_ENTRIES            ( SNAPSHOT_MAX_CLIENTS * 4 )
 #define SNAPSHOT_SERVER_MAX_SIM_RECEIVE_PACKETS     ( 256 * SNAPSHOT_MAX_CLIENTS )
 
@@ -218,16 +222,10 @@ void snapshot_server_start( struct snapshot_server_t * server, int max_clients )
     server->max_clients = max_clients;
     server->num_connected_clients = 0;
     server->challenge_sequence = 0;    
-    snapshot_generate_key( server->challenge_key );
-
-    int i;
-    for ( i = 0; i < server->max_clients; ++i )
-    {
-        snapshot_packet_queue_init( &server->client_packet_queue[i], server->config.allocator_context, server->config.allocate_function, server->config.free_function );
-    }
+    snapshot_crypto_random_bytes( server->challenge_key, SNAPSHOT_KEY_BYTES );
 }
 
-void snapshot_server_send_global_packet( struct snapshot_server_t * server, void * packet, struct snapshot_address_t * to, uint8_t * packet_key )
+void snapshot_server_send_global_packet( snapshot_server_t * server, void * packet, struct snapshot_address_t * to, uint8_t * packet_key )
 {
     snapshot_assert( server );
     snapshot_assert( packet );
@@ -236,6 +234,9 @@ void snapshot_server_send_global_packet( struct snapshot_server_t * server, void
 
     uint8_t packet_data[SNAPSHOT_MAX_PACKET_BYTES];
 
+    // todo
+    (void) packet_data;
+    /*
     int packet_bytes = snapshot_write_packet( packet, packet_data, SNAPSHOT_MAX_PACKET_BYTES, server->global_sequence, packet_key, server->config.protocol_id );
 
     snapshot_assert( packet_bytes <= SNAPSHOT_MAX_PACKET_BYTES );
@@ -259,6 +260,7 @@ void snapshot_server_send_global_packet( struct snapshot_server_t * server, void
             snapshot_socket_send_packet( &server->socket_holder.ipv6, to, packet_data, packet_bytes );
         }
     }
+    */
 
     server->global_sequence++;
 }
@@ -285,6 +287,11 @@ void snapshot_server_send_client_packet( struct snapshot_server_t * server, void
 
     uint8_t * packet_key = snapshot_encryption_manager_get_send_key( &server->encryption_manager, server->client_encryption_index[client_index] );
 
+    // todo
+    (void) packet_key;
+    (void) packet_data;
+
+    /*
     int packet_bytes = snapshot_write_packet( packet, packet_data, SNAPSHOT_MAX_PACKET_BYTES, server->client_sequence[client_index], packet_key, server->config.protocol_id );
 
     snapshot_assert( packet_bytes <= SNAPSHOT_MAX_PACKET_BYTES );
@@ -311,6 +318,7 @@ void snapshot_server_send_client_packet( struct snapshot_server_t * server, void
             }
         }
     }
+    */
 
     server->client_sequence[client_index]++;
 
@@ -331,7 +339,7 @@ void snapshot_server_disconnect_client_internal( struct snapshot_server_t * serv
 
     if ( server->config.connect_disconnect_callback )
     {
-        server->config.connect_disconnect_callback( server->config.callback_context, client_index, 0 );
+        server->config.connect_disconnect_callback( server->config.context, client_index, 0 );
     }
 
     if ( send_disconnect_packets )
@@ -350,6 +358,8 @@ void snapshot_server_disconnect_client_internal( struct snapshot_server_t * serv
         }
     }
 
+    // todo: don't want to use queues, if possible
+    /*
     while ( 1 )
     {
         void * packet = snapshot_packet_queue_pop( &server->client_packet_queue[client_index], NULL );
@@ -359,6 +369,7 @@ void snapshot_server_disconnect_client_internal( struct snapshot_server_t * serv
     }
 
     snapshot_packet_queue_clear( &server->client_packet_queue[client_index] );
+    */
 
     snapshot_replay_protection_reset( &server->client_replay_protection[client_index] );
 
@@ -378,7 +389,7 @@ void snapshot_server_disconnect_client_internal( struct snapshot_server_t * serv
 
     server->num_connected_clients--;
 
-    sanpshot_assert( server->num_connected_clients >= 0 );
+    snapshot_assert( server->num_connected_clients >= 0 );
 }
 
 void snapshot_server_disconnect_client( struct snapshot_server_t * server, int client_index )
@@ -435,7 +446,8 @@ void snapshot_server_stop( struct snapshot_server_t * server )
     server->challenge_sequence = 0;
     memset( server->challenge_key, 0, SNAPSHOT_KEY_BYTES );
 
-    snapshot_connect_token_entries_reset( server->connect_token_entries );
+    // todo: connect token entries
+//    snapshot_connect_token_entries_reset( server->connect_token_entries );
 
     snapshot_encryption_manager_reset( &server->encryption_manager );
 
@@ -474,7 +486,7 @@ int snapshot_server_find_client_index_by_address( struct snapshot_server_t * ser
     return -1;
 }
 
-void snapshot_server_process_connection_request_packet( struct shapshot_server_t * server, 
+void snapshot_server_process_connection_request_packet( snapshot_server_t * server, 
                                                         struct snapshot_address_t * from, 
                                                         struct snapshot_connection_request_packet_t * packet )
 {
@@ -516,6 +528,8 @@ void snapshot_server_process_connection_request_packet( struct shapshot_server_t
         return;
     }
 
+    // todo
+    /*
     if ( !snapshot_connect_token_entries_find_or_add( server->connect_token_entries, 
                                                      from, 
                                                      packet->connect_token_data + SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES - SNAPSHOT_MAC_BYTES, 
@@ -524,6 +538,7 @@ void snapshot_server_process_connection_request_packet( struct shapshot_server_t
         snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server ignored connection request. connect token has already been used\n" );
         return;
     }
+    */
 
     if ( server->num_connected_clients == server->max_clients )
     {
@@ -639,7 +654,7 @@ void snapshot_server_connect_client( struct snapshot_server_t * server,
 
     if ( server->config.connect_disconnect_callback )
     {
-        server->config.connect_disconnect_callback( server->config.callback_context, client_index, 1 );
+        server->config.connect_disconnect_callback( server->config.context, client_index, 1 );
     }
 }
 
@@ -707,12 +722,12 @@ void snapshot_server_process_connection_response_packet( struct snapshot_server_
     snapshot_server_connect_client( server, client_index, from, challenge_token.client_id, encryption_index, timeout_seconds, challenge_token.user_data );
 }
 
-void snapshot_server_process_packet_internal( struct snapshot_server_t * server, 
-                                              struct snapshot_address_t * from, 
-                                              void * packet, 
-                                              uint64_t sequence, 
-                                              int encryption_index, 
-                                              int client_index )
+void snapshot_server_process_packet( struct snapshot_server_t * server, 
+                                     struct snapshot_address_t * from, 
+                                     void * packet, 
+                                     uint64_t sequence, 
+                                     int encryption_index, 
+                                     int client_index )
 {
     snapshot_assert( server );
     snapshot_assert( packet );
@@ -772,7 +787,7 @@ void snapshot_server_process_packet_internal( struct snapshot_server_t * server,
                     snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server confirmed connection with client %d\n", client_index );
                     server->client_confirmed[client_index] = 1;
                 }
-                snapshot_packet_queue_push( &server->client_packet_queue[client_index], packet, sequence );
+                // todo: process payload packet in-place
                 return;
             }
         }
@@ -792,9 +807,12 @@ void snapshot_server_process_packet_internal( struct snapshot_server_t * server,
             break;
     }
 
-    server->config.free_function( server->config.allocator_context, packet );
+    // todo: dont' want to free here. process in-place
+    // server->config.free_function( server->config.allocator_context, packet );
 }
 
+// todo: this is the inject packet function for loopback
+/*
 void snapshot_server_process_packet( struct snapshot_server_t * server, struct snapshot_address_t * from, uint8_t * packet_data, int packet_bytes )
 {
     uint8_t allowed_packets[SNAPSHOT_CONNECTION_NUM_PACKETS];
@@ -848,6 +866,7 @@ void snapshot_server_process_packet( struct snapshot_server_t * server, struct s
 
     snapshot_server_process_packet_internal( server, from, packet, sequence, encryption_index, client_index );
 }
+*/
 
 void snapshot_server_read_and_process_packet( struct snapshot_server_t * server, 
                                               struct snapshot_address_t * from, 
@@ -886,6 +905,12 @@ void snapshot_server_read_and_process_packet( struct snapshot_server_t * server,
         return;
     }
 
+    // todo
+    (void) sequence;
+    (void) current_timestamp;
+    (void) allowed_packets;
+
+    /*
     void * packet = snapshot_read_packet( packet_data, 
                                           packet_bytes, 
                                           &sequence, 
@@ -894,14 +919,13 @@ void snapshot_server_read_and_process_packet( struct snapshot_server_t * server,
                                           current_timestamp, 
                                           server->config.private_key, 
                                           allowed_packets, 
-                                          ( client_index != -1 ) ? &server->client_replay_protection[client_index] : NULL, 
-                                          server->config.allocator_context, 
-                                          server->config.allocate_function );
+                                          ( client_index != -1 ) ? &server->client_replay_protection[client_index] : NULL );
 
     if ( !packet )
         return;
 
-    snapshot_server_process_packet_internal( server, from, packet, sequence, encryption_index, client_index );
+    snapshot_server_process_packet( server, from, packet, sequence, encryption_index, client_index );
+                                        */
 }
 
 void snapshot_server_receive_packets( struct snapshot_server_t * server )
@@ -930,17 +954,9 @@ void snapshot_server_receive_packets( struct snapshot_server_t * server )
             
             int packet_bytes = 0;
             
-            if ( server->config.override_send_and_receive )
+            if ( server->socket.handle != 0 )
             {
-                packet_bytes = server->config.receive_packet_override( server->config.callback_context, &from, packet_data, SNAPSHOT_MAX_PACKET_BYTES );
-            }
-            else
-            {
-                if (server->socket_holder.ipv4.handle != 0)
-                    packet_bytes = snapshot_socket_receive_packet( &server->socket_holder.ipv4, &from, packet_data, SNAPSHOT_MAX_PACKET_BYTES );
-
-                if ( packet_bytes == 0 && server->socket_holder.ipv6.handle != 0)
-                    packet_bytes = snapshot_socket_receive_packet( &server->socket_holder.ipv6, &from, packet_data, SNAPSHOT_MAX_PACKET_BYTES );
+                packet_bytes = snapshot_platform_socket_receive_packet( &server->socket, &from, packet_data, SNAPSHOT_MAX_PACKET_BYTES );
             }
 
             if ( packet_bytes == 0 )
@@ -955,22 +971,22 @@ void snapshot_server_receive_packets( struct snapshot_server_t * server )
 
         int num_packets_received = snapshot_network_simulator_receive_packets( server->config.network_simulator, 
                                                                                &server->address, 
-                                                                               SNAPSHOT_SERVER_MAX_RECEIVE_PACKETS, 
-                                                                               server->receive_packet_data, 
-                                                                               server->receive_packet_bytes, 
-                                                                               server->receive_from );
+                                                                               SNAPSHOT_SERVER_MAX_SIM_RECEIVE_PACKETS, 
+                                                                               server->sim_receive_packet_data, 
+                                                                               server->sim_receive_packet_bytes, 
+                                                                               server->sim_receive_from );
 
         int i;
         for ( i = 0; i < num_packets_received; ++i )
         {
             snapshot_server_read_and_process_packet( server, 
-                                                     &server->receive_from[i], 
-                                                     server->receive_packet_data[i], 
-                                                     server->receive_packet_bytes[i], 
+                                                     &server->sim_receive_from[i], 
+                                                     server->sim_receive_packet_data[i], 
+                                                     server->sim_receive_packet_bytes[i], 
                                                      current_timestamp, 
                                                      allowed_packets );
 
-            server->config.free_function( server->config.allocator_context, server->receive_packet_data[i] );
+            snapshot_free( server->config.context, server->sim_receive_packet_data[i] );
         }
     }
 }
@@ -986,7 +1002,7 @@ void snapshot_server_send_packets( struct snapshot_server_t * server )
     for ( i = 0; i < server->max_clients; ++i )
     {
         if ( server->client_connected[i] && !server->client_loopback[i] &&
-             ( server->client_last_packet_send_time[i] + ( 1.0 / SNAPSHOT_PACKET_SEND_RATE ) <= server->time ) )
+             ( server->client_last_packet_send_time[i] + 0.1 <= server->time ) )
         {
             snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server sent connection keep alive packet to client %d\n", i );
             struct snapshot_connection_keep_alive_packet_t packet;
@@ -1070,7 +1086,7 @@ void snapshot_server_send_packet( struct snapshot_server_t * server, int client_
     snapshot_assert( server );
     snapshot_assert( packet_data );
     snapshot_assert( packet_bytes >= 0 );
-    snapshot_assert( packet_bytes <= SNAPSHOT_MAX_PACKET_SIZE );
+    snapshot_assert( packet_bytes <= SNAPSHOT_MAX_PACKET_BYTES );
 
     if ( !server->running )
         return;
@@ -1105,7 +1121,7 @@ void snapshot_server_send_packet( struct snapshot_server_t * server, int client_
     {
         snapshot_assert( server->config.send_loopback_packet_callback );
 
-        server->config.send_loopback_packet_callback( server->config.callback_context,
+        server->config.send_loopback_packet_callback( server->config.context,
                                                       client_index, 
                                                       packet_data, 
                                                       packet_bytes, 
@@ -1113,46 +1129,6 @@ void snapshot_server_send_packet( struct snapshot_server_t * server, int client_
 
         server->client_last_packet_send_time[client_index] = server->time;
     }
-}
-
-uint8_t * snapshot_server_receive_packet( struct snapshot_server_t * server, int client_index, int * packet_bytes, uint64_t * packet_sequence )
-{
-    snapshot_assert( server );
-    snapshot_assert( packet_bytes );
-
-    if ( !server->running )
-        return NULL;
-
-    if ( !server->client_connected[client_index] )
-        return NULL;
-
-    snapshot_assert( client_index >= 0 );
-    snapshot_assert( client_index < server->max_clients );
-
-    struct snapshot_connection_payload_packet_t * packet = (struct snapshot_connection_payload_packet_t*) 
-        snapshot_packet_queue_pop( &server->client_packet_queue[client_index], packet_sequence );
-    
-    if ( packet )
-    {
-        snapshot_assert( packet->packet_type == SNAPSHOT_CONNECTION_PAYLOAD_PACKET );
-        *packet_bytes = packet->payload_bytes;
-        snapshot_assert( *packet_bytes >= 0 );
-        snapshot_assert( *packet_bytes <= SNAPSHOT_MAX_PAYLOAD_BYTES );
-        return (uint8_t*) &packet->payload_data;
-    }
-    else
-    {
-        return NULL;
-    }
-}
-
-void snapshot_server_free_packet( struct snapshot_server_t * server, void * packet )
-{
-    snapshot_assert( server );
-    snapshot_assert( packet );
-    (void) server;
-    int offset = offsetof( struct snapshot_connection_payload_packet_t, payload_data );
-    server->config.free_function( server->config.allocator_context, ( (uint8_t*) packet ) - offset );
 }
 
 int snapshot_server_num_connected_clients( struct snapshot_server_t * server )
@@ -1224,7 +1200,7 @@ void snapshot_server_connect_loopback_client( struct snapshot_server_t * server,
 
     if ( server->config.connect_disconnect_callback )
     {
-        server->config.connect_disconnect_callback( server->config.callback_context, client_index, 1 );
+        server->config.connect_disconnect_callback( server->config.context, client_index, 1 );
     }
 }
 
@@ -1241,18 +1217,8 @@ void snapshot_server_disconnect_loopback_client( struct snapshot_server_t * serv
 
     if ( server->config.connect_disconnect_callback )
     {
-        server->config.connect_disconnect_callback( server->config.callback_context, client_index, 0 );
+        server->config.connect_disconnect_callback( server->config.context, client_index, 0 );
     }
-
-    while ( 1 )
-    {
-        void * packet = snaphot_packet_queue_pop( &server->client_packet_queue[client_index], NULL );
-        if ( !packet )
-            break;
-        server->config.free_function( server->config.allocator_context, packet );
-    }
-
-    snapshot_packet_queue_clear( &server->client_packet_queue[client_index] );
 
     server->client_connected[client_index] = 0;
     server->client_loopback[client_index] = 0;
@@ -1267,7 +1233,7 @@ void snapshot_server_disconnect_loopback_client( struct snapshot_server_t * serv
 
     server->num_connected_clients--;
 
-    sanpshot_assert( server->num_connected_clients >= 0 );
+    snapshot_assert( server->num_connected_clients >= 0 );
 }
 
 int snapshot_server_client_loopback( struct snapshot_server_t * server, int client_index )
@@ -1286,12 +1252,15 @@ void snapshot_server_process_loopback_packet( struct snapshot_server_t * server,
     snapshot_assert( client_index < server->max_clients );
     snapshot_assert( packet_data );
     snapshot_assert( packet_bytes >= 0 );
-    snapshot_assert( packet_bytes <= SNAPSHOT_MAX_PACKET_SIZE );
+    snapshot_assert( packet_bytes <= SNAPSHOT_MAX_PACKET_BYTES );
     snapshot_assert( server->client_connected[client_index] );
     snapshot_assert( server->client_loopback[client_index] );
     snapshot_assert( server->running );
 
-    struct snapshot_connection_payload_packet_t * packet = snapshot_create_payload_packet( packet_bytes, server->config.allocator_context, server->config.allocate_function );
+    // todo: zero copy update
+    (void) packet_sequence;
+    /*
+    struct snapshot_connection_payload_packet_t * packet = snapshot_create_payload_packet( packet_bytes, server->config.context, server->config.allocate_function );
     if ( !packet )
         return;
 
@@ -1302,10 +1271,11 @@ void snapshot_server_process_loopback_packet( struct snapshot_server_t * server,
     server->client_last_packet_receive_time[client_index] = server->time;
 
     snapshot_packet_queue_push( &server->client_packet_queue[client_index], packet, packet_sequence );
+    */
 }
 
 uint16_t snapshot_server_get_port( struct snapshot_server_t * server )
 {
     snapshot_assert( server );
-    return server->address.type == SNAPSHOT_ADDRESS_IPV4 ? server->socket_holder.ipv4.address.port : server->socket_holder.ipv6.address.port;
+    return server->address.port;
 }
