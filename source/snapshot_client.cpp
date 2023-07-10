@@ -401,7 +401,7 @@ void snapshot_client_receive_packets( struct snapshot_client_t * client )
     {
         // process packets received from network simulator
 
-        // todo: network simulator
+        // todo: ugh
         /*
         int num_packets_received = snapshot_network_simulator_receive_packets( client->config.network_simulator, 
                                                                                &client->address, 
@@ -415,6 +415,8 @@ void snapshot_client_receive_packets( struct snapshot_client_t * client )
         {
             uint64_t sequence;
 
+            uint8_t out_packet_data;
+
             void * packet = snapshot_read_packet( client->receive_packet_data[i], 
                                                   client->receive_packet_bytes[i], 
                                                   &sequence, 
@@ -423,16 +425,15 @@ void snapshot_client_receive_packets( struct snapshot_client_t * client )
                                                   current_timestamp, 
                                                   NULL, 
                                                   allowed_packets, 
-                                                  &client->replay_protection, 
-                                                  client->config.allocator_context, 
-                                                  client->config.allocate_function );
+                                                  out_packet_data,
+                                                  &client->replay_protection );
 
-            client->config.free_function( client->config.allocator_context, client->receive_packet_data[i] );
+            if ( packet )
+            {
+                snapshot_client_process_packet( client, &client->receive_from[i], (uint8_t*)packet, sequence );
+            }
 
-            if ( !packet )
-                continue;
-
-            snapshot_client_process_packet_internal( client, &client->receive_from[i], (uint8_t*)packet, sequence );
+            snapshot_free( client->config.context, client->receive_packet_data[i] );
         }
         */
     }

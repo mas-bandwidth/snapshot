@@ -22,13 +22,29 @@ DONE
 
 	Bring across netcode client as snapshot_client.cpp
 
-TODO
-
 	Update snapshot_read_packet so it doesn't allocate or copy payload packet data
 
 	Update snapshot_client.cpp so it uses the new snapshot read packet stuff
 
-	Get snapshot_client.cpp network simulator code live
+	Implement a zero copy process payload in place.
+
+TODO
+
+	Calculate the allowed packets once on create
+
+	Bring back the buffers needed for receiving packets from simulator
+
+	Get snapshot_client.cpp network simulator receive packets code back up
+
+	-------------
+
+	Work out how to prefix the packet data with the payload packet struct, eg. need offset_of(member)?
+
+	Work out how to create payload packets, so they can be sent on the wire, zero copy as well. This means allocating the payload packet with prefix bytes (256?) so we can stash the packet header prior to the payload data.
+
+	Get the payload packet test working
+
+	Make sure the snapshot client can send, receive and process payload packets, zero copy and alloc.
 
 	-------------
 
