@@ -56,153 +56,70 @@ struct snapshot_client_t
     struct snapshot_address_t address;
     struct snapshot_address_t server_address;
     struct snapshot_connect_token_t connect_token;
-
-    // todo: socket holder?
-    /*
-    struct snapshot_socket_holder_t socket_holder;
-    */
-    
-    // todo: what is snapshot_context_t?
-    /*
-    struct snapshot_context_t context;
-    */
-
+    struct snapshot_platform_socket_t socket;
     struct snapshot_replay_protection_t replay_protection;
-
-    // todo: I want to process packets immediately upon receive, sans queue
-    /*
-    struct snapshot_packet_queue_t packet_receive_queue;
-    */
-
     uint64_t challenge_token_sequence;
     uint8_t challenge_token_data[SNAPSHOT_CHALLENGE_TOKEN_BYTES];
-
-    // todo: no queues
-    /*
-    uint8_t * receive_packet_data[SNAPSHOT_CLIENT_MAX_RECEIVE_PACKETS];
-    int receive_packet_bytes[SNAPSHOT_CLIENT_MAX_RECEIVE_PACKETS];
-    struct snapshot_address_t receive_from[SNAPSHOT_CLIENT_MAX_RECEIVE_PACKETS];
-    */
-
     int loopback;
 };
 
-
-// todo: this function is naff
-int snapshot_client_socket_create( struct snapshot_socket_t * socket,
-                                   struct snapshot_address_t * address,
-                                   int send_buffer_size,
-                                   int receive_buffer_size,
-                                   const struct snapshot_client_config_t * config )
-{
-    snapshot_assert( socket );
-    snapshot_assert( address );
-    snapshot_assert( config );
-
-    (void) socket;
-    (void) address;
-    (void) send_buffer_size;
-    (void) receive_buffer_size;
-
-    // todo
-    /*
-    if ( !config->network_simulator )
-    {
-        if ( snapshot_platform_socket_create( socket, address, send_buffer_size, receive_buffer_size ) != SNAPSHOT_SOCKET_ERROR_NONE )
-        {
-            return 0;       // magic number
-        }
-    }
-    else
-    {
-        if ( address->port == 0 )
-        {
-            snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "error: must bind to a specific port when using network simulator\n" );
-            return 0;       // magic number
-        }
-    }
-
-    return 1;               // magic number
-    */
-
-    // todo
-    return 0;
-}
-
-#if 0 // todo
-
-struct snapshot_client_t * snapshot_client_create_overload( const char * address1_string,
-                                                            const char * address2_string,
-                                                            const struct snapshot_client_config_t * config,
-                                                            double time )
+struct snapshot_client_t * snapshot_client_create( const char * address_string,
+                                                   const struct snapshot_client_config_t * config,
+                                                   double time )
 {
     snapshot_assert( config );
 
-    struct snapshot_address_t address1;
-    struct snapshot_address_t address2;
+    struct snapshot_address_t address;
 
-    memset( &address1, 0, sizeof( address1 ) );
-    memset( &address2, 0, sizeof( address2 ) );
+    memset( &address, 0, sizeof( address ) );
 
-    if ( snapshot_parse_address( address1_string, &address1 ) != SNAPSHOT_OK )
+    if ( snapshot_address_parse( &address, address_string ) != SNAPSHOT_OK )
     {
         snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "error: failed to parse client address\n" );
         return NULL;
     }
 
-    if ( address2_string != NULL && snapshot_parse_address( address2_string, &address2 ) != SNAPSHOT_OK )
-    {
-        snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "error: failed to parse client address2\n" );
-        return NULL;
-    }
+    struct snapshot_platform_socket_t socket;
 
-
-    struct snapshot_socket_t socket_ipv4;
-    struct snapshot_socket_t socket_ipv6;
-
-    memset( &socket_ipv4, 0, sizeof( socket_ipv4 ) );
-    memset( &socket_ipv6, 0, sizeof( socket_ipv6 ) );
-
-    if ( address1.type == SNAPSHOT_ADDRESS_IPV4 || address2.type == SNAPSHOT_ADDRESS_IPV4 )
-    {
-        if ( !snapshot_client_socket_create( &socket_ipv4, address1.type == SNAPSHOT_ADDRESS_IPV4 ? &address1 : &address2, SNAPSHOT_CLIENT_SOCKET_SNDBUF_SIZE, SNAPSHOT_CLIENT_SOCKET_RCVBUF_SIZE, config ) )
-        {
-            return NULL;
-        }
-    }
-
-    if ( address1.type == SNAPSHOT_ADDRESS_IPV6 || address2.type == SNAPSHOT_ADDRESS_IPV6 )
-    {
-        if ( !snapshot_client_socket_create( &socket_ipv6, address1.type == SNAPSHOT_ADDRESS_IPV6 ? &address1 : &address2, SNAPSHOT_CLIENT_SOCKET_SNDBUF_SIZE, SNAPSHOT_CLIENT_SOCKET_RCVBUF_SIZE, config ) )
-        {
-            return NULL;
-        }
-    }
-
-    struct snapshot_client_t * client = (struct snapshot_client_t*) config->allocate_function( config->allocator_context, sizeof( struct snapshot_client_t ) );
-
-    if ( !client )
-    {
-        snapshot_socket_destroy( &socket_ipv4 );
-        snapshot_socket_destroy( &socket_ipv6 );
-        return NULL;
-    }
-
-    struct snapshot_address_t socket_address = address1.type == SNAPSHOT_ADDRESS_IPV4 ? socket_ipv4.address : socket_ipv6.address;
+    memset( &socket, 0, sizeof( socket ) );
 
     if ( !config->network_simulator )
     {
-        snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client started on port %d\n", socket_address.port );
+        if ( snapshot_platform_socket_create( &socket, &address, 0.0f, SNAPSHOT_PLATFORM_SOCKET_NON_BLOCKING, SNAPSHOT_CLIENT_SOCKET_SNDBUF_SIZE, SNAPSHOT_CLIENT_SOCKET_RCVBUF_SIZE ) != SNAPSHOT_OK )
+        {
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "error: failed to create client socket\n" );
+            return NULL;
+        }
     }
     else
     {
-        snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client started on port %d (network simulator)\n", socket_address.port );
+        if ( address.port == 0 )
+        {
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "error: must bind to a specific port when using network simulator\n" );
+            return NULL;
+        }
+    }
+
+    struct snapshot_client_t * client = (struct snapshot_client_t*) snapshot_malloc( config->context, sizeof( struct snapshot_client_t ) );
+
+    if ( !client )
+    {
+        snapshot_platform_socket_destroy( &socket );
+        return NULL;
+    }
+
+    if ( !config->network_simulator )
+    {
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client started on port %d\n", address.port );
+    }
+    else
+    {
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client started on port %d (network simulator)\n", address.port );
     }
 
     client->config = *config;
-    client->socket_holder.ipv4 = socket_ipv4;
-    client->socket_holder.ipv6 = socket_ipv6;
-    client->address = config->network_simulator ? address1 : socket_address;
+    client->socket = socket;
+    client->address = address;
     client->state = SNAPSHOT_CLIENT_STATE_DISCONNECTED;
     client->time = time;
     client->connect_start_time = 0.0;
@@ -218,22 +135,14 @@ struct snapshot_client_t * snapshot_client_create_overload( const char * address
     client->loopback = 0;
     memset( &client->server_address, 0, sizeof( struct snapshot_address_t ) );
     memset( &client->connect_token, 0, sizeof( struct snapshot_connect_token_t ) );
-    memset( &client->context, 0, sizeof( struct snapshot_context_t ) );
     memset( client->challenge_token_data, 0, SNAPSHOT_CHALLENGE_TOKEN_BYTES );
-
-    snapshot_packet_queue_init( &client->packet_receive_queue, config->allocator_context, config->allocate_function, config->free_function );
 
     snapshot_replay_protection_reset( &client->replay_protection );
 
     return client;
 }
 
-struct snapshot_client_t * snapshot_client_create( const char * address,
-                                                   const struct snapshot_client_config_t * config,
-                                                   double time )
-{
-    return snapshot_client_create_overload( address, NULL, config, time );
-}
+#if 0 // todo
 
 void snapshot_client_destroy( struct snapshot_client_t * client )
 {
