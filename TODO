@@ -1,40 +1,12 @@
 DONE
 
-	Bring across connect token into snapshot_connect_token.h
-
-	Find corresponding snapshot_crypto_ function to replace "_bignonce"
-
-	Get "test_connect_token" compiling and passing
-
-	Bring across public and private connect token tests
-
-	Bring across challenge token test
-
-	Bring across packet types and tests
-
-	Get packet type tests passing
-
-	Stop and clean up. Especially, work out if we want to pass allocators into the read/write packets.
-
-	Bring across encryption manager
-
-	Bring across replay protection
-
-	Bring across netcode client as snapshot_client.cpp
-
-	Update snapshot_read_packet so it doesn't allocate or copy payload packet data
-
-	Update snapshot_client.cpp so it uses the new snapshot read packet stuff
-
-	Implement a zero copy process payload in place.
-
-TODO
-
 	Calculate the allowed packets once on create
 
 	Bring back the buffers needed for receiving packets from simulator
 
 	Get snapshot_client.cpp network simulator receive packets code back up
+
+TODO
 
 	-------------
 

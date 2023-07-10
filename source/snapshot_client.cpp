@@ -12,6 +12,8 @@
 #include "snapshot_packets.h"
 #include "snapshot_network_simulator.h"
 
+#define SNAPSHOT_CLIENT_MAX_SIM_RECEIVE_PACKETS 256
+
 const char * snapshot_client_state_name( int client_state )
 {
     switch ( client_state )
@@ -64,6 +66,10 @@ struct snapshot_client_t
     uint8_t challenge_token_data[SNAPSHOT_CHALLENGE_TOKEN_BYTES];
     uint8_t read_packet_key[SNAPSHOT_KEY_BYTES];
     uint8_t write_packet_key[SNAPSHOT_KEY_BYTES];
+    uint8_t allowed_packets[SNAPSHOT_CONNECTION_NUM_PACKETS];
+    uint8_t * sim_receive_packet_data[SNAPSHOT_CLIENT_MAX_SIM_RECEIVE_PACKETS];
+    int sim_receive_packet_bytes[SNAPSHOT_CLIENT_MAX_SIM_RECEIVE_PACKETS];
+    struct snapshot_address_t sim_receive_from[SNAPSHOT_CLIENT_MAX_SIM_RECEIVE_PACKETS];
     int loopback;
 };
 
@@ -144,6 +150,12 @@ struct snapshot_client_t * snapshot_client_create( const char * address_string,
     memset( client->challenge_token_data, 0, SNAPSHOT_CHALLENGE_TOKEN_BYTES );
 
     snapshot_replay_protection_reset( &client->replay_protection );
+
+    client->allowed_packets[SNAPSHOT_CONNECTION_DENIED_PACKET] = 1;
+    client->allowed_packets[SNAPSHOT_CONNECTION_CHALLENGE_PACKET] = 1;
+    client->allowed_packets[SNAPSHOT_CONNECTION_KEEP_ALIVE_PACKET] = 1;
+    client->allowed_packets[SNAPSHOT_CONNECTION_PAYLOAD_PACKET] = 1;
+    client->allowed_packets[SNAPSHOT_CONNECTION_DISCONNECT_PACKET] = 1;
 
     return client;
 }
@@ -240,7 +252,7 @@ void snapshot_client_process_payload( struct snapshot_client_t * client, uint64_
     snapshot_assert( bytes > 0 );
     snapshot_assert( bytes <= SNAPSHOT_MAX_PAYLOAD_BYTES );
 
-    // todo
+    // todo: process the payload ...
     (void) client;
     (void) sequence;
     (void) data;
@@ -354,14 +366,6 @@ void snapshot_client_receive_packets( struct snapshot_client_t * client )
     snapshot_assert( client );
     snapshot_assert( !client->loopback );
 
-    uint8_t allowed_packets[SNAPSHOT_CONNECTION_NUM_PACKETS];
-    memset( allowed_packets, 0, sizeof( allowed_packets ) );
-    allowed_packets[SNAPSHOT_CONNECTION_DENIED_PACKET] = 1;
-    allowed_packets[SNAPSHOT_CONNECTION_CHALLENGE_PACKET] = 1;
-    allowed_packets[SNAPSHOT_CONNECTION_KEEP_ALIVE_PACKET] = 1;
-    allowed_packets[SNAPSHOT_CONNECTION_PAYLOAD_PACKET] = 1;
-    allowed_packets[SNAPSHOT_CONNECTION_DISCONNECT_PACKET] = 1;
-
     uint64_t current_timestamp = (uint64_t) time( NULL );
 
     if ( !client->config.network_simulator )
@@ -387,7 +391,7 @@ void snapshot_client_receive_packets( struct snapshot_client_t * client )
                                                   client->connect_token.protocol_id, 
                                                   current_timestamp, 
                                                   NULL, 
-                                                  allowed_packets, 
+                                                  client->allowed_packets, 
                                                   out_packet_buffer,
                                                   &client->replay_protection );
 
@@ -401,54 +405,43 @@ void snapshot_client_receive_packets( struct snapshot_client_t * client )
     {
         // process packets received from network simulator
 
-        // todo: ugh
-        /*
         int num_packets_received = snapshot_network_simulator_receive_packets( client->config.network_simulator, 
                                                                                &client->address, 
-                                                                               SNAPSHOT_CLIENT_MAX_RECEIVE_PACKETS, 
-                                                                               client->receive_packet_data, 
-                                                                               client->receive_packet_bytes, 
-                                                                               client->receive_from );
+                                                                               SNAPSHOT_CLIENT_MAX_SIM_RECEIVE_PACKETS, 
+                                                                               client->sim_receive_packet_data, 
+                                                                               client->sim_receive_packet_bytes, 
+                                                                               client->sim_receive_from );
 
         int i;
         for ( i = 0; i < num_packets_received; ++i )
         {
             uint64_t sequence;
 
-            uint8_t out_packet_data;
+            uint8_t out_packet_data[1024];
 
-            void * packet = snapshot_read_packet( client->receive_packet_data[i], 
-                                                  client->receive_packet_bytes[i], 
+            void * packet = snapshot_read_packet( client->sim_receive_packet_data[i], 
+                                                  client->sim_receive_packet_bytes[i], 
                                                   &sequence, 
-                                                  client->context.read_packet_key, 
+                                                  client->read_packet_key, 
                                                   client->connect_token.protocol_id, 
                                                   current_timestamp, 
                                                   NULL, 
-                                                  allowed_packets, 
+                                                  client->allowed_packets, 
                                                   out_packet_data,
                                                   &client->replay_protection );
 
             if ( packet )
             {
-                snapshot_client_process_packet( client, &client->receive_from[i], (uint8_t*)packet, sequence );
+                snapshot_client_process_packet( client, &client->sim_receive_from[i], (uint8_t*)packet, sequence );
             }
 
-            snapshot_free( client->config.context, client->receive_packet_data[i] );
+            snapshot_free( client->config.context, client->sim_receive_packet_data[i] );
         }
-        */
     }
 }
 
 void snapshot_client_inject_packet( struct snapshot_client_t * client, struct snapshot_address_t * from, uint8_t * packet_data, int packet_bytes )
 {
-    uint8_t allowed_packets[SNAPSHOT_CONNECTION_NUM_PACKETS];
-    memset( allowed_packets, 0, sizeof( allowed_packets ) );
-    allowed_packets[SNAPSHOT_CONNECTION_DENIED_PACKET] = 1;
-    allowed_packets[SNAPSHOT_CONNECTION_CHALLENGE_PACKET] = 1;
-    allowed_packets[SNAPSHOT_CONNECTION_KEEP_ALIVE_PACKET] = 1;
-    allowed_packets[SNAPSHOT_CONNECTION_PAYLOAD_PACKET] = 1;
-    allowed_packets[SNAPSHOT_CONNECTION_DISCONNECT_PACKET] = 1;
-
     uint64_t current_timestamp = (uint64_t) time( NULL );
 
     uint64_t sequence;
@@ -462,7 +455,7 @@ void snapshot_client_inject_packet( struct snapshot_client_t * client, struct sn
                                           client->connect_token.protocol_id, 
                                           current_timestamp, 
                                           NULL, 
-                                          allowed_packets, 
+                                          client->allowed_packets, 
                                           out_packet_data,
                                           &client->replay_protection );
 
