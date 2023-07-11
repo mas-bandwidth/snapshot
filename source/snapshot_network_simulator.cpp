@@ -27,7 +27,7 @@ struct snapshot_network_simulator_t
     float latency_milliseconds;
     float jitter_milliseconds;
     float packet_loss_percent;
-    float duplicate_packet_percent;
+    float duplicate_percent;
     double time;
     int current_index;
     int num_pending_receive_packets;
@@ -48,11 +48,23 @@ struct snapshot_network_simulator_t * snapshot_network_simulator_create( void * 
     return network_simulator;
 }
 
+void snapshot_network_simulator_set( struct snapshot_network_simulator_t * network_simulator, float latency_milliseconds, float jitter_milliseconds, float packet_loss_percent, float duplicate_percent )
+{
+    snapshot_assert( network_simulator );
+
+    snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "network simulator set: latency = %.1f (ms), jitter = %.1f (ms), packet loss = %.1f%%, duplicate = %.1f%%", latency_milliseconds, jitter_milliseconds, packet_loss_percent, duplicate_percent );
+
+    network_simulator->latency_milliseconds = latency_milliseconds;
+    network_simulator->jitter_milliseconds = jitter_milliseconds;
+    network_simulator->packet_loss_percent = packet_loss_percent;
+    network_simulator->duplicate_percent = duplicate_percent;
+}
+
 void snapshot_network_simulator_reset( struct snapshot_network_simulator_t * network_simulator )
 {
     snapshot_assert( network_simulator );
 
-    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "network simulator reset" );
+    snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "network simulator reset" );
 
     int i;
     for ( i = 0; i < SNAPSHOT_NETWORK_SIMULATOR_NUM_PACKET_ENTRIES; ++i )
@@ -69,6 +81,11 @@ void snapshot_network_simulator_reset( struct snapshot_network_simulator_t * net
 
     network_simulator->current_index = 0;
     network_simulator->num_pending_receive_packets = 0;
+
+    network_simulator->latency_milliseconds = 0.0f;
+    network_simulator->jitter_milliseconds = 0.0f;
+    network_simulator->packet_loss_percent = 0.0f;
+    network_simulator->duplicate_percent = 0.0f;
 }
 
 void snapshot_network_simulator_destroy( struct snapshot_network_simulator_t * network_simulator )
@@ -135,7 +152,7 @@ void snapshot_network_simulator_send_packet( struct snapshot_network_simulator_t
 
     snapshot_network_simulator_queue_packet( network_simulator, from, to, packet_data, packet_bytes, delay );
 
-    if ( snapshot_random_float( 0.0f, 100.0f ) <= network_simulator->duplicate_packet_percent )
+    if ( snapshot_random_float( 0.0f, 100.0f ) <= network_simulator->duplicate_percent )
     {
         snapshot_network_simulator_queue_packet( network_simulator, from, to, packet_data, packet_bytes, delay + snapshot_random_float( 0, 1.0 ) );
     }

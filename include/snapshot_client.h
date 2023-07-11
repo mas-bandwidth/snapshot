@@ -18,7 +18,7 @@ struct snapshot_client_config_t
 
 void snapshot_default_client_config( struct snapshot_client_config_t * config );
 
-struct snapshot_client_t * snapshot_client_create( const char * address, const struct snapshot_client_config_t * config, double time );
+struct snapshot_client_t * snapshot_client_create( const char * bind_address, const struct snapshot_client_config_t * config, double time );
 
 void snapshot_client_destroy( struct snapshot_client_t * client );
 

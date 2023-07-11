@@ -57,7 +57,7 @@ struct snapshot_client_t
     int client_index;
     int max_clients;
     int server_address_index;
-    struct snapshot_address_t address;
+    struct snapshot_address_t bind_address;
     struct snapshot_address_t server_address;
     struct snapshot_connect_token_t connect_token;
     struct snapshot_platform_socket_t * socket;
@@ -73,19 +73,17 @@ struct snapshot_client_t
     int loopback;
 };
 
-struct snapshot_client_t * snapshot_client_create( const char * address_string,
+struct snapshot_client_t * snapshot_client_create( const char * bind_address_string,
                                                    const struct snapshot_client_config_t * config,
                                                    double time )
 {
     snapshot_assert( config );
 
-    struct snapshot_address_t address;
-
-    memset( &address, 0, sizeof( address ) );
-
-    if ( snapshot_address_parse( &address, address_string ) != SNAPSHOT_OK )
+    struct snapshot_address_t bind_address;
+    memset( &bind_address, 0, sizeof( bind_address ) );
+    if ( snapshot_address_parse( &bind_address, bind_address_string ) != SNAPSHOT_OK )
     {
-        snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to parse client address" );
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to parse client bind address" );
         return NULL;
     }
 
@@ -93,11 +91,6 @@ struct snapshot_client_t * snapshot_client_create( const char * address_string,
 
     if ( !config->network_simulator )
     {
-        snapshot_address_t bind_address;
-        memset( &bind_address, 0, sizeof(bind_address) );
-        bind_address.type = address.type;
-        bind_address.port = address.port;
-
         socket = snapshot_platform_socket_create( config->context, &bind_address, 0.0f, SNAPSHOT_PLATFORM_SOCKET_NON_BLOCKING, SNAPSHOT_CLIENT_SOCKET_SNDBUF_SIZE, SNAPSHOT_CLIENT_SOCKET_RCVBUF_SIZE );
 
         if ( socket == NULL )
@@ -105,12 +98,10 @@ struct snapshot_client_t * snapshot_client_create( const char * address_string,
             snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to create client socket" );
             return NULL;
         }
-
-        address.port = bind_address.port;
     }
     else
     {
-        if ( address.port == 0 )
+        if ( bind_address.port == 0 )
         {
             snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "must bind to a specific port when using network simulator" );
             return NULL;
@@ -129,16 +120,16 @@ struct snapshot_client_t * snapshot_client_create( const char * address_string,
 
     if ( !config->network_simulator )
     {
-        snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client started on port %d", address.port );
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client started on port %d", bind_address.port );
     }
     else
     {
-        snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client started on port %d (network simulator)", address.port );
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client started on port %d (network simulator)", bind_address.port );
     }
 
     client->config = *config;
     client->socket = socket;
-    client->address = address;
+    client->bind_address = bind_address;
     client->state = SNAPSHOT_CLIENT_STATE_DISCONNECTED;
     client->time = time;
     client->connect_start_time = 0.0;
@@ -422,7 +413,7 @@ void snapshot_client_receive_packets( struct snapshot_client_t * client )
         // process packets received from network simulator
 
         int num_packets_received = snapshot_network_simulator_receive_packets( client->config.network_simulator, 
-                                                                               &client->address, 
+                                                                               &client->bind_address, 
                                                                                SNAPSHOT_CLIENT_MAX_SIM_RECEIVE_PACKETS, 
                                                                                client->sim_receive_packet_data, 
                                                                                client->sim_receive_packet_bytes, 
@@ -499,7 +490,7 @@ void snapshot_client_send_packet_to_server_internal( struct snapshot_client_t * 
 
     if ( client->config.network_simulator )
     {
-        snapshot_network_simulator_send_packet( client->config.network_simulator, &client->address, &client->server_address, packet_data, packet_bytes );
+        snapshot_network_simulator_send_packet( client->config.network_simulator, &client->bind_address, &client->server_address, packet_data, packet_bytes );
     }
     else
     {
@@ -743,5 +734,5 @@ int snapshot_client_max_clients( struct snapshot_client_t * client )
 
 uint16_t snapshot_client_port( struct snapshot_client_t * client )
 {
-    return client->address.port;
+    return client->bind_address.port;
 }

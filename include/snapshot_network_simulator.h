@@ -10,6 +10,12 @@
 
 struct snapshot_network_simulator_t * snapshot_network_simulator_create( void * context );
 
+void snapshot_network_simulator_set( struct snapshot_network_simulator_t * network_simulator, 
+                                     float latency_milliseconds, 
+                                     float jitter_milliseconds, 
+                                     float packet_loss_percent, 
+                                     float duplicate_percent );
+
 void snapshot_network_simulator_reset( struct snapshot_network_simulator_t * network_simulator );
 
 void snapshot_network_simulator_destroy( struct snapshot_network_simulator_t * network_simulator );

@@ -4,9 +4,17 @@ DONE
 
 	Clean up various logs
 
+	Fix ipv6 sockets
+
+	Get the client/server unit tests back up for ipv4 sockets and ipv6 sockets
+
 TODO
 
-	Get the client/server unit tests back up
+	Get the loopback client server connect working
+
+	-------------
+
+	Get the rest of the client server tests working
 
 	-------------
 	
@@ -18,10 +26,6 @@ TODO
 
 	-------------
 
-	Get the network simulator working
-
-	-------------
-
 	Test on linux
 
 	-------------
@@ -30,7 +34,15 @@ TODO
 
 	-------------
 
-	Clean up pass before we go any further
+	Bring back the console platforms
+
+	-------------
+
+	Verify that we can compile for consoles -- probably need to setup some platform specific projects per-platform like with next SDK
+
+	-------------
+
+	Clean up pass before I go any further
 
 	-------------
 
@@ -66,12 +78,6 @@ TODO
 
 	Integrate reliable so we have packet fragmentation and re-assembly, and sequence numbers and acks.
 
-	---------------------------
-
-	Verify tests pass on linux.
-
-	Verify tests pass on windows.
-
 	---------------------------	
 
 	Now think what are the essential other things?
@@ -82,13 +88,15 @@ TODO
 
 	Unreliable messages stuck at the back of the packets (when there is room) for sound effects, visual fx etc...
 
+	Player commands with input and dt sent redundantly all unacked.
+
 	Choke.
 
 	Server loop w. tick rate.
 
 	Server sim objects step forward together.
 
-	Player commands with input and dt sent redundantly all unacked.
+	Player owned objects advanced forward with player command dt as they arrive.
 
 	Schema
 
