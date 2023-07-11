@@ -12,21 +12,21 @@ DONE
 
 	Bring across netcode server as snapshot_server_t
 
+	Bring across the connect token entry, it's needed by the server
+
+	Make sure we get the port number when bind to zero port
+
+	Fix up the bind address vs. server address
+
+	Fix up bind address vs. client address
+
+	Fix up read and write packets for server
+
 TODO
-
-	Bring across the connect token manager, it's needed by the server
-
-	Fix up the commented out functions in snapshot_server.cpp
-
-	-------------
 
 	Create a client.cpp and server.cpp and add to makefile
 
 	Get the client successfully connecting to the server and exchanging payload packets
-
-	-------------
-
-	Zero copy on payload packet write.
 
 	-------------
 

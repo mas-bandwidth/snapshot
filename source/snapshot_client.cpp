@@ -85,7 +85,7 @@ struct snapshot_client_t * snapshot_client_create( const char * address_string,
 
     if ( snapshot_address_parse( &address, address_string ) != SNAPSHOT_OK )
     {
-        snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "error: failed to parse client address\n" );
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to parse client address" );
         return NULL;
     }
 
@@ -98,21 +98,22 @@ struct snapshot_client_t * snapshot_client_create( const char * address_string,
         snapshot_address_t bind_address;
         memset( &bind_address, 0, sizeof(bind_address) );
 
-        // todo: bind to 0.0.0.0:[portnum]?
+        bind_address.type = SNAPSHOT_ADDRESS_IPV4;
+        bind_address.port = address.port;
 
         if ( snapshot_platform_socket_create( &socket, &bind_address, 0.0f, SNAPSHOT_PLATFORM_SOCKET_NON_BLOCKING, SNAPSHOT_CLIENT_SOCKET_SNDBUF_SIZE, SNAPSHOT_CLIENT_SOCKET_RCVBUF_SIZE ) != SNAPSHOT_OK )
         {
-            snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "error: failed to create client socket\n" );
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to create client socket" );
             return NULL;
         }
 
-        // todo: get port from bind address and stash on address?
+        address.port = bind_address.port;
     }
     else
     {
         if ( address.port == 0 )
         {
-            snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "error: must bind to a specific port when using network simulator\n" );
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "must bind to a specific port when using network simulator" );
             return NULL;
         }
     }
@@ -129,11 +130,11 @@ struct snapshot_client_t * snapshot_client_create( const char * address_string,
 
     if ( !config->network_simulator )
     {
-        snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client started on port %d\n", address.port );
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client started on port %d", address.port );
     }
     else
     {
-        snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client started on port %d (network simulator)\n", address.port );
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client started on port %d (network simulator)", address.port );
     }
 
     client->config = *config;
@@ -180,7 +181,7 @@ void snapshot_client_destroy( struct snapshot_client_t * client )
 
 void snapshot_client_set_state( struct snapshot_client_t * client, int client_state )
 {
-    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client changed state from '%s' to '%s'\n", snapshot_client_state_name( client->state ), snapshot_client_state_name( client_state ) );
+    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client changed state from '%s' to '%s'", snapshot_client_state_name( client->state ), snapshot_client_state_name( client_state ) );
 
     if ( client->config.state_change_callback )
     {
@@ -242,7 +243,7 @@ void snapshot_client_connect( struct snapshot_client_t * client, uint8_t * conne
 
     char server_address_string[SNAPSHOT_MAX_ADDRESS_STRING_LENGTH];
 
-    snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connecting to server %s [%d/%d]\n", snapshot_address_to_string( &client->server_address, server_address_string ), client->server_address_index + 1, client->connect_token.num_server_addresses );
+    snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connecting to server %s [%d/%d]", snapshot_address_to_string( &client->server_address, server_address_string ), client->server_address_index + 1, client->connect_token.num_server_addresses );
 
     memcpy( client->read_packet_key, client->connect_token.server_to_client_key, SNAPSHOT_KEY_BYTES );
     memcpy( client->write_packet_key, client->connect_token.client_to_server_key, SNAPSHOT_KEY_BYTES );
@@ -293,7 +294,7 @@ void snapshot_client_process_packet( struct snapshot_client_t * client, struct s
         {
             if ( client->state == SNAPSHOT_CLIENT_STATE_SENDING_CONNECTION_REQUEST && snapshot_address_equal( from, &client->server_address ) )
             {
-                snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client received connection challenge packet from server\n" );
+                snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client received connection challenge packet from server" );
 
                 struct snapshot_connection_challenge_packet_t * p = (struct snapshot_connection_challenge_packet_t*) packet;
                 client->challenge_token_sequence = p->challenge_token_sequence;
@@ -313,13 +314,13 @@ void snapshot_client_process_packet( struct snapshot_client_t * client, struct s
 
                 if ( client->state == SNAPSHOT_CLIENT_STATE_CONNECTED )
                 {
-                    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client received connection keep alive packet from server\n" );
+                    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client received connection keep alive packet from server" );
 
                     client->last_packet_receive_time = client->time;
                 }
                 else if ( client->state == SNAPSHOT_CLIENT_STATE_SENDING_CONNECTION_RESPONSE )
                 {
-                    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client received connection keep alive packet from server\n" );
+                    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client received connection keep alive packet from server" );
 
                     client->last_packet_receive_time = client->time;
                     client->client_index = p->client_index;
@@ -327,7 +328,7 @@ void snapshot_client_process_packet( struct snapshot_client_t * client, struct s
 
                     snapshot_client_set_state( client, SNAPSHOT_CLIENT_STATE_CONNECTED );
 
-                    snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connected to server\n" );
+                    snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connected to server" );
                 }
             }
         }
@@ -337,7 +338,7 @@ void snapshot_client_process_packet( struct snapshot_client_t * client, struct s
         {
             if ( client->state == SNAPSHOT_CLIENT_STATE_CONNECTED && snapshot_address_equal( from, &client->server_address ) )
             {
-                snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client received connection payload packet from server\n" );
+                snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client received connection payload packet from server" );
 
                 struct snapshot_connection_payload_packet_t * p = (struct snapshot_connection_payload_packet_t*) packet;
 
@@ -354,7 +355,7 @@ void snapshot_client_process_packet( struct snapshot_client_t * client, struct s
         {
             if ( client->state == SNAPSHOT_CLIENT_STATE_CONNECTED && snapshot_address_equal( from, &client->server_address ) )
             {
-                snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client received disconnect packet from server\n" );
+                snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client received disconnect packet from server" );
 
                 client->should_disconnect = 1;
                 client->should_disconnect_state = SNAPSHOT_CLIENT_STATE_DISCONNECTED;
@@ -512,7 +513,7 @@ void snapshot_client_send_packets( struct snapshot_client_t * client )
             if ( client->last_packet_send_time + 0.1 >= client->time )
                 return;
 
-            snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client sent connection request packet to server\n" );
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client sent connection request packet to server" );
 
             struct snapshot_connection_request_packet_t packet;
             packet.packet_type = SNAPSHOT_CONNECTION_REQUEST_PACKET;
@@ -531,7 +532,7 @@ void snapshot_client_send_packets( struct snapshot_client_t * client )
             if ( client->last_packet_send_time + 0.1 >= client->time )
                 return;
 
-            snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client sent connection response packet to server\n" );
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client sent connection response packet to server" );
 
             struct snapshot_connection_response_packet_t packet;
             packet.packet_type = SNAPSHOT_CONNECTION_RESPONSE_PACKET;
@@ -547,7 +548,7 @@ void snapshot_client_send_packets( struct snapshot_client_t * client )
             if ( client->last_packet_send_time + 0.1 >= client->time )
                 return;
 
-            snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client sent connection keep-alive packet to server\n" );
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client sent connection keep-alive packet to server" );
 
             struct snapshot_connection_keep_alive_packet_t packet;
             packet.packet_type = SNAPSHOT_CONNECTION_KEEP_ALIVE_PACKET;
@@ -569,7 +570,7 @@ int snapshot_client_connect_to_next_server( struct snapshot_client_t * client )
 
     if ( client->server_address_index + 1 >= client->connect_token.num_server_addresses )
     {
-        snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client has no more servers to connect to\n" );
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client has no more servers to connect to" );
         return 0;
     }
 
@@ -580,7 +581,7 @@ int snapshot_client_connect_to_next_server( struct snapshot_client_t * client )
 
     char server_address_string[SNAPSHOT_MAX_ADDRESS_STRING_LENGTH];
 
-    snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connecting to next server %s [%d/%d]\n", 
+    snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connecting to next server %s [%d/%d]", 
         snapshot_address_to_string( &client->server_address, server_address_string ), 
         client->server_address_index + 1, 
         client->connect_token.num_server_addresses );
@@ -608,7 +609,7 @@ void snapshot_client_update( struct snapshot_client_t * client, double time )
         uint64_t connect_token_expire_seconds = ( client->connect_token.expire_timestamp - client->connect_token.create_timestamp );            
         if ( client->time - client->connect_start_time >= connect_token_expire_seconds )
         {
-            snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connect failed. connect token expired\n" );
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connect failed. connect token expired" );
             snapshot_client_disconnect_internal( client, SNAPSHOT_CLIENT_STATE_CONNECT_TOKEN_EXPIRED, 0 );
             return;
         }
@@ -616,7 +617,7 @@ void snapshot_client_update( struct snapshot_client_t * client, double time )
 
     if ( client->should_disconnect )
     {
-        snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client should disconnect -> %s\n", snapshot_client_state_name( client->should_disconnect_state ) );
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client should disconnect -> %s", snapshot_client_state_name( client->should_disconnect_state ) );
         if ( snapshot_client_connect_to_next_server( client ) )
             return;
         snapshot_client_disconnect_internal( client, client->should_disconnect_state, 0 );
@@ -629,7 +630,7 @@ void snapshot_client_update( struct snapshot_client_t * client, double time )
         {
             if ( client->connect_token.timeout_seconds > 0 && client->last_packet_receive_time + client->connect_token.timeout_seconds < time )
             {
-                snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connect failed. connection request timed out\n" );
+                snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connect failed. connection request timed out" );
                 if ( snapshot_client_connect_to_next_server( client ) )
                     return;
                 snapshot_client_disconnect_internal( client, SNAPSHOT_CLIENT_STATE_CONNECTION_REQUEST_TIMED_OUT, 0 );
@@ -642,7 +643,7 @@ void snapshot_client_update( struct snapshot_client_t * client, double time )
         {
             if ( client->connect_token.timeout_seconds > 0 && client->last_packet_receive_time + client->connect_token.timeout_seconds < time )
             {
-                snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connect failed. connection response timed out\n" );
+                snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connect failed. connection response timed out" );
                 if ( snapshot_client_connect_to_next_server( client ) )
                     return;
                 snapshot_client_disconnect_internal( client, SNAPSHOT_CLIENT_STATE_CONNECTION_RESPONSE_TIMED_OUT, 0 );
@@ -655,7 +656,7 @@ void snapshot_client_update( struct snapshot_client_t * client, double time )
         {
             if ( client->connect_token.timeout_seconds > 0 && client->last_packet_receive_time + client->connect_token.timeout_seconds < time )
             {
-                snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connection timed out\n" );
+                snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connection timed out" );
                 snapshot_client_disconnect_internal( client, SNAPSHOT_CLIENT_STATE_CONNECTION_TIMED_OUT, 0 );
                 return;
             }

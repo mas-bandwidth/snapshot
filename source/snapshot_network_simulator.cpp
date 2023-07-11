@@ -52,7 +52,7 @@ void snapshot_network_simulator_reset( struct snapshot_network_simulator_t * net
 {
     snapshot_assert( network_simulator );
 
-    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "network simulator reset\n" );
+    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "network simulator reset" );
 
     int i;
     for ( i = 0; i < SNAPSHOT_NETWORK_SIMULATOR_NUM_PACKET_ENTRIES; ++i )
