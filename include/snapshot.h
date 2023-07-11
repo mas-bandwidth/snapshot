@@ -20,6 +20,8 @@
 
 #define SNAPSHOT_MAX_PACKET_BYTES                              4096
 
+#define SNAPSHOT_NUM_DISCONNECT_PACKETS                          10
+
 #define SNAPSHOT_CLIENT_SOCKET_SNDBUF_SIZE           ( 256 * 1024 )
 #define SNAPSHOT_CLIENT_SOCKET_RCVBUF_SIZE           ( 256 * 1024 )
 

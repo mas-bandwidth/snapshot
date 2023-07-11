@@ -22,12 +22,14 @@ DONE
 
 	Fix up read and write packets for server
 
+	Create a server.cpp and get it creating a socket and listening
+
 TODO
 
-	Create a client.cpp and server.cpp and add to makefile
+	Create a client.cpp and get it creating a socket and trying to connect to the server
 
-	Get the client successfully connecting to the server and exchanging payload packets
-
+	Get the client successfully connecting to the server
+	
 	-------------
 
 	Get the loopback stuff working

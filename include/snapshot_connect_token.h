@@ -26,6 +26,17 @@ struct snapshot_connect_token_t
     uint8_t server_to_client_key[SNAPSHOT_KEY_BYTES];
 };
 
+int snapshot_generate_connect_token( int num_server_addresses, 
+                                     const char ** public_server_addresses, 
+                                     const char ** internal_server_addresses, 
+                                     int expire_seconds, 
+                                     int timeout_seconds,
+                                     uint64_t client_id, 
+                                     uint64_t protocol_id, 
+                                     const uint8_t * private_key, 
+                                     uint8_t * user_data, 
+                                     uint8_t * output_buffer );
+
 void snapshot_write_connect_token( struct snapshot_connect_token_t * connect_token, uint8_t * buffer, int buffer_length );
 
 int snapshot_read_connect_token( const uint8_t * buffer, int buffer_length, struct snapshot_connect_token_t * connect_token );

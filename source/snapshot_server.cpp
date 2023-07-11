@@ -13,7 +13,6 @@
 #include "snapshot_encryption_manager.h"
 #include "snapshot_network_simulator.h"
 
-#define SNAPSHOT_NUM_DISCONNECT_PACKETS                                         10
 #define SNAPSHOT_MAX_CONNECT_TOKEN_ENTRIES            ( SNAPSHOT_MAX_CLIENTS * 4 )
 #define SNAPSHOT_SERVER_MAX_SIM_RECEIVE_PACKETS     ( 256 * SNAPSHOT_MAX_CLIENTS )
 
@@ -144,7 +143,7 @@ struct snapshot_server_t * snapshot_server_create( const char * server_address_s
         return NULL;
     }
 
-    struct snapshot_platform_socket_t * socket;
+    struct snapshot_platform_socket_t * socket = NULL;
 
     if ( !config->network_simulator )
     {

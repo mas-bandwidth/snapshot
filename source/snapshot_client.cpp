@@ -60,7 +60,7 @@ struct snapshot_client_t
     struct snapshot_address_t address;
     struct snapshot_address_t server_address;
     struct snapshot_connect_token_t connect_token;
-    struct snapshot_platform_socket_t socket;
+    struct snapshot_platform_socket_t * socket;
     struct snapshot_replay_protection_t replay_protection;
     uint64_t challenge_token_sequence;
     uint8_t challenge_token_data[SNAPSHOT_CHALLENGE_TOKEN_BYTES];
@@ -89,9 +89,7 @@ struct snapshot_client_t * snapshot_client_create( const char * address_string,
         return NULL;
     }
 
-    struct snapshot_platform_socket_t socket;
-
-    memset( &socket, 0, sizeof( socket ) );
+    struct snapshot_platform_socket_t * socket = NULL;
 
     if ( !config->network_simulator )
     {
@@ -101,7 +99,9 @@ struct snapshot_client_t * snapshot_client_create( const char * address_string,
         bind_address.type = SNAPSHOT_ADDRESS_IPV4;
         bind_address.port = address.port;
 
-        if ( snapshot_platform_socket_create( &socket, &bind_address, 0.0f, SNAPSHOT_PLATFORM_SOCKET_NON_BLOCKING, SNAPSHOT_CLIENT_SOCKET_SNDBUF_SIZE, SNAPSHOT_CLIENT_SOCKET_RCVBUF_SIZE ) != SNAPSHOT_OK )
+        socket = snapshot_platform_socket_create( config->context, &bind_address, 0.0f, SNAPSHOT_PLATFORM_SOCKET_NON_BLOCKING, SNAPSHOT_CLIENT_SOCKET_SNDBUF_SIZE, SNAPSHOT_CLIENT_SOCKET_RCVBUF_SIZE );
+
+        if ( socket == NULL )
         {
             snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to create client socket" );
             return NULL;
@@ -124,7 +124,7 @@ struct snapshot_client_t * snapshot_client_create( const char * address_string,
 
     if ( !client )
     {
-        snapshot_platform_socket_destroy( &socket );
+        snapshot_platform_socket_destroy( socket );
         return NULL;
     }
 
@@ -172,10 +172,17 @@ void snapshot_client_destroy( struct snapshot_client_t * client )
 {
     snapshot_assert( client );
     if ( !client->loopback )
+    {
         snapshot_client_disconnect( client );
+    }
+    // todo: bring across loopback disconnect
+    /*
     else
+    {
         snapshot_client_disconnect_loopback( client );
-    snapshot_platform_socket_destroy( &client->socket );
+    }
+    */
+    snapshot_platform_socket_destroy( client->socket );
     snapshot_free( client->config.context, client );
 }
 
@@ -384,7 +391,7 @@ void snapshot_client_receive_packets( struct snapshot_client_t * client )
         {
             struct snapshot_address_t from;
             uint8_t packet_data[SNAPSHOT_MAX_PACKET_BYTES];
-            int packet_bytes = snapshot_platform_socket_receive_packet( &client->socket, &from, packet_data, SNAPSHOT_MAX_PACKET_BYTES );
+            int packet_bytes = snapshot_platform_socket_receive_packet( client->socket, &from, packet_data, SNAPSHOT_MAX_PACKET_BYTES );
             if ( packet_bytes == 0 )
                 break;
 
@@ -495,7 +502,7 @@ void snapshot_client_send_packet_to_server_internal( struct snapshot_client_t * 
     }
     else
     {
-        snapshot_platform_socket_send_packet( &client->socket, &client->server_address, packet_data, packet_bytes );
+        snapshot_platform_socket_send_packet( client->socket, &client->server_address, packet_data, packet_bytes );
     }
 
     client->last_packet_send_time = client->time;
@@ -666,4 +673,58 @@ void snapshot_client_update( struct snapshot_client_t * client, double time )
         default:
             break;
     }
+}
+
+void snapshot_client_disconnect( struct snapshot_client_t * client )
+{
+    snapshot_assert( client );
+    snapshot_assert( !client->loopback );
+    snapshot_client_disconnect_internal( client, SNAPSHOT_CLIENT_STATE_DISCONNECTED, 1 );
+}
+
+void snapshot_client_disconnect_internal( struct snapshot_client_t * client, int destination_state, int send_disconnect_packets )
+{
+    snapshot_assert( !client->loopback );
+    snapshot_assert( destination_state <= SNAPSHOT_CLIENT_STATE_DISCONNECTED );
+
+    if ( client->state <= SNAPSHOT_CLIENT_STATE_DISCONNECTED || client->state == destination_state )
+        return;
+
+    snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client disconnected" );
+
+    if ( !client->loopback && send_disconnect_packets && client->state > SNAPSHOT_CLIENT_STATE_DISCONNECTED )
+    {
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client sent disconnect packets to server" );
+
+        int i;
+        for ( i = 0; i < SNAPSHOT_NUM_DISCONNECT_PACKETS; ++i )
+        {
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client sent disconnect packet %d", i );
+
+            struct snapshot_connection_disconnect_packet_t packet;
+            packet.packet_type = SNAPSHOT_CONNECTION_DISCONNECT_PACKET;
+
+            snapshot_client_send_packet_to_server_internal( client, &packet );
+        }
+    }
+
+    snapshot_client_reset_connection_data( client, destination_state );
+}
+
+int snapshot_client_state( struct snapshot_client_t * client )
+{
+    snapshot_assert( client );
+    return client->state;
+}
+
+int snapshot_client_index( struct snapshot_client_t * client )
+{
+    snapshot_assert( client );
+    return client->client_index;
+}
+
+int snapshot_client_max_clients( struct snapshot_client_t * client )
+{   
+    snapshot_assert( client );
+    return client->max_clients;
 }
