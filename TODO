@@ -24,9 +24,9 @@ DONE
 
 	Create a server.cpp and get it creating a socket and listening
 
-TODO
-
 	Create a client.cpp and get it creating a socket and trying to connect to the server
+
+TODO
 
 	Get the client successfully connecting to the server
 	
@@ -40,30 +40,7 @@ TODO
 
 	-------------
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	Clean up pass before we go any further
 
 	---------------------------
 
