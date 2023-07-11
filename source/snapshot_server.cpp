@@ -1103,8 +1103,8 @@ void snapshot_server_connect_loopback_client( struct snapshot_server_t * server,
     server->client_id[client_index] = client_id;
     server->client_sequence[client_index] = 0;
     memset( &server->client_address[client_index], 0, sizeof( struct snapshot_address_t ) );
-    server->client_last_packet_send_time[client_index] = server->time;
-    server->client_last_packet_receive_time[client_index] = server->time;
+    server->client_last_packet_send_time[client_index] = server->time - 1.0;
+    server->client_last_packet_receive_time[client_index] = server->time - 1.0;
 
     if ( user_data )
     {

@@ -47,19 +47,9 @@ void snapshot_server_disconnect_client( struct snapshot_server_t * server, int c
 
 void snapshot_server_disconnect_all_clients( struct snapshot_server_t * server );
 
-uint64_t snapshot_server_next_packet_sequence( struct snapshot_server_t * server, int client_index );
-
-void snapshot_server_send_packet( struct snapshot_server_t * server, int client_index, const uint8_t * packet_data, int packet_bytes );
-
-uint8_t * snapshot_server_receive_packet( struct snapshot_server_t * server, int client_index, int * packet_bytes, uint64_t * packet_sequence );
-
-void snapshot_server_free_packet( struct snapshot_server_t * server, void * packet );
-
 int snapshot_server_num_connected_clients( struct snapshot_server_t * server );
 
 void * snapshot_server_client_user_data( struct snapshot_server_t * server, int client_index );
-
-void snapshot_server_process_packet( struct snapshot_server_t * server, struct snapshot_address_t * from, uint8_t * packet_data, int packet_bytes );
 
 void snapshot_server_connect_loopback_client( struct snapshot_server_t * server, int client_index, uint64_t client_id, const uint8_t * user_data );
 

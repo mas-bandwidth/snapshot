@@ -56,7 +56,7 @@ struct snapshot_client_t
     uint64_t sequence;
     int client_index;
     int max_clients;
-    int server_address_index;
+    int server_connect_index;
     struct snapshot_address_t bind_address;
     struct snapshot_address_t server_address;
     struct snapshot_connect_token_t connect_token;
@@ -140,7 +140,7 @@ struct snapshot_client_t * snapshot_client_create( const char * bind_address_str
     client->sequence = 0;
     client->client_index = 0;
     client->max_clients = 0;
-    client->server_address_index = 0;
+    client->server_connect_index = 0;
     client->challenge_token_sequence = 0;
     client->loopback = 0;
     memset( &client->server_address, 0, sizeof( struct snapshot_address_t ) );
@@ -211,7 +211,7 @@ void snapshot_client_reset_connection_data( struct snapshot_client_t * client, i
     client->client_index = 0;
     client->max_clients = 0;
     client->connect_start_time = 0.0;
-    client->server_address_index = 0;
+    client->server_connect_index = 0;
     memset( &client->server_address, 0, sizeof( struct snapshot_address_t ) );
     memset( &client->connect_token, 0, sizeof( struct snapshot_connect_token_t ) );
 
@@ -235,12 +235,12 @@ void snapshot_client_connect( struct snapshot_client_t * client, uint8_t * conne
         return;
     }
 
-    client->server_address_index = 0;
+    client->server_connect_index = 0;
     client->server_address = client->connect_token.server_addresses[0];
 
     char server_address_string[SNAPSHOT_MAX_ADDRESS_STRING_LENGTH];
 
-    snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connecting to server %s [%d/%d]", snapshot_address_to_string( &client->server_address, server_address_string ), client->server_address_index + 1, client->connect_token.num_server_addresses );
+    snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connecting to server %s [%d/%d]", snapshot_address_to_string( &client->server_address, server_address_string ), client->server_connect_index + 1, client->connect_token.num_server_addresses );
 
     memcpy( client->read_packet_key, client->connect_token.server_to_client_key, SNAPSHOT_KEY_BYTES );
     memcpy( client->write_packet_key, client->connect_token.client_to_server_key, SNAPSHOT_KEY_BYTES );
@@ -567,14 +567,14 @@ int snapshot_client_connect_to_next_server( struct snapshot_client_t * client )
 {
     snapshot_assert( client );
 
-    if ( client->server_address_index + 1 >= client->connect_token.num_server_addresses )
+    if ( client->server_connect_index + 1 >= client->connect_token.num_server_addresses )
     {
         snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client has no more servers to connect to" );
         return 0;
     }
 
-    client->server_address_index++;
-    client->server_address = client->connect_token.server_addresses[client->server_address_index];
+    client->server_connect_index++;
+    client->server_address = client->connect_token.server_addresses[client->server_connect_index];
 
     snapshot_client_reset_before_next_connect( client );
 
@@ -582,7 +582,7 @@ int snapshot_client_connect_to_next_server( struct snapshot_client_t * client )
 
     snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connecting to next server %s [%d/%d]", 
         snapshot_address_to_string( &client->server_address, server_address_string ), 
-        client->server_address_index + 1, 
+        client->server_connect_index + 1, 
         client->connect_token.num_server_addresses );
 
     snapshot_client_set_state( client, SNAPSHOT_CLIENT_STATE_SENDING_CONNECTION_REQUEST );
@@ -735,4 +735,48 @@ int snapshot_client_max_clients( struct snapshot_client_t * client )
 uint16_t snapshot_client_port( struct snapshot_client_t * client )
 {
     return client->bind_address.port;
+}
+
+void snapshot_client_connect_loopback( struct snapshot_client_t * client, snapshot_address_t * server_address, int client_index, int max_clients )
+{
+    snapshot_assert( client );
+    snapshot_assert( server_address );
+    snapshot_assert( client->state <= SNAPSHOT_CLIENT_STATE_DISCONNECTED );
+    snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connected to server via loopback as client %d\n", client_index );
+    client->state = SNAPSHOT_CLIENT_STATE_CONNECTED;
+    client->server_address = *server_address;
+    client->client_index = client_index;
+    client->max_clients = max_clients;
+    client->loopback = 1;
+}
+
+void snapshot_client_disconnect_loopback( struct snapshot_client_t * client )
+{
+    snapshot_assert( client );
+    snapshot_assert( client->loopback );
+    snapshot_client_reset_connection_data( client, SNAPSHOT_CLIENT_STATE_DISCONNECTED );
+}
+
+int snapshot_client_loopback( struct snapshot_client_t * client )
+{
+    snapshot_assert( client );
+    return client->loopback;
+}
+
+void snapshot_client_process_loopback_packet( struct snapshot_client_t * client, const uint8_t * packet_data, int packet_bytes, uint64_t packet_sequence )
+{
+    snapshot_assert( client );
+    snapshot_assert( client->loopback );
+
+    // todo: process payload packet
+    (void) client;
+    (void) packet_data;
+    (void) packet_bytes;
+    (void) packet_sequence;
+}
+
+const struct snapshot_address_t * snapshot_client_server_address( struct snapshot_client_t * client )
+{
+    snapshot_assert( client );
+    return &client->server_address;
 }

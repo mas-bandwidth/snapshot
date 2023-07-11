@@ -1891,10 +1891,9 @@ void server_send_loopback_packet_callback( void * context, int client_index, con
 
 void test_loopback_client_server_connect()
 {
-    loopback_context_t loopback_context;
-
     double time = 0.0;
-    double delta_time = 1.0 / 10.0;
+
+    loopback_context_t loopback_context;
 
     uint8_t private_key[SNAPSHOT_KEY_BYTES];
     snapshot_crypto_random_bytes( private_key, SNAPSHOT_KEY_BYTES );
@@ -1908,7 +1907,12 @@ void test_loopback_client_server_connect()
     server_config.send_loopback_packet_callback = server_send_loopback_packet_callback;
     memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
 
-    struct snapshot_server_t * server = snapshot_server_create( "127.0.0.1:40000", &server_config, time );
+    const char * server_address_string = "127.0.0.1:40000";
+
+    snapshot_address_t server_address;
+    snapshot_check( snapshot_address_parse( &server_address, server_address_string ) == SNAPSHOT_OK );
+
+    struct snapshot_server_t * server = snapshot_server_create( server_address_string, &server_config, time );
 
     snapshot_check( server );
 
@@ -1918,41 +1922,41 @@ void test_loopback_client_server_connect()
 
     loopback_context.server = server;
 
-    // todo
-    (void) delta_time;
-
-    /*
     // connect a loopback client in slot 0
 
     struct snapshot_client_config_t client_config;
     snapshot_default_client_config( &client_config );
-    client_config.callback_context = &context;
+    client_config.context = &loopback_context;
     client_config.send_loopback_packet_callback = client_send_loopback_packet_callback;
-    client_config.network_simulator = network_simulator;
 
     struct snapshot_client_t * loopback_client = snapshot_client_create( "0.0.0.0:30000", &client_config, time );
-    check( loopback_client );
-    snapshot_client_connect_loopback( loopback_client, 0, max_clients );
-    context.client = loopback_client;
-
-    check( snapshot_client_index( loopback_client ) == 0 );
-    check( snapshot_client_loopback( loopback_client ) == 1 );
-    check( snapshot_client_max_clients( loopback_client ) == max_clients );
-    check( snapshot_client_state( loopback_client ) == SNAPSHOT_CLIENT_STATE_CONNECTED );
+    snapshot_check( loopback_client );
 
     uint64_t client_id = 0;
-    snapshot_random_bytes( (uint8_t*) &client_id, 8 );
+    snapshot_crypto_random_bytes( (uint8_t*) &client_id, 8 );
+    snapshot_client_connect_loopback( loopback_client, &server_address, 0, max_clients );
+
+    loopback_context.client = loopback_client;
+
+    snapshot_check( snapshot_client_index( loopback_client ) == 0 );
+    snapshot_check( snapshot_client_loopback( loopback_client ) == 1 );
+    snapshot_check( snapshot_client_max_clients( loopback_client ) == max_clients );
+    snapshot_check( snapshot_client_state( loopback_client ) == SNAPSHOT_CLIENT_STATE_CONNECTED );
+
     snapshot_server_connect_loopback_client( server, 0, client_id, NULL );
 
-    check( snapshot_server_client_loopback( server, 0 ) == 1 );
-    check( snapshot_server_client_connected( server, 0 ) == 1 );
-    check( snapshot_server_num_connected_clients( server ) == 1 );
+    snapshot_check( snapshot_server_client_loopback( server, 0 ) == 1 );
+    snapshot_check( snapshot_server_client_connected( server, 0 ) == 1 );
+    snapshot_check( snapshot_server_num_connected_clients( server ) == 1 );
+    snapshot_check( snapshot_address_equal( snapshot_client_server_address( loopback_client ), &server_address ) );
 
     // connect a regular client in the other slot
 
+    // todo
+    /*
     struct snapshot_client_t * regular_client = snapshot_client_create( "0.0.0.0:30001", &client_config, time );
 
-    check( regular_client );
+    snapshot_check( regular_client );
 
     const char * server_address = "[::1]:40000";
 
@@ -1965,6 +1969,8 @@ void test_loopback_client_server_connect()
     check( snapshot_generate_connect_token( 1, &server_address, &server_address, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) );
 
     snapshot_client_connect( regular_client, connect_token );
+
+    double delta_time = 1.0 / 10.0;
 
     while ( 1 )
     {
