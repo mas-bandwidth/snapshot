@@ -1942,31 +1942,29 @@ void test_loopback_client_server_connect()
     snapshot_check( snapshot_client_loopback( loopback_client ) == 1 );
     snapshot_check( snapshot_client_max_clients( loopback_client ) == max_clients );
     snapshot_check( snapshot_client_state( loopback_client ) == SNAPSHOT_CLIENT_STATE_CONNECTED );
+    snapshot_check( snapshot_address_equal( snapshot_client_server_address( loopback_client ), &server_address ) );
 
     snapshot_server_connect_loopback_client( server, 0, client_id, NULL );
 
     snapshot_check( snapshot_server_client_loopback( server, 0 ) == 1 );
     snapshot_check( snapshot_server_client_connected( server, 0 ) == 1 );
     snapshot_check( snapshot_server_num_connected_clients( server ) == 1 );
-    snapshot_check( snapshot_address_equal( snapshot_client_server_address( loopback_client ), &server_address ) );
+
+    // todo: we should really be checking that the client address is correct in slot 0 -- snapshot_server_client_address
 
     // connect a regular client in the other slot
 
-    // todo
-    /*
     struct snapshot_client_t * regular_client = snapshot_client_create( "0.0.0.0:30001", &client_config, time );
 
     snapshot_check( regular_client );
 
-    const char * server_address = "[::1]:40000";
-
     uint8_t connect_token[SNAPSHOT_CONNECT_TOKEN_BYTES];
-    snapshot_random_bytes( (uint8_t*) &client_id, 8 );
+    snapshot_crypto_random_bytes( (uint8_t*) &client_id, 8 );
 
     uint8_t user_data[SNAPSHOT_USER_DATA_BYTES];
-    snapshot_random_bytes( user_data, SNAPSHOT_USER_DATA_BYTES);
+    snapshot_crypto_random_bytes( user_data, SNAPSHOT_USER_DATA_BYTES);
 
-    check( snapshot_generate_connect_token( 1, &server_address, &server_address, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) );
+    snapshot_check( snapshot_generate_connect_token( 1, &server_address_string, &server_address_string, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
 
     snapshot_client_connect( regular_client, connect_token );
 
@@ -1974,8 +1972,6 @@ void test_loopback_client_server_connect()
 
     while ( 1 )
     {
-        snapshot_network_simulator_update( network_simulator, time );
-
         snapshot_client_update( regular_client, time );
 
         snapshot_server_update( server, time );
@@ -1989,14 +1985,16 @@ void test_loopback_client_server_connect()
         time += delta_time;
     }
 
-    check( snapshot_client_state( regular_client ) == SNAPSHOT_CLIENT_STATE_CONNECTED );
-    check( snapshot_client_index( regular_client ) == 1 );
-    check( snapshot_server_client_connected( server, 0 ) == 1 );
-    check( snapshot_server_client_connected( server, 1 ) == 1 );
-    check( snapshot_server_client_loopback( server, 0 ) == 1 );
-    check( snapshot_server_client_loopback( server, 1 ) == 0 );
-    check( snapshot_server_num_connected_clients( server ) == 2 );
+    snapshot_check( snapshot_client_state( regular_client ) == SNAPSHOT_CLIENT_STATE_CONNECTED );
+    snapshot_check( snapshot_client_index( regular_client ) == 1 );
 
+    snapshot_check( snapshot_server_client_connected( server, 0 ) == 1 );
+    snapshot_check( snapshot_server_client_connected( server, 1 ) == 1 );
+    snapshot_check( snapshot_server_client_loopback( server, 0 ) == 1 );
+    snapshot_check( snapshot_server_client_loopback( server, 1 ) == 0 );
+    snapshot_check( snapshot_server_num_connected_clients( server ) == 2 );
+
+    /*
     // test that we can exchange packets for the regular client and the loopback client
 
     int loopback_client_num_packets_received = 0;
@@ -2011,8 +2009,6 @@ void test_loopback_client_server_connect()
 
     while ( 1 )
     {
-        snapshot_network_simulator_update( network_simulator, time );
-
         snapshot_client_update( regular_client, time );
 
         snapshot_server_update( server, time );
