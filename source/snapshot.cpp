@@ -73,7 +73,9 @@ const char * snapshot_log_level_string( int level )
         return "???";
 }
 
-// todo: custom log function
+static bool log_quiet;
+static int log_level = SNAPSHOT_LOG_LEVEL_INFO;
+
 static void log_function( int level, const char * format, ... )
 {
     va_list args;
@@ -82,10 +84,10 @@ static void log_function( int level, const char * format, ... )
     vsnprintf( buffer, sizeof( buffer ), format, args );
     if ( level != SNAPSHOT_LOG_LEVEL_NONE )
     {
-        // todo: quiet flag
-//        if ( !log_quiet )
+        if ( !log_quiet )
         {
             const char * level_string = snapshot_log_level_string( level );
+            // todo: custom log function
             printf( "%.6f: %s: %s\n", snapshot_platform_time(), level_string, buffer );
         }
     }
@@ -97,7 +99,10 @@ static void log_function( int level, const char * format, ... )
     fflush( stdout );
 }
 
-static int log_level = SNAPSHOT_LOG_LEVEL_INFO;
+void snapshot_quiet( bool value )
+{
+    log_quiet = value;
+}
 
 void snapshot_printf( const char * format, ... )
 {

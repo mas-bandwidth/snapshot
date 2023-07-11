@@ -1648,10 +1648,70 @@ void test_replay_protection()
     }
 }
 
+void test_client_create_ipv4_any_port()
+{
+    struct snapshot_client_config_t client_config;
+    snapshot_default_client_config( &client_config );
+
+    struct snapshot_client_t * client = snapshot_client_create( "127.0.0.1:0", &client_config, 0.0 );
+
+    snapshot_check( client );
+    snapshot_check( snapshot_client_port( client ) != 0 );
+    snapshot_check( snapshot_client_state( client ) == SNAPSHOT_CLIENT_STATE_DISCONNECTED );
+
+    snapshot_client_destroy( client );
+}
+
+void test_client_create_ipv4_specific_port()
+{
+    struct snapshot_client_config_t client_config;
+    snapshot_default_client_config( &client_config );
+
+    struct snapshot_client_t * client = snapshot_client_create( "127.0.0.1:30000", &client_config, 0.0 );
+
+    snapshot_check( client );
+    snapshot_check( snapshot_client_port( client ) == 30000 );
+    snapshot_check( snapshot_client_state( client ) == SNAPSHOT_CLIENT_STATE_DISCONNECTED );
+
+    snapshot_client_destroy( client );
+}
+
+#if SNAPSHOT_PLATFORM_HAS_IPV6
+
+void test_client_create_ipv6_any_port()
+{
+    struct snapshot_client_config_t client_config;
+    snapshot_default_client_config( &client_config );
+
+    struct snapshot_client_t * client = snapshot_client_create( "[::]:0", &client_config, 0.0 );
+
+    snapshot_check( client );
+    snapshot_check( snapshot_client_port( client ) != 0 );
+    snapshot_check( snapshot_client_state( client ) == SNAPSHOT_CLIENT_STATE_DISCONNECTED );
+
+    snapshot_client_destroy( client );
+}
+
+void test_client_create_ipv6_specific_port()
+{
+    struct snapshot_client_config_t client_config;
+    snapshot_default_client_config( &client_config );
+
+    struct snapshot_client_t * client = snapshot_client_create( "[::]:30000", &client_config, 0.0 );
+
+    snapshot_check( client );
+    snapshot_check( snapshot_client_port( client ) == 30000 );
+    snapshot_check( snapshot_client_state( client ) == SNAPSHOT_CLIENT_STATE_DISCONNECTED );
+
+    snapshot_client_destroy( client );
+}
+
+#endif // #if SNAPSHOT_PLATFORM_HAS_IPV6
+
 #define RUN_TEST( test_function )                                           \
     do                                                                      \
     {                                                                       \
-        snapshot_printf( "    " #test_function );                           \
+        snapshot_printf( #test_function );                                  \
         fflush( stdout );                                                   \
         test_function();                                                    \
     }                                                                       \
@@ -1659,7 +1719,11 @@ void test_replay_protection()
 
 void test()
 {
-    while ( true )
+    printf( "\n[test]\n\n" );
+
+    snapshot_quiet( true );
+
+    // while ( true )
     {
         RUN_TEST( test_time );
         RUN_TEST( test_endian );
@@ -1686,17 +1750,19 @@ void test()
         RUN_TEST( test_connection_denied_packet );
         RUN_TEST( test_connection_challenge_packet );
         RUN_TEST( test_connection_response_packet );
-
-        // todo
-        // RUN_TEST( test_connection_payload_packet );
-
+        RUN_TEST( test_connection_payload_packet );
         RUN_TEST( test_connection_disconnect_packet );        
         RUN_TEST( test_encryption_manager );
         RUN_TEST( test_replay_protection );
 
+        RUN_TEST( test_client_create_ipv4_any_port );
+        RUN_TEST( test_client_create_ipv4_specific_port );
+#if SNAPSHOT_PLATFORM_HAS_IPV6
+        RUN_TEST( test_client_create_ipv6_any_port );
+        RUN_TEST( test_client_create_ipv6_specific_port );
+#endif // if SNAPSHOT_PLATFORM_HAS_IPV6
+
         /*
-        RUN_TEST( test_client_create );
-        RUN_TEST( test_server_create );
         RUN_TEST( test_client_server_connect );
         RUN_TEST( test_client_server_ipv4_socket_connect );
         RUN_TEST( test_client_server_ipv6_socket_connect );
@@ -1716,6 +1782,8 @@ void test()
         RUN_TEST( test_loopback );
         */
     }
+
+    printf( "\nAll tests pass.\n\n" );
 }
 
 int main()

@@ -52,7 +52,7 @@ int snapshot_client_loopback( struct snapshot_client_t * client );
 
 void snapshot_client_process_loopback_packet( struct snapshot_client_t * client, const uint8_t * packet_data, int packet_bytes, uint64_t packet_sequence );
 
-uint16_t snapshot_client_get_port( struct snapshot_client_t * client );
+uint16_t snapshot_client_port( struct snapshot_client_t * client );
 
 struct snapshot_address_t * snapshot_client_server_address( struct snapshot_client_t * client );
 

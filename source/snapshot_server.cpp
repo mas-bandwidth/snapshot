@@ -147,11 +147,9 @@ struct snapshot_server_t * snapshot_server_create( const char * server_address_s
 
     if ( !config->network_simulator )
     {
-        struct snapshot_address_t bind_address;
-
-        memset( &bind_address, 0, sizeof( bind_address ) );
-
-        bind_address.type = SNAPSHOT_ADDRESS_IPV4;
+        snapshot_address_t bind_address;
+        memset( &bind_address, 0, sizeof(bind_address) );
+        bind_address.type = server_address.type;
         bind_address.port = server_address.port;
 
         socket = snapshot_platform_socket_create( config->context, &bind_address, 0.0f, SNAPSHOT_PLATFORM_SOCKET_NON_BLOCKING, SNAPSHOT_SERVER_SOCKET_SNDBUF_SIZE, SNAPSHOT_SERVER_SOCKET_RCVBUF_SIZE );

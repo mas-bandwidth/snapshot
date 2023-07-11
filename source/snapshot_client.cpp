@@ -95,8 +95,7 @@ struct snapshot_client_t * snapshot_client_create( const char * address_string,
     {
         snapshot_address_t bind_address;
         memset( &bind_address, 0, sizeof(bind_address) );
-
-        bind_address.type = SNAPSHOT_ADDRESS_IPV4;
+        bind_address.type = address.type;
         bind_address.port = address.port;
 
         socket = snapshot_platform_socket_create( config->context, &bind_address, 0.0f, SNAPSHOT_PLATFORM_SOCKET_NON_BLOCKING, SNAPSHOT_CLIENT_SOCKET_SNDBUF_SIZE, SNAPSHOT_CLIENT_SOCKET_RCVBUF_SIZE );
@@ -740,4 +739,9 @@ int snapshot_client_max_clients( struct snapshot_client_t * client )
 {   
     snapshot_assert( client );
     return client->max_clients;
+}
+
+uint16_t snapshot_client_port( struct snapshot_client_t * client )
+{
+    return client->address.port;
 }

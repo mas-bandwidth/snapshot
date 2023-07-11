@@ -2,13 +2,17 @@ DONE
 
 	Get the client successfully connecting to the server
 
+	Clean up various logs
+
 TODO
 
+	Get the client/server unit tests back up
+
+	-------------
+	
 	Clean up the internal address stuff. I *really* don't think we need it.
 
 	-------------
-
-	Get the loopback stuff working
 
 	Setup a loopback.cpp example
 
@@ -18,9 +22,17 @@ TODO
 
 	-------------
 
+	Test on linux
+
+	-------------
+
+	Test on windows
+
+	-------------
+
 	Clean up pass before we go any further
 
-	---------------------------
+	-------------
 
 
 

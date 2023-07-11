@@ -212,6 +212,8 @@ void snapshot_term();
 
 #define snapshot_assert assert
 
+void snapshot_quiet( bool value );
+
 void snapshot_printf( const char * format, ... );
 
 void snapshot_printf( int level, const char * format, ... );
