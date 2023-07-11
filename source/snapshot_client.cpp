@@ -335,7 +335,9 @@ void snapshot_client_process_packet( struct snapshot_client_t * client, struct s
 
                     snapshot_client_set_state( client, SNAPSHOT_CLIENT_STATE_CONNECTED );
 
-                    snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connected to server" );
+                    char server_address_string[SNAPSHOT_MAX_ADDRESS_STRING_LENGTH];
+                    snapshot_address_to_string( &client->server_address, server_address_string );
+                    snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connected to server %s slot %d", server_address_string, p->client_index );
                 }
             }
         }
@@ -616,7 +618,9 @@ void snapshot_client_update( struct snapshot_client_t * client, double time )
         uint64_t connect_token_expire_seconds = ( client->connect_token.expire_timestamp - client->connect_token.create_timestamp );            
         if ( client->time - client->connect_start_time >= connect_token_expire_seconds )
         {
-            snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connect failed. connect token expired" );
+            char server_address_string[SNAPSHOT_MAX_ADDRESS_STRING_LENGTH];
+            snapshot_address_to_string( &client->server_address, server_address_string );
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connect to %s failed. connect token expired", server_address_string );
             snapshot_client_disconnect_internal( client, SNAPSHOT_CLIENT_STATE_CONNECT_TOKEN_EXPIRED, 0 );
             return;
         }
@@ -637,7 +641,9 @@ void snapshot_client_update( struct snapshot_client_t * client, double time )
         {
             if ( client->connect_token.timeout_seconds > 0 && client->last_packet_receive_time + client->connect_token.timeout_seconds < time )
             {
-                snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connect failed. connection request timed out" );
+                char server_address_string[SNAPSHOT_MAX_ADDRESS_STRING_LENGTH];
+                snapshot_address_to_string( &client->server_address, server_address_string );
+                snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connect to %s failed. connection request timed out", server_address_string );
                 if ( snapshot_client_connect_to_next_server( client ) )
                     return;
                 snapshot_client_disconnect_internal( client, SNAPSHOT_CLIENT_STATE_CONNECTION_REQUEST_TIMED_OUT, 0 );
@@ -663,7 +669,9 @@ void snapshot_client_update( struct snapshot_client_t * client, double time )
         {
             if ( client->connect_token.timeout_seconds > 0 && client->last_packet_receive_time + client->connect_token.timeout_seconds < time )
             {
-                snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connection timed out" );
+                char server_address_string[SNAPSHOT_MAX_ADDRESS_STRING_LENGTH];
+                snapshot_address_to_string( &client->server_address, server_address_string );
+                snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connection to %s timed out", server_address_string );
                 snapshot_client_disconnect_internal( client, SNAPSHOT_CLIENT_STATE_CONNECTION_TIMED_OUT, 0 );
                 return;
             }
@@ -690,7 +698,12 @@ void snapshot_client_disconnect_internal( struct snapshot_client_t * client, int
     if ( client->state <= SNAPSHOT_CLIENT_STATE_DISCONNECTED || client->state == destination_state )
         return;
 
-    snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client disconnected" );
+    if ( client->state == SNAPSHOT_CLIENT_STATE_CONNECTED )
+    {
+        char server_address_string[SNAPSHOT_MAX_ADDRESS_STRING_LENGTH];
+        snapshot_address_to_string( &client->server_address, server_address_string );
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client disconnected from server %s slot %d", server_address_string, client->client_index );
+    }
 
     if ( !client->loopback && send_disconnect_packets && client->state > SNAPSHOT_CLIENT_STATE_DISCONNECTED )
     {

@@ -334,7 +334,9 @@ void snapshot_server_disconnect_client_internal( struct snapshot_server_t * serv
     snapshot_assert( !server->client_loopback[client_index] );
     snapshot_assert( server->encryption_manager.client_index[server->client_encryption_index[client_index]] == client_index );
 
-    snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "server disconnected client %d", client_index );
+    char client_address_string[SNAPSHOT_MAX_ADDRESS_STRING_LENGTH];
+    snapshot_address_to_string( &server->client_address[client_index], client_address_string );
+    snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "server disconnected client %s [%.16" PRIx64 "] from slot %d", client_address_string, server->client_id[client_index], client_index );
 
     if ( server->config.connect_disconnect_callback )
     {
@@ -625,7 +627,7 @@ void snapshot_server_connect_client( struct snapshot_server_t * server,
 
     char address_string[SNAPSHOT_MAX_ADDRESS_STRING_LENGTH];
 
-    snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "server accepted client %s %.16" PRIx64 " in slot %d", snapshot_address_to_string( address, address_string ), client_id, client_index );
+    snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "server accepted client %s [%.16" PRIx64 "] in slot %d", snapshot_address_to_string( address, address_string ), client_id, client_index );
 
     struct snapshot_connection_keep_alive_packet_t packet;
     packet.packet_type = SNAPSHOT_CONNECTION_KEEP_ALIVE_PACKET;
@@ -1115,7 +1117,7 @@ void snapshot_server_connect_loopback_client( struct snapshot_server_t * server,
         memset( server->client_user_data[client_index], 0, SNAPSHOT_USER_DATA_BYTES );
     }
 
-    snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "server connected loopback client %.16" PRIx64 " in slot %d", client_id, client_index );
+    snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "server connected loopback client [%.16" PRIx64 "] in slot %d", client_id, client_index );
 
     if ( server->config.connect_disconnect_callback )
     {

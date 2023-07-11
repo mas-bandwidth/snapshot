@@ -1,38 +1,16 @@
 DONE
 
-	Calculate the allowed packets once on create
-
-	Bring back the buffers needed for receiving packets from simulator
-
-	Get snapshot_client.cpp network simulator receive packets code back up
-
-	Work out how to prefix the packet data with the payload packet struct, eg. need offsetof(type, member)
-
-	Get the payload packet test working
-
-	Bring across netcode server as snapshot_server_t
-
-	Bring across the connect token entry, it's needed by the server
-
-	Make sure we get the port number when bind to zero port
-
-	Fix up the bind address vs. server address
-
-	Fix up bind address vs. client address
-
-	Fix up read and write packets for server
-
-	Create a server.cpp and get it creating a socket and listening
-
-	Create a client.cpp and get it creating a socket and trying to connect to the server
+	Get the client successfully connecting to the server
 
 TODO
 
-	Get the client successfully connecting to the server
-	
+	Clean up the internal address stuff. I *really* don't think we need it.
+
 	-------------
 
 	Get the loopback stuff working
+
+	Setup a loopback.cpp example
 
 	-------------
 
@@ -41,6 +19,32 @@ TODO
 	-------------
 
 	Clean up pass before we go any further
+
+	---------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	---------------------------
 
