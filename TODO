@@ -8,11 +8,9 @@ DONE
 
 	Get the client/server unit tests back up for ipv4 sockets and ipv6 sockets
 
+	Get the loopback unit test working
+
 TODO
-
-	Get the loopback client server connect working
-
-	-------------
 
 	Get the rest of the client server tests working
 

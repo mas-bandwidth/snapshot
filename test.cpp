@@ -3,8 +3,6 @@
     Commercial licensing under different terms is available. Please email licensing@mas-bandwidth.com for details.
 */
 
-#include <stdio.h>
-#include <string.h>
 #include "snapshot.h"
 #include "snapshot_crypto.h"
 #include "snapshot_platform.h"
@@ -22,6 +20,10 @@
 #include "snapshot_packets.h"
 #include "snapshot_encryption_manager.h"
 #include "snapshot_replay_protection.h"
+
+#include <math.h>
+#include <stdio.h>
+#include <string.h>
 
 static void snapshot_check_handler( const char * condition,
                                     const char * function,
@@ -1830,6 +1832,8 @@ void test_ipv6_client_server_connect()
     snapshot_client_destroy( client );
 }
 
+#endif // #if SNAPSHOT_PLATFORM_HAS_IPV6
+
 struct loopback_context_t
 {
     struct snapshot_client_t * client;
@@ -1840,27 +1844,11 @@ struct loopback_context_t
 
 void client_send_loopback_packet_callback( void * context, int client_index, const uint8_t * packet_data, int packet_bytes, uint64_t packet_sequence )
 {
-    // todo
     (void) context;
     (void) client_index;
     (void) packet_data;
     (void) packet_bytes;
     (void) packet_sequence;
-
-    /*
-    check( _context );
-    check( client_index == 0 );
-    check( packet_data );
-    check( packet_bytes == NETCODE_MAX_PACKET_SIZE );
-    int i;
-    for ( i = 0; i < packet_bytes; ++i )
-    {
-        check( packet_data[i] == (uint8_t) i );
-    }
-    struct test_loopback_context_t * context = (struct test_loopback_context_t*) _context;
-    context->num_loopback_packets_sent_to_server++;
-    snapshot_server_process_loopback_packet( context->server, client_index, packet_data, packet_bytes, packet_sequence );
-    */
 }
 
 void server_send_loopback_packet_callback( void * context, int client_index, const uint8_t * packet_data, int packet_bytes, uint64_t packet_sequence )
@@ -1870,25 +1858,9 @@ void server_send_loopback_packet_callback( void * context, int client_index, con
     (void) packet_data;
     (void) packet_bytes;
     (void) packet_sequence;
-
-    /*
-    (void) packet_sequence;
-    check( _context );
-    check( client_index == 0 );
-    check( packet_data );
-    check( packet_bytes == NETCODE_MAX_PACKET_SIZE );
-    int i;
-    for ( i = 0; i < packet_bytes; ++i )
-    {
-        check( packet_data[i] == (uint8_t) i );
-    }
-    struct test_loopback_context_t * context = (struct test_loopback_context_t*) _context;
-    context->num_loopback_packets_sent_to_client++;
-    snapshot_client_process_loopback_packet( context->client, packet_data, packet_bytes, packet_sequence );
-    */
 }
 
-void test_loopback()
+void test_client_server_loopback()
 {
     double time = 0.0;
 
@@ -2054,7 +2026,222 @@ void test_loopback()
     snapshot_server_destroy( server );
 }
 
-#endif // #if SNAPSHOT_PLATFORM_HAS_IPV6
+void test_client_server_network_simulator()
+{
+    // todo
+}
+
+void test_client_server_keep_alive()
+{
+    double time = 0.0;
+    double delta_time = 1.0 / 10.0;
+
+    uint8_t private_key[SNAPSHOT_KEY_BYTES];
+    snapshot_crypto_random_bytes( private_key, SNAPSHOT_KEY_BYTES );
+
+    // connect client to server
+
+    struct snapshot_client_config_t client_config;
+    snapshot_default_client_config( &client_config );
+
+    struct snapshot_client_t * client = snapshot_client_create( "0.0.0.0:30000", &client_config, time );
+
+    snapshot_check( client );
+
+    struct snapshot_server_config_t server_config;
+    snapshot_default_server_config( &server_config );
+    server_config.protocol_id = TEST_PROTOCOL_ID;
+    memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
+
+    struct snapshot_server_t * server = snapshot_server_create( "127.0.0.1:40000", &server_config, time );
+
+    snapshot_check( server );
+
+    snapshot_server_start( server, 1 );
+
+    const char * server_address = "127.0.0.1:40000";
+
+    uint8_t connect_token[SNAPSHOT_CONNECT_TOKEN_BYTES];
+
+    uint64_t client_id = 0;
+    snapshot_crypto_random_bytes( (uint8_t*) &client_id, 8 );
+
+    uint8_t user_data[SNAPSHOT_USER_DATA_BYTES];
+    snapshot_crypto_random_bytes(user_data, SNAPSHOT_USER_DATA_BYTES);
+
+    snapshot_check( snapshot_generate_connect_token( 1, &server_address, &server_address, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
+
+    snapshot_client_connect( client, connect_token );
+
+    while ( 1 )
+    {
+        snapshot_client_update( client, time );
+
+        snapshot_server_update( server, time );
+
+        if ( snapshot_client_state( client ) <= SNAPSHOT_CLIENT_STATE_DISCONNECTED )
+            break;
+
+        if ( snapshot_client_state( client ) == SNAPSHOT_CLIENT_STATE_CONNECTED )
+            break;
+
+        time += delta_time;
+    }
+
+    snapshot_check( snapshot_client_state( client ) == SNAPSHOT_CLIENT_STATE_CONNECTED );
+    snapshot_check( snapshot_client_index( client ) == 0 );
+    snapshot_check( snapshot_server_client_connected( server, 0 ) == 1 );
+    snapshot_check( snapshot_server_num_connected_clients( server ) == 1 );
+
+    // pump the client and server long enough that they would timeout without keep alive packets
+
+    int num_iterations = (int) ceil( 1.25f * TEST_TIMEOUT_SECONDS / delta_time );
+
+    int i;
+    for ( i = 0; i < num_iterations; ++i )
+    {
+        snapshot_client_update( client, time );
+
+        snapshot_server_update( server, time );
+
+        if ( snapshot_client_state( client ) <= SNAPSHOT_CLIENT_STATE_DISCONNECTED )
+            break;
+
+        time += delta_time;
+    }
+
+    snapshot_check( snapshot_client_state( client ) == SNAPSHOT_CLIENT_STATE_CONNECTED );
+    snapshot_check( snapshot_client_index( client ) == 0 );
+    snapshot_check( snapshot_server_client_connected( server, 0 ) == 1 );
+    snapshot_check( snapshot_server_num_connected_clients( server ) == 1 );
+
+    snapshot_server_destroy( server );
+
+    snapshot_client_destroy( client );
+}
+
+void test_client_server_multiple_clients()
+{
+    #define NUM_START_STOP_ITERATIONS 3
+
+    uint8_t private_key[SNAPSHOT_KEY_BYTES];
+    snapshot_crypto_random_bytes( private_key, SNAPSHOT_KEY_BYTES );
+
+    int max_clients[NUM_START_STOP_ITERATIONS] = { 2, 32, 5 };
+
+    double time = 0.0;
+    double delta_time = 1.0 / 10.0;
+
+    struct snapshot_server_config_t server_config;
+    snapshot_default_server_config( &server_config );
+    server_config.protocol_id = TEST_PROTOCOL_ID;
+    memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
+
+    struct snapshot_server_t * server = snapshot_server_create( "127.0.0.1:40000", &server_config, time );
+
+    snapshot_check( server );
+
+    for ( int i = 0; i < NUM_START_STOP_ITERATIONS; ++i )
+    {
+        // start the server with max # of clients for this iteration
+
+        snapshot_server_start( server, max_clients[i] );
+
+        // create # of client objects for this iteration and connect to server
+
+        struct snapshot_client_t ** client = (struct snapshot_client_t **) malloc( sizeof( struct snapshot_client_t* ) * max_clients[i] );
+
+        snapshot_check( client );
+
+        for ( int j = 0; j < max_clients[i]; ++j )
+        {
+            char client_bind_address[SNAPSHOT_MAX_ADDRESS_STRING_LENGTH];
+            snprintf( client_bind_address, sizeof(client_bind_address), "0.0.0.0:%d", 30000 + j );
+
+            struct snapshot_client_config_t client_config;
+            snapshot_default_client_config( &client_config );
+
+            client[j] = snapshot_client_create( client_bind_address, &client_config, time );
+
+            snapshot_check( client[j] );
+
+            uint64_t client_id = j;
+            snapshot_crypto_random_bytes( (uint8_t*) &client_id, 8 );
+
+            const char * server_address = "127.0.0.1:40000";
+
+            uint8_t connect_token[SNAPSHOT_CONNECT_TOKEN_BYTES];
+
+            uint8_t user_data[SNAPSHOT_USER_DATA_BYTES];
+            snapshot_crypto_random_bytes( user_data, SNAPSHOT_USER_DATA_BYTES );
+
+            snapshot_check( snapshot_generate_connect_token( 1, 
+                                                             &server_address, 
+                                                             &server_address, 
+                                                             TEST_CONNECT_TOKEN_EXPIRY, 
+                                                             TEST_TIMEOUT_SECONDS,
+                                                             client_id, 
+                                                             TEST_PROTOCOL_ID, 
+                                                             private_key, 
+                                                             user_data, 
+                                                             connect_token ) == SNAPSHOT_OK );
+
+            snapshot_client_connect( client[j], connect_token );
+        }
+
+        // make sure all clients can connect
+
+        while ( 1 )
+        {
+            for ( int j = 0; j < max_clients[i]; ++j )
+            {
+                snapshot_client_update( client[j], time );
+            }
+
+            snapshot_server_update( server, time );
+
+            int num_connected_clients = 0;
+
+            for ( int j = 0; j < max_clients[i]; ++j )
+            {
+                if ( snapshot_client_state( client[j] ) <= SNAPSHOT_CLIENT_STATE_DISCONNECTED )
+                    break;
+
+                if ( snapshot_client_state( client[j] ) == SNAPSHOT_CLIENT_STATE_CONNECTED )
+                    num_connected_clients++;
+            }
+
+            if ( num_connected_clients == max_clients[i] )
+                break;
+
+            time += delta_time;
+        }
+
+        snapshot_check( snapshot_server_num_connected_clients( server ) == max_clients[i] );
+
+        for ( int j = 0; j < max_clients[i]; ++j )
+        {
+            snapshot_check( snapshot_client_state( client[j] ) == SNAPSHOT_CLIENT_STATE_CONNECTED );
+            snapshot_check( snapshot_server_client_connected( server, j ) == 1 );
+        }
+
+        for ( int j = 0; j < max_clients[i]; ++j )
+        {
+            snapshot_client_destroy( client[j] );
+        }
+
+        free( client );
+
+        snapshot_server_stop( server );
+    }
+
+    snapshot_server_destroy( server );
+}
+
+void test_client_server_multiple_servers()
+{
+    // todo
+}
 
 #define RUN_TEST( test_function )                                           \
     do                                                                      \
@@ -2110,13 +2297,14 @@ void test()
         RUN_TEST( test_ipv6_client_create_specific_port );
         RUN_TEST( test_ipv6_client_server_connect );
 #endif // if SNAPSHOT_PLATFORM_HAS_IPV6
-
-        RUN_TEST( test_loopback );
-
-        /*
+        RUN_TEST( test_client_server_loopback );
+        RUN_TEST( test_client_server_network_simulator );
         RUN_TEST( test_client_server_keep_alive );
         RUN_TEST( test_client_server_multiple_clients );
+
         RUN_TEST( test_client_server_multiple_servers );
+
+        /*
         RUN_TEST( test_client_error_connect_token_expired );
         RUN_TEST( test_client_error_invalid_connect_token );
         RUN_TEST( test_client_error_connection_timed_out );
