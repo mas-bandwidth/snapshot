@@ -1949,8 +1949,6 @@ void test_loopback()
     snapshot_check( snapshot_server_client_connected( server, 0 ) == 1 );
     snapshot_check( snapshot_server_num_connected_clients( server ) == 1 );
 
-    // todo: we should really be checking that the client address is correct in slot 0 -- snapshot_server_client_address
-
     // connect a regular client in the other slot
 
     struct snapshot_client_t * regular_client = snapshot_client_create( "0.0.0.0:30001", &client_config, time );
@@ -1993,140 +1991,38 @@ void test_loopback()
     snapshot_check( snapshot_server_client_loopback( server, 1 ) == 0 );
     snapshot_check( snapshot_server_num_connected_clients( server ) == 2 );
 
-    // todo: check the client addresses for slot 0 and slot 1 are correct
+    // verify we can disconnect the loopback client
 
-    // verify that we can disconnect the loopback client
-
-    /*
-    check( snapshot_server_client_loopback( server, 0 ) == 1 );
-    check( snapshot_server_client_connected( server, 0 ) == 1 );
-    check( snapshot_server_num_connected_clients( server ) == 2 );
+    snapshot_check( snapshot_server_client_loopback( server, 0 ) == 1 );
+    snapshot_check( snapshot_server_client_connected( server, 0 ) == 1 );
+    snapshot_check( snapshot_server_num_connected_clients( server ) == 2 );
 
     snapshot_server_disconnect_loopback_client( server, 0 );    
 
-    check( snapshot_server_client_loopback( server, 0 ) == 0 );
-    check( snapshot_server_client_connected( server, 0 ) == 0 );
-    check( snapshot_server_num_connected_clients( server ) == 1 );
+    snapshot_check( snapshot_server_client_loopback( server, 0 ) == 0 );
+    snapshot_check( snapshot_server_client_connected( server, 0 ) == 0 );
+    snapshot_check( snapshot_server_num_connected_clients( server ) == 1 );
 
     snapshot_client_disconnect_loopback( loopback_client );
 
-    check( snapshot_client_state( loopback_client ) == SNAPSHOT_CLIENT_STATE_DISCONNECTED );
+    snapshot_check( snapshot_client_state( loopback_client ) == SNAPSHOT_CLIENT_STATE_DISCONNECTED );
 
-    // verify that we can reconnect the loopback client
+    // verify we can reconnect the loopback client
 
-    snapshot_random_bytes( (uint8_t*) &client_id, 8 );
     snapshot_server_connect_loopback_client( server, 0, client_id, NULL );
 
-    check( snapshot_server_client_loopback( server, 0 ) == 1 );
-    check( snapshot_server_client_loopback( server, 1 ) == 0 );
-    check( snapshot_server_client_connected( server, 0 ) == 1 );
-    check( snapshot_server_client_connected( server, 1 ) == 1 );
-    check( snapshot_server_num_connected_clients( server ) == 2 );
+    snapshot_check( snapshot_server_client_loopback( server, 0 ) == 1 );
+    snapshot_check( snapshot_server_client_loopback( server, 1 ) == 0 );
+    snapshot_check( snapshot_server_client_connected( server, 0 ) == 1 );
+    snapshot_check( snapshot_server_client_connected( server, 1 ) == 1 );
+    snapshot_check( snapshot_server_num_connected_clients( server ) == 2 );
 
-    snapshot_client_connect_loopback( loopback_client, 0, max_clients );
+    snapshot_client_connect_loopback( loopback_client, &server_address, 0, max_clients );
     
-    check( snapshot_client_index( loopback_client ) == 0 );
-    check( snapshot_client_loopback( loopback_client ) == 1 );
-    check( snapshot_client_max_clients( loopback_client ) == max_clients );
-    check( snapshot_client_state( loopback_client ) == SNAPSHOT_CLIENT_STATE_CONNECTED );
-
-    // verify that we can exchange packets for both regular and loopback client post reconnect
-
-    loopback_server_num_packets_received = 0;
-    loopback_client_num_packets_received = 0;
-    regular_server_num_packets_received = 0;
-    regular_client_num_packets_received = 0;
-    context.num_loopback_packets_sent_to_client = 0;
-    context.num_loopback_packets_sent_to_server = 0;
-
-    while ( 1 )
-    {
-        snapshot_network_simulator_update( network_simulator, time );
-
-        snapshot_client_update( regular_client, time );
-
-        snapshot_server_update( server, time );
-
-        snapshot_client_send_packet( loopback_client, packet_data, SNAPSHOT_MAX_PACKET_SIZE );
-
-        snapshot_client_send_packet( regular_client, packet_data, SNAPSHOT_MAX_PACKET_SIZE );
-        
-        snapshot_server_send_packet( server, 0, packet_data, SNAPSHOT_MAX_PACKET_SIZE );
-        
-        snapshot_server_send_packet( server, 1, packet_data, SNAPSHOT_MAX_PACKET_SIZE );
-
-        while ( 1 )             
-        {
-            int packet_bytes;
-            uint64_t packet_sequence;
-            uint8_t * packet = snapshot_client_receive_packet( loopback_client, &packet_bytes, &packet_sequence );
-            if ( !packet )
-                break;
-            (void) packet_sequence;
-            snapshot_assert( packet_bytes == SNAPSHOT_MAX_PACKET_SIZE );
-            snapshot_assert( memcmp( packet, packet_data, SNAPSHOT_MAX_PACKET_SIZE ) == 0 );            
-            loopback_client_num_packets_received++;
-            snapshot_client_free_packet( loopback_client, packet );
-        }
-
-        while ( 1 )             
-        {
-            int packet_bytes;
-            uint64_t packet_sequence;
-            uint8_t * packet = snapshot_client_receive_packet( regular_client, &packet_bytes, &packet_sequence );
-            if ( !packet )
-                break;
-            (void) packet_sequence;
-            snapshot_assert( packet_bytes == SNAPSHOT_MAX_PACKET_SIZE );
-            snapshot_assert( memcmp( packet, packet_data, SNAPSHOT_MAX_PACKET_SIZE ) == 0 );            
-            regular_client_num_packets_received++;
-            snapshot_client_free_packet( regular_client, packet );
-        }
-
-        while ( 1 )             
-        {
-            int packet_bytes;
-            uint64_t packet_sequence;
-            void * packet = snapshot_server_receive_packet( server, 0, &packet_bytes, &packet_sequence );
-            if ( !packet )
-                break;
-            (void) packet_sequence;
-            snapshot_assert( packet_bytes == SNAPSHOT_MAX_PACKET_SIZE );
-            snapshot_assert( memcmp( packet, packet_data, SNAPSHOT_MAX_PACKET_SIZE ) == 0 );            
-            loopback_server_num_packets_received++;
-            snapshot_server_free_packet( server, packet );
-        }
-
-        while ( 1 )             
-        {
-            int packet_bytes;
-            uint64_t packet_sequence;
-            void * packet = snapshot_server_receive_packet( server, 1, &packet_bytes, &packet_sequence );
-            if ( !packet )
-                break;
-            (void) packet_sequence;
-            snapshot_assert( packet_bytes == SNAPSHOT_MAX_PACKET_SIZE );
-            snapshot_assert( memcmp( packet, packet_data, SNAPSHOT_MAX_PACKET_SIZE ) == 0 );            
-            regular_server_num_packets_received++;
-            snapshot_server_free_packet( server, packet );
-        }
-
-        if ( loopback_client_num_packets_received >= 10 && loopback_server_num_packets_received >= 10 &&
-             regular_client_num_packets_received >= 10 && regular_server_num_packets_received >= 10 )
-            break;
-
-        if ( snapshot_client_state( regular_client ) <= SNAPSHOT_CLIENT_STATE_DISCONNECTED )
-            break;
-
-        time += delta_time;
-    }
-
-    check( loopback_client_num_packets_received >= 10 );
-    check( loopback_server_num_packets_received >= 10 );
-    check( regular_client_num_packets_received >= 10 );
-    check( regular_server_num_packets_received >= 10 );
-    check( context.num_loopback_packets_sent_to_client >= 10 );
-    check( context.num_loopback_packets_sent_to_server >= 10 );
+    snapshot_check( snapshot_client_index( loopback_client ) == 0 );
+    snapshot_check( snapshot_client_loopback( loopback_client ) == 1 );
+    snapshot_check( snapshot_client_max_clients( loopback_client ) == max_clients );
+    snapshot_check( snapshot_client_state( loopback_client ) == SNAPSHOT_CLIENT_STATE_CONNECTED );
 
     // verify the regular client times out but loopback client doesn't
 
@@ -2134,20 +2030,20 @@ void test_loopback()
 
     snapshot_server_update( server, time );
 
-    check( snapshot_server_client_connected( server, 0 ) == 1 );
-    check( snapshot_server_client_connected( server, 1 ) == 0 );
+    snapshot_check( snapshot_server_client_connected( server, 0 ) == 1 );
+    snapshot_check( snapshot_server_client_connected( server, 1 ) == 0 );
 
     snapshot_client_update( loopback_client, time );
 
-    check( snapshot_client_state( loopback_client ) == SNAPSHOT_CLIENT_STATE_CONNECTED );
+    snapshot_check( snapshot_client_state( loopback_client ) == SNAPSHOT_CLIENT_STATE_CONNECTED );
 
     // verify that disconnect all clients leaves loopback clients alone
 
     snapshot_server_disconnect_all_clients( server );
 
-    check( snapshot_server_client_connected( server, 0 ) == 1 );
-    check( snapshot_server_client_connected( server, 1 ) == 0 );
-    check( snapshot_server_client_loopback( server, 0 ) == 1 );
+    snapshot_check( snapshot_server_client_connected( server, 0 ) == 1 );
+    snapshot_check( snapshot_server_client_connected( server, 1 ) == 0 );
+    snapshot_check( snapshot_server_client_loopback( server, 0 ) == 1 );
 
     // clean up
 
@@ -2156,9 +2052,6 @@ void test_loopback()
     snapshot_client_destroy( loopback_client );
 
     snapshot_server_destroy( server );
-
-    snapshot_network_simulator_destroy( network_simulator );
-    */
 }
 
 #endif // #if SNAPSHOT_PLATFORM_HAS_IPV6
