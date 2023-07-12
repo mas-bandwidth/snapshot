@@ -3,10 +3,10 @@
     Commercial licensing under different terms is available. Please email licensing@mas-bandwidth.com for details.
 */
 
-#include "next.h"
+#include "snapshot.h"
 
-#ifndef SNAPSHOT_IOS_H
-#define SNAPSHOT_IOS_H
+#ifndef SNAPSHOT_PLATFORM_IOS_H
+#define SNAPSHOT_PLATFORM_IOS_H
 
 #if SNAPSHOT_PLATFORM == SNAPSHOT_PLATFORM_IOS
 
@@ -43,4 +43,4 @@ struct snapshot_platform_mutex_t
 
 #endif // #if SNAPSHOT_PLATFORM == SNAPSHOT_PLATFORM_IOS
 
-#endif // #ifndef SNAPSHOT_IOS_H
+#endif // #ifndef SNAPSHOT_PLATFORM_IOS_H

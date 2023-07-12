@@ -5,7 +5,7 @@
 
 // IMPORTANT: you must compile this file with /ZW to get windows runtime components
 
-#include "snapshot_xboxone.h"
+#include "snapshot_platform_xboxone.h"
 
 #if SNAPSHOT_PLATFORM == SNAPSHOT_PLATFORM_XBOX_ONE
 

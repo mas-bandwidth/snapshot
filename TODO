@@ -16,23 +16,25 @@
 
 	Apply network simulator to remainder of non-socket client server tests, this makes them more reliable across platforms so we don't have test failures due to timing or thread switching
 
-TODO
-
-	-------------
-
 	Setup a semaphore job.
+
+TODO
 
 	Test on linux w. GCC and clang all versions matrix, warnings = errors.
 
 	Test on mac.
 
-	Can I run custom semaphore nodes on windows yet?
+	Can I run custom semaphore nodes on windows yet? Yes.
 
 	-------------
 
 	Test on consoles
 
 	Probably need to bring across and modify the testbed projects from next SDK...
+
+	-------------
+
+	Setup custom agents on machines and set them up to build console versions
 
 	-------------
 
@@ -49,7 +51,36 @@ TODO
 	-------------
 
 	Implement a passthrough packet type so we can pass through UE packets.
-	
+
+	-------------
+
+	Setup a snapshot UE4 plugin
+
+	-------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	-------------
 
 	Fix up the crypto AEAD todos so they call into official snapshot_crypto_* functions.
