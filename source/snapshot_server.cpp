@@ -174,7 +174,10 @@ struct snapshot_server_t * snapshot_server_create( const char * server_address_s
     struct snapshot_server_t * server = (struct snapshot_server_t*) snapshot_malloc( config->context, sizeof( struct snapshot_server_t ) );
     if ( !server )
     {
-        snapshot_platform_socket_destroy( socket );
+        if ( socket )
+        {
+            snapshot_platform_socket_destroy( socket );
+        }
         return NULL;
     }
 
@@ -234,7 +237,10 @@ void snapshot_server_destroy( struct snapshot_server_t * server )
 
     snapshot_server_stop( server );
 
-    snapshot_platform_socket_destroy( server->socket );
+    if ( server->socket )
+    {
+        snapshot_platform_socket_destroy( server->socket );
+    }
 
     snapshot_free( server->config.context, server );
 }

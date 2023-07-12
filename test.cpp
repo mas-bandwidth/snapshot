@@ -2032,7 +2032,74 @@ void test_client_server_loopback()
 
 void test_client_server_network_simulator()
 {
-    // todo
+    struct snapshot_network_simulator_t * network_simulator = snapshot_network_simulator_create( NULL );
+
+    snapshot_network_simulator_set( network_simulator, 250, 250, 5, 10 );
+
+    double time = 0.0;
+    double delta_time = 1.0 / 10.0;
+
+    struct snapshot_client_config_t client_config;
+    snapshot_default_client_config( &client_config );
+    client_config.network_simulator = network_simulator;
+
+    struct snapshot_client_t * client = snapshot_client_create( "0.0.0.0:50000", &client_config, time );
+
+    snapshot_check( client );
+
+    uint8_t private_key[SNAPSHOT_KEY_BYTES];
+    snapshot_crypto_random_bytes( private_key, SNAPSHOT_KEY_BYTES );
+
+    struct snapshot_server_config_t server_config;
+    snapshot_default_server_config( &server_config );
+    server_config.protocol_id = TEST_PROTOCOL_ID;
+    server_config.network_simulator = network_simulator;
+    memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
+
+    const char * server_address = "127.0.0.1:40000";
+
+    struct snapshot_server_t * server = snapshot_server_create( server_address, &server_config, time );
+
+    snapshot_check( server );
+
+    snapshot_server_start( server, 1 );
+
+    uint8_t connect_token[SNAPSHOT_CONNECT_TOKEN_BYTES];
+
+    uint64_t client_id = 0;
+    snapshot_crypto_random_bytes( (uint8_t*) &client_id, 8 );
+
+    uint8_t user_data[SNAPSHOT_USER_DATA_BYTES];
+    snapshot_crypto_random_bytes(user_data, SNAPSHOT_USER_DATA_BYTES);
+
+    snapshot_check( snapshot_generate_connect_token( 1, &server_address, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
+
+    snapshot_client_connect( client, connect_token );
+
+    while ( 1 )
+    {
+        snapshot_network_simulator_update( network_simulator, time );
+
+        snapshot_client_update( client, time );
+
+        snapshot_server_update( server, time );
+
+        if ( snapshot_client_state( client ) <= SNAPSHOT_CLIENT_STATE_DISCONNECTED )
+            break;
+
+        if ( snapshot_client_state( client ) == SNAPSHOT_CLIENT_STATE_CONNECTED )
+            break;
+
+        time += delta_time;
+    }
+
+    snapshot_check( snapshot_client_state( client ) == SNAPSHOT_CLIENT_STATE_CONNECTED );
+
+    snapshot_server_destroy( server );
+
+    snapshot_client_destroy( client );
+
+    snapshot_network_simulator_destroy ( network_simulator );
 }
 
 void test_client_server_keep_alive()

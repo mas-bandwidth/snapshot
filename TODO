@@ -1,4 +1,4 @@
-DONE
+8520DONE
 
 	Clean up the internal address stuff. I *really* don't think we need it.
 
@@ -14,11 +14,11 @@ DONE
 
 TODO
 
-	Get network simulator test working with loopback
-
 	Get network simulator test working with ipv4 sockets
 
 	Get network simulator test working with ipv6 sockets
+
+	Get network simulator test working with loopback
 
 	-------------
 
@@ -70,7 +70,7 @@ TODO
 
 	Incorporate reliable.io source code
 
-	Update license to include netcode.io source code
+	Update license to include reliable.io source code
 
 	Integrate reliable so we have packet fragmentation and re-assembly, and sequence numbers and acks.
 

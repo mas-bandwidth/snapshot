@@ -114,7 +114,10 @@ struct snapshot_client_t * snapshot_client_create( const char * bind_address_str
 
     if ( !client )
     {
-        snapshot_platform_socket_destroy( socket );
+        if ( socket )
+        {
+            snapshot_platform_socket_destroy( socket );
+        }
         return NULL;
     }
 
@@ -172,7 +175,10 @@ void snapshot_client_destroy( struct snapshot_client_t * client )
         snapshot_client_disconnect_loopback( client );
     }
     */
-    snapshot_platform_socket_destroy( client->socket );
+    if ( client->socket )
+    {
+        snapshot_platform_socket_destroy( client->socket );
+    }
     snapshot_free( client->config.context, client );
 }
 
@@ -476,7 +482,8 @@ void snapshot_client_send_packet_to_server_internal( struct snapshot_client_t * 
 {
     snapshot_assert( client );
     snapshot_assert( !client->loopback );
-    
+
+    // todo: go zero copy on packet write
     uint8_t packet_data[SNAPSHOT_MAX_PACKET_BYTES];
 
     int packet_bytes = snapshot_write_packet( packet, 

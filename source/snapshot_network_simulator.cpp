@@ -21,9 +21,7 @@ struct snapshot_network_simulator_packet_entry_t
 
 struct snapshot_network_simulator_t
 {
-    void * allocator_context;
-    void * (*allocate_function)(void*,uint64_t);
-    void (*free_function)(void*,void*);
+    void * context;
     float latency_milliseconds;
     float jitter_milliseconds;
     float packet_loss_percent;
@@ -35,15 +33,15 @@ struct snapshot_network_simulator_t
     struct snapshot_network_simulator_packet_entry_t pending_receive_packets[SNAPSHOT_NETWORK_SIMULATOR_NUM_PENDING_RECEIVE_PACKETS];
 };
 
-struct snapshot_network_simulator_t * snapshot_network_simulator_create( void * allocator_context )
+struct snapshot_network_simulator_t * snapshot_network_simulator_create( void * context )
 {
-    struct snapshot_network_simulator_t * network_simulator = (struct snapshot_network_simulator_t*) snapshot_malloc( allocator_context, sizeof( struct snapshot_network_simulator_t ) );
+    struct snapshot_network_simulator_t * network_simulator = (struct snapshot_network_simulator_t*) snapshot_malloc( context, sizeof( struct snapshot_network_simulator_t ) );
 
     snapshot_assert( network_simulator );
 
     memset( network_simulator, 0, sizeof( struct snapshot_network_simulator_t ) );
 
-    network_simulator->allocator_context = allocator_context;
+    network_simulator->context = context;
 
     return network_simulator;
 }
@@ -69,13 +67,13 @@ void snapshot_network_simulator_reset( struct snapshot_network_simulator_t * net
     int i;
     for ( i = 0; i < SNAPSHOT_NETWORK_SIMULATOR_NUM_PACKET_ENTRIES; ++i )
     {
-        network_simulator->free_function( network_simulator->allocator_context, network_simulator->packet_entries[i].packet_data );
+        snapshot_free( network_simulator->context, network_simulator->packet_entries[i].packet_data );
         memset( &network_simulator->packet_entries[i], 0, sizeof( struct snapshot_network_simulator_packet_entry_t ) );
     }
 
     for ( i = 0; i < network_simulator->num_pending_receive_packets; ++i )
     {
-        network_simulator->free_function( network_simulator->allocator_context, network_simulator->pending_receive_packets[i].packet_data );
+        snapshot_free( network_simulator->context, network_simulator->pending_receive_packets[i].packet_data );
         memset( &network_simulator->pending_receive_packets[i], 0, sizeof( struct snapshot_network_simulator_packet_entry_t ) );
     }
 
@@ -92,7 +90,7 @@ void snapshot_network_simulator_destroy( struct snapshot_network_simulator_t * n
 {
     snapshot_assert( network_simulator );
     snapshot_network_simulator_reset( network_simulator );
-    network_simulator->free_function( network_simulator->allocator_context, network_simulator );
+    snapshot_free( network_simulator->context, network_simulator );
 }
 
 float snapshot_random_float( float a, float b )
@@ -111,9 +109,15 @@ void snapshot_network_simulator_queue_packet( struct snapshot_network_simulator_
                                               int packet_bytes, 
                                               float delay )
 {
+    snapshot_assert( network_simulator );
+    snapshot_assert( from );
+    snapshot_assert( to );
+    snapshot_assert( packet_data );
+    snapshot_assert( packet_bytes > 0 );
+
     network_simulator->packet_entries[network_simulator->current_index].from = *from;
     network_simulator->packet_entries[network_simulator->current_index].to = *to;
-    network_simulator->packet_entries[network_simulator->current_index].packet_data = (uint8_t*) network_simulator->allocate_function( network_simulator->allocator_context, packet_bytes );
+    network_simulator->packet_entries[network_simulator->current_index].packet_data = (uint8_t*) snapshot_malloc( network_simulator->context, packet_bytes );
     memcpy( network_simulator->packet_entries[network_simulator->current_index].packet_data, packet_data, packet_bytes );
     network_simulator->packet_entries[network_simulator->current_index].packet_bytes = packet_bytes;
     network_simulator->packet_entries[network_simulator->current_index].delivery_time = network_simulator->time + delay;
@@ -141,7 +145,7 @@ void snapshot_network_simulator_send_packet( struct snapshot_network_simulator_t
 
     if ( network_simulator->packet_entries[network_simulator->current_index].packet_data )
     {
-        network_simulator->free_function( network_simulator->allocator_context, network_simulator->packet_entries[network_simulator->current_index].packet_data );
+        snapshot_free( network_simulator->context, network_simulator->packet_entries[network_simulator->current_index].packet_data );
         network_simulator->packet_entries[network_simulator->current_index].packet_data = NULL;
     }
 
@@ -213,7 +217,7 @@ void snapshot_network_simulator_update( struct snapshot_network_simulator_t * ne
     {
         if ( network_simulator->pending_receive_packets[i].packet_data )
         {
-            network_simulator->free_function( network_simulator->allocator_context, network_simulator->pending_receive_packets[i].packet_data );
+            snapshot_free( network_simulator->context, network_simulator->pending_receive_packets[i].packet_data );
             network_simulator->pending_receive_packets[i].packet_data = NULL;
         }
     }
