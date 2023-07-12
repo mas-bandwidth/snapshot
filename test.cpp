@@ -2104,6 +2104,10 @@ void test_client_server_network_simulator()
 
 void test_client_server_keep_alive()
 {
+    struct snapshot_network_simulator_t * network_simulator = snapshot_network_simulator_create( NULL );
+
+    snapshot_network_simulator_set( network_simulator, 250, 250, 5, 10 );
+
     double time = 0.0;
     double delta_time = 1.0 / 10.0;
 
@@ -2114,6 +2118,7 @@ void test_client_server_keep_alive()
 
     struct snapshot_client_config_t client_config;
     snapshot_default_client_config( &client_config );
+    client_config.network_simulator = network_simulator;
 
     struct snapshot_client_t * client = snapshot_client_create( "0.0.0.0:30000", &client_config, time );
 
@@ -2122,6 +2127,7 @@ void test_client_server_keep_alive()
     struct snapshot_server_config_t server_config;
     snapshot_default_server_config( &server_config );
     server_config.protocol_id = TEST_PROTOCOL_ID;
+    server_config.network_simulator = network_simulator;
     memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
 
     struct snapshot_server_t * server = snapshot_server_create( "127.0.0.1:40000", &server_config, time );
@@ -2146,6 +2152,8 @@ void test_client_server_keep_alive()
 
     while ( 1 )
     {
+        snapshot_network_simulator_update( network_simulator, time );
+
         snapshot_client_update( client, time );
 
         snapshot_server_update( server, time );
@@ -2171,6 +2179,8 @@ void test_client_server_keep_alive()
     int i;
     for ( i = 0; i < num_iterations; ++i )
     {
+        snapshot_network_simulator_update( network_simulator, time );
+
         snapshot_client_update( client, time );
 
         snapshot_server_update( server, time );
@@ -2189,10 +2199,16 @@ void test_client_server_keep_alive()
     snapshot_server_destroy( server );
 
     snapshot_client_destroy( client );
+
+    snapshot_network_simulator_destroy( network_simulator );
 }
 
 void test_client_server_multiple_clients()
 {
+    struct snapshot_network_simulator_t * network_simulator = snapshot_network_simulator_create( NULL );
+
+    snapshot_network_simulator_set( network_simulator, 250, 250, 5, 10 );
+
     #define NUM_START_STOP_ITERATIONS 3
 
     uint8_t private_key[SNAPSHOT_KEY_BYTES];
@@ -2206,6 +2222,7 @@ void test_client_server_multiple_clients()
     struct snapshot_server_config_t server_config;
     snapshot_default_server_config( &server_config );
     server_config.protocol_id = TEST_PROTOCOL_ID;
+    server_config.network_simulator = network_simulator;
     memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
 
     struct snapshot_server_t * server = snapshot_server_create( "127.0.0.1:40000", &server_config, time );
@@ -2231,6 +2248,7 @@ void test_client_server_multiple_clients()
 
             struct snapshot_client_config_t client_config;
             snapshot_default_client_config( &client_config );
+            client_config.network_simulator = network_simulator;
 
             client[j] = snapshot_client_create( client_bind_address, &client_config, time );
 
@@ -2263,6 +2281,8 @@ void test_client_server_multiple_clients()
 
         while ( 1 )
         {
+            snapshot_network_simulator_update( network_simulator, time );
+
             for ( int j = 0; j < max_clients[i]; ++j )
             {
                 snapshot_client_update( client[j], time );
@@ -2306,10 +2326,16 @@ void test_client_server_multiple_clients()
     }
 
     snapshot_server_destroy( server );
+
+    snapshot_network_simulator_destroy( network_simulator );
 }
 
 void test_client_server_multiple_servers()
 {
+    struct snapshot_network_simulator_t * network_simulator = snapshot_network_simulator_create( NULL );
+
+    snapshot_network_simulator_set( network_simulator, 250, 250, 5, 10 );
+
     uint8_t private_key[SNAPSHOT_KEY_BYTES];
     snapshot_crypto_random_bytes( private_key, SNAPSHOT_KEY_BYTES );
 
@@ -2318,6 +2344,7 @@ void test_client_server_multiple_servers()
 
     struct snapshot_client_config_t client_config;
     snapshot_default_client_config( &client_config );
+    client_config.network_simulator = network_simulator;
 
     struct snapshot_client_t * client = snapshot_client_create( "0.0.0.0:30000", &client_config, time );
 
@@ -2326,6 +2353,7 @@ void test_client_server_multiple_servers()
     struct snapshot_server_config_t server_config;
     snapshot_default_server_config( &server_config );
     server_config.protocol_id = TEST_PROTOCOL_ID;
+    server_config.network_simulator = network_simulator;
     memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
 
     struct snapshot_server_t * server = snapshot_server_create( "127.0.0.1:40000", &server_config, time );
@@ -2350,6 +2378,8 @@ void test_client_server_multiple_servers()
 
     while ( 1 )
     {
+        snapshot_network_simulator_update( network_simulator, time );
+
         snapshot_client_update( client, time );
 
         snapshot_server_update( server, time );
@@ -2371,6 +2401,8 @@ void test_client_server_multiple_servers()
     snapshot_server_destroy( server );
 
     snapshot_client_destroy( client );
+
+    snapshot_network_simulator_destroy( network_simulator );
 }
 
 void test_client_error_connect_token_expired()
@@ -2437,6 +2469,10 @@ void test_client_error_invalid_connect_token()
 
 void test_client_error_connection_timed_out()
 {
+    struct snapshot_network_simulator_t * network_simulator = snapshot_network_simulator_create( NULL );
+
+    snapshot_network_simulator_set( network_simulator, 250, 250, 5, 10 );
+
     uint8_t private_key[SNAPSHOT_KEY_BYTES];
     snapshot_crypto_random_bytes( private_key, SNAPSHOT_KEY_BYTES );
 
@@ -2447,6 +2483,7 @@ void test_client_error_connection_timed_out()
 
     struct snapshot_client_config_t client_config;
     snapshot_default_client_config( &client_config );
+    client_config.network_simulator = network_simulator;
 
     struct snapshot_client_t * client = snapshot_client_create( "0.0.0.0:30000", &client_config, time );
 
@@ -2455,6 +2492,7 @@ void test_client_error_connection_timed_out()
     struct snapshot_server_config_t server_config;
     snapshot_default_server_config( &server_config );
     server_config.protocol_id = TEST_PROTOCOL_ID;
+    server_config.network_simulator = network_simulator;
     memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
 
     struct snapshot_server_t * server = snapshot_server_create( "127.0.0.1:40000", &server_config, time );
@@ -2479,6 +2517,8 @@ void test_client_error_connection_timed_out()
 
     while ( 1 )
     {
+        snapshot_network_simulator_update( network_simulator, time );
+
         snapshot_client_update( client, time );
 
         snapshot_server_update( server, time );
@@ -2501,6 +2541,8 @@ void test_client_error_connection_timed_out()
 
     while ( 1 )
     {
+        snapshot_network_simulator_update( network_simulator, time );
+
         snapshot_client_update( client, time );
 
         if ( snapshot_client_state( client ) <= SNAPSHOT_CLIENT_STATE_DISCONNECTED )
@@ -2514,10 +2556,16 @@ void test_client_error_connection_timed_out()
     snapshot_server_destroy( server );
 
     snapshot_client_destroy( client );
+
+    snapshot_network_simulator_destroy( network_simulator );
 }
 
 void test_client_error_connection_response_timeout()
 {
+    struct snapshot_network_simulator_t * network_simulator = snapshot_network_simulator_create( NULL );
+
+    snapshot_network_simulator_set( network_simulator, 250, 250, 5, 10 );
+
     uint8_t private_key[SNAPSHOT_KEY_BYTES];
     snapshot_crypto_random_bytes( private_key, SNAPSHOT_KEY_BYTES );
 
@@ -2526,6 +2574,7 @@ void test_client_error_connection_response_timeout()
 
     struct snapshot_client_config_t client_config;
     snapshot_default_client_config( &client_config );
+    client_config.network_simulator = network_simulator;
 
     struct snapshot_client_t * client = snapshot_client_create( "0.0.0.0:30000", &client_config, time );
 
@@ -2534,6 +2583,7 @@ void test_client_error_connection_response_timeout()
     struct snapshot_server_config_t server_config;
     snapshot_default_server_config( &server_config );
     server_config.protocol_id = TEST_PROTOCOL_ID;
+    server_config.network_simulator = network_simulator;
     memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
 
     struct snapshot_server_t * server = snapshot_server_create( "127.0.0.1:40000", &server_config, time );
@@ -2560,6 +2610,8 @@ void test_client_error_connection_response_timeout()
 
     while ( 1 )
     {
+        snapshot_network_simulator_update( network_simulator, time );
+
         snapshot_client_update( client, time );
 
         snapshot_server_update( server, time );
@@ -2578,10 +2630,16 @@ void test_client_error_connection_response_timeout()
     snapshot_server_destroy( server );
 
     snapshot_client_destroy( client );
+
+    snapshot_network_simulator_destroy( network_simulator );
 }
 
 void test_client_error_connection_request_timeout()
 {
+    struct snapshot_network_simulator_t * network_simulator = snapshot_network_simulator_create( NULL );
+
+    snapshot_network_simulator_set( network_simulator, 250, 250, 5, 10 );
+
     uint8_t private_key[SNAPSHOT_KEY_BYTES];
     snapshot_crypto_random_bytes( private_key, SNAPSHOT_KEY_BYTES );
 
@@ -2590,6 +2648,7 @@ void test_client_error_connection_request_timeout()
 
     struct snapshot_client_config_t client_config;
     snapshot_default_client_config( &client_config );
+    client_config.network_simulator = network_simulator;
 
     struct snapshot_client_t * client = snapshot_client_create( "0.0.0.0:30000", &client_config, time );
 
@@ -2598,6 +2657,7 @@ void test_client_error_connection_request_timeout()
     struct snapshot_server_config_t server_config;
     snapshot_default_server_config( &server_config );
     server_config.protocol_id = TEST_PROTOCOL_ID;
+    server_config.network_simulator = network_simulator;
     memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
 
     struct snapshot_server_t * server = snapshot_server_create( "127.0.0.1:40000", &server_config, time );
@@ -2624,6 +2684,8 @@ void test_client_error_connection_request_timeout()
 
     while ( 1 )
     {
+        snapshot_network_simulator_update( network_simulator, time );
+
         snapshot_client_update( client, time );
 
         snapshot_server_update( server, time );
@@ -2642,10 +2704,16 @@ void test_client_error_connection_request_timeout()
     snapshot_server_destroy( server );
 
     snapshot_client_destroy( client );
+
+    snapshot_network_simulator_destroy( network_simulator );
 }
 
 void test_client_error_connection_denied()
 {
+    struct snapshot_network_simulator_t * network_simulator = snapshot_network_simulator_create( NULL );
+
+    snapshot_network_simulator_set( network_simulator, 250, 250, 5, 10 );
+
     uint8_t private_key[SNAPSHOT_KEY_BYTES];
     snapshot_crypto_random_bytes( private_key, SNAPSHOT_KEY_BYTES );
 
@@ -2656,6 +2724,7 @@ void test_client_error_connection_denied()
 
     struct snapshot_client_config_t client_config;
     snapshot_default_client_config( &client_config );
+    client_config.network_simulator = network_simulator;
 
     struct snapshot_client_t * client = snapshot_client_create( "0.0.0.0:30000", &client_config, time );
 
@@ -2664,6 +2733,7 @@ void test_client_error_connection_denied()
     struct snapshot_server_config_t server_config;
     snapshot_default_server_config( &server_config );
     server_config.protocol_id = TEST_PROTOCOL_ID;
+    server_config.network_simulator = network_simulator;
     memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
 
     struct snapshot_server_t * server = snapshot_server_create( "127.0.0.1:40000", &server_config, time );
@@ -2688,6 +2758,8 @@ void test_client_error_connection_denied()
 
     while ( 1 )
     {
+        snapshot_network_simulator_update( network_simulator, time );
+
         snapshot_client_update( client, time );
 
         snapshot_server_update( server, time );
@@ -2726,6 +2798,8 @@ void test_client_error_connection_denied()
 
     while ( 1 )
     {
+        snapshot_network_simulator_update( network_simulator, time );
+
         snapshot_client_update( client, time );
 
         snapshot_client_update( client2, time );
@@ -2751,10 +2825,16 @@ void test_client_error_connection_denied()
     snapshot_client_destroy( client );
     
     snapshot_client_destroy( client2 );
+
+    snapshot_network_simulator_destroy( network_simulator );
 }
 
 void test_client_side_disconnect()
 {
+    struct snapshot_network_simulator_t * network_simulator = snapshot_network_simulator_create( NULL );
+
+    snapshot_network_simulator_set( network_simulator, 250, 250, 5, 10 );
+
     uint8_t private_key[SNAPSHOT_KEY_BYTES];
     snapshot_crypto_random_bytes( private_key, SNAPSHOT_KEY_BYTES );
 
@@ -2765,6 +2845,7 @@ void test_client_side_disconnect()
 
     struct snapshot_client_config_t client_config;
     snapshot_default_client_config( &client_config );
+    client_config.network_simulator = network_simulator;
 
     struct snapshot_client_t * client = snapshot_client_create( "0.0.0.0:30000", &client_config, time );
 
@@ -2773,6 +2854,7 @@ void test_client_side_disconnect()
     struct snapshot_server_config_t server_config;
     snapshot_default_server_config( &server_config );
     server_config.protocol_id = TEST_PROTOCOL_ID;
+    server_config.network_simulator = network_simulator;
     memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
 
     struct snapshot_server_t * server = snapshot_server_create( "127.0.0.1:40000", &server_config, time );
@@ -2797,6 +2879,8 @@ void test_client_side_disconnect()
 
     while ( 1 )
     {
+        snapshot_network_simulator_update( network_simulator, time );
+
         snapshot_client_update( client, time );
 
         snapshot_server_update( server, time );
@@ -2822,6 +2906,8 @@ void test_client_side_disconnect()
     int i;
     for ( i = 0; i < 10; ++i )
     {
+        snapshot_network_simulator_update( network_simulator, time );
+
         snapshot_client_update( client, time );
 
         snapshot_server_update( server, time );
@@ -2838,10 +2924,16 @@ void test_client_side_disconnect()
     snapshot_server_destroy( server );
 
     snapshot_client_destroy( client );
+
+    snapshot_network_simulator_destroy( network_simulator );
 }
 
 void test_server_side_disconnect()
 {
+    struct snapshot_network_simulator_t * network_simulator = snapshot_network_simulator_create( NULL );
+
+    snapshot_network_simulator_set( network_simulator, 250, 250, 5, 10 );
+
     uint8_t private_key[SNAPSHOT_KEY_BYTES];
     snapshot_crypto_random_bytes( private_key, SNAPSHOT_KEY_BYTES );
 
@@ -2852,6 +2944,7 @@ void test_server_side_disconnect()
 
     struct snapshot_client_config_t client_config;
     snapshot_default_client_config( &client_config );
+    client_config.network_simulator = network_simulator;
 
     struct snapshot_client_t * client = snapshot_client_create( "0.0.0.0:30000", &client_config, time );
 
@@ -2860,6 +2953,7 @@ void test_server_side_disconnect()
     struct snapshot_server_config_t server_config;
     snapshot_default_server_config( &server_config );
     server_config.protocol_id = TEST_PROTOCOL_ID;
+    server_config.network_simulator = network_simulator;
     memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
 
     struct snapshot_server_t * server = snapshot_server_create( "127.0.0.1:40000", &server_config, time );
@@ -2884,6 +2978,8 @@ void test_server_side_disconnect()
 
     while ( 1 )
     {
+        snapshot_network_simulator_update( network_simulator, time );
+
         snapshot_client_update( client, time );
 
         snapshot_server_update( server, time );
@@ -2909,6 +3005,8 @@ void test_server_side_disconnect()
     int i;
     for ( i = 0; i < 10; ++i )
     {
+        snapshot_network_simulator_update( network_simulator, time );
+
         snapshot_client_update( client, time );
 
         snapshot_server_update( server, time );
@@ -2926,10 +3024,16 @@ void test_server_side_disconnect()
     snapshot_server_destroy( server );
 
     snapshot_client_destroy( client );
+
+    snapshot_network_simulator_destroy( network_simulator );
 }
 
 void test_client_reconnect()
 {
+    struct snapshot_network_simulator_t * network_simulator = snapshot_network_simulator_create( NULL );
+
+    snapshot_network_simulator_set( network_simulator, 250, 250, 5, 10 );
+
     uint8_t private_key[SNAPSHOT_KEY_BYTES];
     snapshot_crypto_random_bytes( private_key, SNAPSHOT_KEY_BYTES );
 
@@ -2940,6 +3044,7 @@ void test_client_reconnect()
 
     struct snapshot_client_config_t client_config;
     snapshot_default_client_config( &client_config );
+    client_config.network_simulator = network_simulator;
 
     struct snapshot_client_t * client = snapshot_client_create( "0.0.0.0:30000", &client_config, time );
 
@@ -2948,6 +3053,7 @@ void test_client_reconnect()
     struct snapshot_server_config_t server_config;
     snapshot_default_server_config( &server_config );
     server_config.protocol_id = TEST_PROTOCOL_ID;
+    server_config.network_simulator = network_simulator;
     memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
 
     struct snapshot_server_t * server = snapshot_server_create( "127.0.0.1:40000", &server_config, time );
@@ -2972,6 +3078,8 @@ void test_client_reconnect()
 
     while ( 1 )
     {
+        snapshot_network_simulator_update( network_simulator, time );
+
         snapshot_client_update( client, time );
 
         snapshot_server_update( server, time );
@@ -2990,12 +3098,24 @@ void test_client_reconnect()
     snapshot_check( snapshot_server_client_connected( server, 0 ) == 1 );
     snapshot_check( snapshot_server_num_connected_clients( server ) == 1 );
 
+    // wait for a bit, so any packets on the wire go away (otherwise, we sometimes have connection request packets in flight which break the test...)
+
+    time += 10.0;
+
+    snapshot_network_simulator_update( network_simulator, time );
+
+    snapshot_client_update( client, time );
+
+    snapshot_server_update( server, time );
+
     // disconnect client on the server-side and wait until client sees the disconnect
 
     snapshot_server_disconnect_client( server, 0 );
 
     while ( 1 )
     {
+        snapshot_network_simulator_update( network_simulator, time );
+
         snapshot_client_update( client, time );
 
         snapshot_server_update( server, time );
@@ -3018,6 +3138,8 @@ void test_client_reconnect()
 
     while ( 1 )
     {
+        snapshot_network_simulator_update( network_simulator, time );
+
         snapshot_client_update( client, time );
 
         snapshot_server_update( server, time );
@@ -3039,10 +3161,16 @@ void test_client_reconnect()
     snapshot_server_destroy( server );
 
     snapshot_client_destroy( client );
+
+    snapshot_network_simulator_destroy( network_simulator );
 }
 
 void test_disable_timeout()
 {
+    struct snapshot_network_simulator_t * network_simulator = snapshot_network_simulator_create( NULL );
+
+    snapshot_network_simulator_set( network_simulator, 250, 250, 5, 10 );
+
     uint8_t private_key[SNAPSHOT_KEY_BYTES];
     snapshot_crypto_random_bytes( private_key, SNAPSHOT_KEY_BYTES );
 
@@ -3051,6 +3179,7 @@ void test_disable_timeout()
 
     struct snapshot_client_config_t client_config;
     snapshot_default_client_config( &client_config );
+    client_config.network_simulator = network_simulator;
 
     struct snapshot_client_t * client = snapshot_client_create( "0.0.0.0:30000", &client_config, time );
 
@@ -3059,6 +3188,7 @@ void test_disable_timeout()
     struct snapshot_server_config_t server_config;
     snapshot_default_server_config( &server_config );
     server_config.protocol_id = TEST_PROTOCOL_ID;
+    server_config.network_simulator = network_simulator;
     memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
 
     struct snapshot_server_t * server = snapshot_server_create( "127.0.0.1:40000", &server_config, time );
@@ -3084,6 +3214,8 @@ void test_disable_timeout()
 
     while ( 1 )
     {
+        snapshot_network_simulator_update( network_simulator, time );
+
         snapshot_client_update( client, time );
 
         snapshot_server_update( server, time );
@@ -3104,6 +3236,8 @@ void test_disable_timeout()
 
     for ( int i = 0; i < 100; i++ )
     {
+        snapshot_network_simulator_update( network_simulator, time );
+
         snapshot_client_update( client, time );
 
         snapshot_server_update( server, time );
@@ -3119,6 +3253,8 @@ void test_disable_timeout()
     snapshot_server_destroy( server );
 
     snapshot_client_destroy( client );
+
+    snapshot_network_simulator_destroy( network_simulator );
 }
 
 #define RUN_TEST( test_function )                                           \
