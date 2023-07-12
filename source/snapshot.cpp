@@ -74,7 +74,7 @@ const char * snapshot_log_level_string( int level )
 }
 
 static bool log_quiet;
-static int log_level = 9000; // SNAPSHOT_LOG_LEVEL_INFO;
+static int log_level = SNAPSHOT_LOG_LEVEL_INFO;
 
 static void log_function( int level, const char * format, ... )
 {
