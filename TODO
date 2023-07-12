@@ -10,6 +10,10 @@ DONE
 
 TODO
 
+	Bring back the console platform code
+
+	-------------
+
 	Get network simulator test working with loopback
 
 	Get network simulator test working with ipv4 sockets
@@ -19,21 +23,6 @@ TODO
 	-------------
 
 	Apply network simulator to remainder of non-socket client server tests, this makes them more reliable across platforms.
-
-	-------------
-
-	Bring back the console platform code
-
-	-------------
-
-
-
-
-
-
-
-
-
 
 	-------------
 
