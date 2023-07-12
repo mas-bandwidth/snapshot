@@ -10,17 +10,39 @@ DONE
 
 	Get the loopback unit test working
 
-TODO
-
 	Get the rest of the client server tests working
 
-	-------------
-	
+TODO
+
 	Clean up the internal address stuff. I *really* don't think we need it.
 
 	-------------
 
 	Setup a loopback.cpp example
+
+	-------------
+
+	Get network simulator test working with loopback
+
+	Get network simulator test working with ipv4 sockets
+
+	Get network simulator test working with ipv6 sockets
+
+	-------------
+
+	Apply network simulator to remainder of non-socket client server tests, this makes them more reliable across platforms.
+
+	-------------
+
+
+
+
+
+
+
+
+
+
 
 	-------------
 
