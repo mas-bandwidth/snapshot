@@ -10,9 +10,9 @@ DONE
 
 	Bring back the console platform code
 
-TODO
+	Bring back ios.
 
-	-------------
+TODO
 
 	Get network simulator test working with loopback
 
@@ -35,6 +35,10 @@ TODO
 	-------------
 
 	Test on consoles
+
+	Probably need to bring across the testbed projects from next SDK. 
+
+	Easiest way to complile and test for each console platform.
 
 	-------------
 
