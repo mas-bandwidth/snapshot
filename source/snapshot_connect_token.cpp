@@ -9,8 +9,7 @@
 #include <time.h>
 
 int snapshot_generate_connect_token( int num_server_addresses, 
-                                     const char ** public_server_addresses, 
-                                     const char ** internal_server_addresses, 
+                                     const char ** server_addresses, 
                                      int expire_seconds, 
                                      int timeout_seconds,
                                      uint64_t client_id, 
@@ -21,31 +20,18 @@ int snapshot_generate_connect_token( int num_server_addresses,
 {
     snapshot_assert( num_server_addresses > 0 );
     snapshot_assert( num_server_addresses <= SNAPSHOT_MAX_SERVERS_PER_CONNECT );
-    snapshot_assert( public_server_addresses );
-    snapshot_assert( internal_server_addresses );
+    snapshot_assert( server_addresses );
     snapshot_assert( private_key );
     snapshot_assert( user_data );
     snapshot_assert( output_buffer );
 
-    // parse public server addresses
+    // parse server addresses
 
-    struct snapshot_address_t parsed_public_server_addresses[SNAPSHOT_MAX_SERVERS_PER_CONNECT];
+    struct snapshot_address_t parsed_server_addresses[SNAPSHOT_MAX_SERVERS_PER_CONNECT];
     int i;
     for ( i = 0; i < num_server_addresses; ++i )
     {
-        if ( snapshot_address_parse( &parsed_public_server_addresses[i], public_server_addresses[i] ) != SNAPSHOT_OK )
-        {
-            return SNAPSHOT_ERROR;
-        }
-    }
-
-    // parse internal server addresses
-
-    // todo: do we really need internal server addresses? I doubt it.
-    struct snapshot_address_t parsed_internal_server_addresses[SNAPSHOT_MAX_SERVERS_PER_CONNECT];
-    for ( i = 0; i < num_server_addresses; ++i )
-    {
-        if ( snapshot_address_parse( &parsed_internal_server_addresses[i], internal_server_addresses[i] ) != SNAPSHOT_OK )
+        if ( snapshot_address_parse( &parsed_server_addresses[i], server_addresses[i] ) != SNAPSHOT_OK )
         {
             return SNAPSHOT_ERROR;
         }
@@ -57,7 +43,7 @@ int snapshot_generate_connect_token( int num_server_addresses,
     snapshot_crypto_random_bytes( nonce, SNAPSHOT_CONNECT_TOKEN_NONCE_BYTES );
 
     struct snapshot_connect_token_private_t connect_token_private;
-    snapshot_generate_connect_token_private( &connect_token_private, client_id, timeout_seconds, num_server_addresses, parsed_internal_server_addresses, user_data );
+    snapshot_generate_connect_token_private( &connect_token_private, client_id, timeout_seconds, num_server_addresses, parsed_server_addresses, user_data );
 
     // write it to a buffer
 
@@ -82,7 +68,7 @@ int snapshot_generate_connect_token( int num_server_addresses,
     memcpy( connect_token.private_data, connect_token_data, SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES );
     connect_token.num_server_addresses = num_server_addresses;
     for ( i = 0; i < num_server_addresses; ++i )
-        connect_token.server_addresses[i] = parsed_public_server_addresses[i];
+        connect_token.server_addresses[i] = parsed_server_addresses[i];
     memcpy( connect_token.client_to_server_key, connect_token_private.client_to_server_key, SNAPSHOT_KEY_BYTES );
     memcpy( connect_token.server_to_client_key, connect_token_private.server_to_client_key, SNAPSHOT_KEY_BYTES );
     connect_token.timeout_seconds = timeout_seconds;

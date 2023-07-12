@@ -64,7 +64,7 @@ int main( int argc, char ** argv )
 
     uint8_t connect_token[SNAPSHOT_CONNECT_TOKEN_BYTES];
 
-    if ( snapshot_generate_connect_token( 1, &server_address, &server_address, CONNECT_TOKEN_EXPIRY, CONNECT_TOKEN_TIMEOUT, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) != SNAPSHOT_OK )
+    if ( snapshot_generate_connect_token( 1, &server_address, CONNECT_TOKEN_EXPIRY, CONNECT_TOKEN_TIMEOUT, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) != SNAPSHOT_OK )
     {
         snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to generate connect token" );
         return 1;

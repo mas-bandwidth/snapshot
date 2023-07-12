@@ -27,8 +27,7 @@ struct snapshot_connect_token_t
 };
 
 int snapshot_generate_connect_token( int num_server_addresses, 
-                                     const char ** public_server_addresses, 
-                                     const char ** internal_server_addresses, 
+                                     const char ** server_addresses, 
                                      int expire_seconds, 
                                      int timeout_seconds,
                                      uint64_t client_id, 

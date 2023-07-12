@@ -1714,7 +1714,7 @@ void test_ipv4_client_server_connect()
     uint8_t user_data[SNAPSHOT_USER_DATA_BYTES];
     snapshot_crypto_random_bytes(user_data, SNAPSHOT_USER_DATA_BYTES);
 
-    snapshot_check( snapshot_generate_connect_token( 1, &server_address, &server_address, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
+    snapshot_check( snapshot_generate_connect_token( 1, &server_address, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
 
     snapshot_client_connect( client, connect_token );
 
@@ -1806,7 +1806,7 @@ void test_ipv6_client_server_connect()
     uint8_t user_data[SNAPSHOT_USER_DATA_BYTES];
     snapshot_crypto_random_bytes(user_data, SNAPSHOT_USER_DATA_BYTES);
 
-    snapshot_check( snapshot_generate_connect_token( 1, &server_address, &server_address, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
+    snapshot_check( snapshot_generate_connect_token( 1, &server_address, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
 
     snapshot_client_connect( client, connect_token );
 
@@ -1933,7 +1933,7 @@ void test_client_server_loopback()
     uint8_t user_data[SNAPSHOT_USER_DATA_BYTES];
     snapshot_crypto_random_bytes( user_data, SNAPSHOT_USER_DATA_BYTES);
 
-    snapshot_check( snapshot_generate_connect_token( 1, &server_address_string, &server_address_string, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
+    snapshot_check( snapshot_generate_connect_token( 1, &server_address_string, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
 
     snapshot_client_connect( regular_client, connect_token );
 
@@ -2069,7 +2069,7 @@ void test_client_server_keep_alive()
     uint8_t user_data[SNAPSHOT_USER_DATA_BYTES];
     snapshot_crypto_random_bytes(user_data, SNAPSHOT_USER_DATA_BYTES);
 
-    snapshot_check( snapshot_generate_connect_token( 1, &server_address, &server_address, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
+    snapshot_check( snapshot_generate_connect_token( 1, &server_address, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
 
     snapshot_client_connect( client, connect_token );
 
@@ -2177,7 +2177,6 @@ void test_client_server_multiple_clients()
 
             snapshot_check( snapshot_generate_connect_token( 1, 
                                                              &server_address, 
-                                                             &server_address, 
                                                              TEST_CONNECT_TOKEN_EXPIRY, 
                                                              TEST_TIMEOUT_SECONDS,
                                                              client_id, 
@@ -2274,7 +2273,7 @@ void test_client_server_multiple_servers()
     uint8_t user_data[SNAPSHOT_USER_DATA_BYTES];
     snapshot_crypto_random_bytes(user_data, SNAPSHOT_USER_DATA_BYTES);
 
-    snapshot_check( snapshot_generate_connect_token( 3, server_address, server_address, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
+    snapshot_check( snapshot_generate_connect_token( 3, server_address, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
 
     snapshot_client_connect( client, connect_token );
 
@@ -2327,7 +2326,7 @@ void test_client_error_connect_token_expired()
     uint8_t user_data[SNAPSHOT_USER_DATA_BYTES];
     snapshot_crypto_random_bytes(user_data, SNAPSHOT_USER_DATA_BYTES);
 
-    snapshot_check( snapshot_generate_connect_token( 1, &server_address, &server_address, 0, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
+    snapshot_check( snapshot_generate_connect_token( 1, &server_address, 0, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
 
     snapshot_client_connect( client, connect_token );
 
@@ -2403,7 +2402,7 @@ void test_client_error_connection_timed_out()
     uint8_t user_data[SNAPSHOT_USER_DATA_BYTES];
     snapshot_crypto_random_bytes(user_data, SNAPSHOT_USER_DATA_BYTES);
 
-    snapshot_check( snapshot_generate_connect_token( 1, &server_address, &server_address, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
+    snapshot_check( snapshot_generate_connect_token( 1, &server_address, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
 
     snapshot_client_connect( client, connect_token );
 
@@ -2484,7 +2483,7 @@ void test_client_error_connection_response_timeout()
     uint8_t user_data[SNAPSHOT_USER_DATA_BYTES];
     snapshot_crypto_random_bytes(user_data, SNAPSHOT_USER_DATA_BYTES);
 
-    snapshot_check( snapshot_generate_connect_token( 1, &server_address, &server_address, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
+    snapshot_check( snapshot_generate_connect_token( 1, &server_address, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
 
     snapshot_client_connect( client, connect_token );
 
@@ -2548,7 +2547,7 @@ void test_client_error_connection_request_timeout()
     uint8_t user_data[SNAPSHOT_USER_DATA_BYTES];
     snapshot_crypto_random_bytes(user_data, SNAPSHOT_USER_DATA_BYTES);
 
-    snapshot_check( snapshot_generate_connect_token( 1, &server_address, &server_address, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
+    snapshot_check( snapshot_generate_connect_token( 1, &server_address, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
 
     snapshot_client_connect( client, connect_token );
 
@@ -2612,7 +2611,7 @@ void test_client_error_connection_denied()
 
     const char * server_address = "127.0.0.1:40000";
 
-    snapshot_check( snapshot_generate_connect_token( 1, &server_address, &server_address, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
+    snapshot_check( snapshot_generate_connect_token( 1, &server_address, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
 
     snapshot_client_connect( client, connect_token );
 
@@ -2650,7 +2649,7 @@ void test_client_error_connection_denied()
     uint8_t user_data2[SNAPSHOT_USER_DATA_BYTES];
     snapshot_crypto_random_bytes(user_data2, SNAPSHOT_USER_DATA_BYTES);
 
-    snapshot_check( snapshot_generate_connect_token( 1, &server_address, &server_address, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id2, TEST_PROTOCOL_ID, private_key, user_data2, connect_token2 ) == SNAPSHOT_OK );
+    snapshot_check( snapshot_generate_connect_token( 1, &server_address, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id2, TEST_PROTOCOL_ID, private_key, user_data2, connect_token2 ) == SNAPSHOT_OK );
 
     snapshot_client_connect( client2, connect_token2 );
 
@@ -2721,7 +2720,7 @@ void test_client_side_disconnect()
     uint8_t user_data[SNAPSHOT_USER_DATA_BYTES];
     snapshot_crypto_random_bytes(user_data, SNAPSHOT_USER_DATA_BYTES);
 
-    snapshot_check( snapshot_generate_connect_token( 1, &server_address, &server_address, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
+    snapshot_check( snapshot_generate_connect_token( 1, &server_address, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
 
     snapshot_client_connect( client, connect_token );
 
@@ -2808,7 +2807,7 @@ void test_server_side_disconnect()
     uint8_t user_data[SNAPSHOT_USER_DATA_BYTES];
     snapshot_crypto_random_bytes(user_data, SNAPSHOT_USER_DATA_BYTES);
 
-    snapshot_check( snapshot_generate_connect_token( 1, &server_address, &server_address, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
+    snapshot_check( snapshot_generate_connect_token( 1, &server_address, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
 
     snapshot_client_connect( client, connect_token );
 
@@ -2896,7 +2895,7 @@ void test_client_reconnect()
     uint8_t user_data[SNAPSHOT_USER_DATA_BYTES];
     snapshot_crypto_random_bytes(user_data, SNAPSHOT_USER_DATA_BYTES);
 
-    snapshot_check( snapshot_generate_connect_token( 1, &server_address, &server_address, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
+    snapshot_check( snapshot_generate_connect_token( 1, &server_address, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
 
     snapshot_client_connect( client, connect_token );
 
@@ -2942,7 +2941,7 @@ void test_client_reconnect()
 
     // now reconnect the client and verify they connect
 
-    snapshot_check( snapshot_generate_connect_token( 1, &server_address, &server_address, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
+    snapshot_check( snapshot_generate_connect_token( 1, &server_address, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
 
     snapshot_client_connect( client, connect_token );
 
@@ -3008,7 +3007,7 @@ void test_disable_timeout()
     snapshot_crypto_random_bytes(user_data, SNAPSHOT_USER_DATA_BYTES);
 
     // IMPORTANT: passing in -1 timeout in connect token disables timeout for that client. This is useful for testing!
-    snapshot_check( snapshot_generate_connect_token( 1, &server_address, &server_address, TEST_CONNECT_TOKEN_EXPIRY, -1, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
+    snapshot_check( snapshot_generate_connect_token( 1, &server_address, TEST_CONNECT_TOKEN_EXPIRY, -1, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
 
     snapshot_client_connect( client, connect_token );
 

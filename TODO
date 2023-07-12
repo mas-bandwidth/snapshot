@@ -1,17 +1,5 @@
 DONE
 
-	Get the client successfully connecting to the server
-
-	Clean up various logs
-
-	Fix ipv6 sockets
-
-	Get the client/server unit tests back up for ipv4 sockets and ipv6 sockets
-
-	Get the loopback unit test working
-
-	Get the rest of the client server tests working
-
 TODO
 
 	Clean up the internal address stuff. I *really* don't think we need it.
