@@ -1170,4 +1170,10 @@ uint16_t snapshot_server_get_port( struct snapshot_server_t * server )
     return server->address.port;
 }
 
+void snapshot_server_set_flags( struct snapshot_server_t * server, uint64_t flags )
+{
+    snapshot_assert( server );
+    server->flags = flags;
+}
+
 // ------------------------------------------------------------------------------------------

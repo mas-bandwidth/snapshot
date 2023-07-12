@@ -61,4 +61,6 @@ void snapshot_server_process_loopback_packet( struct snapshot_server_t * server,
 
 uint16_t snapshot_server_get_port( struct snapshot_server_t * server );
 
+void snapshot_server_set_flags( struct snapshot_server_t * server, uint64_t flags );
+
 #endif // #ifndef SNAPSHOT_SERVER_H
