@@ -18,29 +18,15 @@
 
 TODO
 
-	Fix up the crypto AEAD todos so they call into official snapshot_crypto_* functions.
-
-	-------------
-
-	Let's get zero copy working on write packet, including across simulator
-
-	To do this, there should be a standard concept of a packet with a prefix in front, say 256 bytes.
-
-	snapshot_create_packet
-
-	snapshot_destroy_packet
-
-	When spending packets to the simulator, it's OK to copy. This is a non-release codepath
-
 	-------------
 
 	Setup a semaphore job.
 
 	Test on linux w. GCC and clang all versions matrix, warnings = errors.
 
-	-------------
+	Test on mac.
 
-	Test on windows
+	Can I run custom semaphore nodes on windows yet?
 
 	-------------
 
@@ -60,7 +46,27 @@ TODO
 
 
 
+	-------------
 
+	Implement a passthrough packet type so we can pass through UE packets.
+	
+	-------------
+
+	Fix up the crypto AEAD todos so they call into official snapshot_crypto_* functions.
+
+	-------------
+
+	Let's get zero copy working on write packet, including across simulator
+
+	To do this, there should be a standard concept of a packet with a prefix in front, say 256 bytes.
+
+	snapshot_create_packet
+
+	snapshot_destroy_packet
+
+	When spending packets to the simulator, it's OK to copy. This is a non-release codepath
+
+	-------------
 
 
 
