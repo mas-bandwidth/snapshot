@@ -2,9 +2,11 @@ DONE
 
 	Clean up the internal address stuff. I *really* don't think we need it.
 
+	Setup a listen server example
+
 TODO
 
-	Setup a loopback.cpp example
+	Something is up with the loopback client connect -- the server is accepting loopback into slot 0, then accepting the next client into slot 0 as well... what?
 
 	-------------
 
