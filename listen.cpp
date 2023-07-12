@@ -102,6 +102,8 @@ int main( int argc, char ** argv )
         return 1;
     }
 
+    server_address.port = snapshot_server_port( server );
+
     snapshot_server_start( server, SNAPSHOT_MAX_CLIENTS );
 
     // create a local client in slot 0
@@ -122,6 +124,8 @@ int main( int argc, char ** argv )
     uint64_t client_id = 0;
     snapshot_crypto_random_bytes( (uint8_t*) &client_id, 8 );
     snapshot_client_connect_loopback( client, &server_address, 0, SNAPSHOT_MAX_CLIENTS );
+
+    snapshot_server_connect_loopback_client( server, 0, client_id, NULL );
 
     loopback_context.client = client;
 

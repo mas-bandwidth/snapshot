@@ -4,11 +4,11 @@ DONE
 
 	Setup a listen server example
 
-TODO
-
 	Something is up with the loopback client connect -- the server is accepting loopback into slot 0, then accepting the next client into slot 0 as well... what?
 
-	-------------
+	Fixed. I just hadn't connected the loopback client on the server side.
+
+TODO
 
 	Get network simulator test working with loopback
 

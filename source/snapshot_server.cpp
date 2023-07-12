@@ -1096,8 +1096,8 @@ void snapshot_server_connect_loopback_client( struct snapshot_server_t * server,
 
     snapshot_assert( server->num_connected_clients <= server->max_clients );
 
-    server->client_loopback[client_index] = 1;
     server->client_connected[client_index] = 1;
+    server->client_loopback[client_index] = 1;
     server->client_confirmed[client_index] = 1;
     server->client_encryption_index[client_index] = -1;
     server->client_id[client_index] = client_id;
