@@ -2303,6 +2303,149 @@ void test_client_server_multiple_servers()
     snapshot_client_destroy( client );
 }
 
+void test_client_error_connect_token_expired()
+{
+    uint8_t private_key[SNAPSHOT_KEY_BYTES];
+    snapshot_crypto_random_bytes( private_key, SNAPSHOT_KEY_BYTES );
+
+    double time = 0.0;
+
+    struct snapshot_client_config_t client_config;
+    snapshot_default_client_config( &client_config );
+    
+    struct snapshot_client_t * client = snapshot_client_create( "0.0.0.0:30000", &client_config, time );
+
+    snapshot_check( client );
+
+    const char * server_address = "127.0.0.1:40000";
+
+    uint8_t connect_token[SNAPSHOT_CONNECT_TOKEN_BYTES];
+
+    uint64_t client_id = 0;
+    snapshot_crypto_random_bytes( (uint8_t*) &client_id, 8 );
+
+    uint8_t user_data[SNAPSHOT_USER_DATA_BYTES];
+    snapshot_crypto_random_bytes(user_data, SNAPSHOT_USER_DATA_BYTES);
+
+    snapshot_check( snapshot_generate_connect_token( 1, &server_address, &server_address, 0, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
+
+    snapshot_client_connect( client, connect_token );
+
+    snapshot_client_update( client, time );
+
+    snapshot_check( snapshot_client_state( client ) == SNAPSHOT_CLIENT_STATE_CONNECT_TOKEN_EXPIRED );
+
+    snapshot_client_destroy( client );
+}
+
+void test_client_error_invalid_connect_token()
+{
+    uint8_t private_key[SNAPSHOT_KEY_BYTES];
+    snapshot_crypto_random_bytes( private_key, SNAPSHOT_KEY_BYTES );
+
+    double time = 0.0;
+
+    struct snapshot_client_config_t client_config;
+    snapshot_default_client_config( &client_config );
+
+    struct snapshot_client_t * client = snapshot_client_create( "0.0.0.0:30000", &client_config, time );
+
+    snapshot_check( client );
+
+    uint8_t connect_token[SNAPSHOT_CONNECT_TOKEN_BYTES];
+    snapshot_crypto_random_bytes( connect_token, SNAPSHOT_CONNECT_TOKEN_BYTES );
+
+    uint64_t client_id = 0;
+    snapshot_crypto_random_bytes( (uint8_t*) &client_id, 8 );
+
+    snapshot_client_connect( client, connect_token );
+
+    snapshot_check( snapshot_client_state( client ) == SNAPSHOT_CLIENT_STATE_INVALID_CONNECT_TOKEN );
+
+    snapshot_client_destroy( client );
+}
+
+void test_client_error_connection_timed_out()
+{
+    uint8_t private_key[SNAPSHOT_KEY_BYTES];
+    snapshot_crypto_random_bytes( private_key, SNAPSHOT_KEY_BYTES );
+
+    double time = 0.0;
+    double delta_time = 1.0 / 10.0;
+
+    // connect a client to the server
+
+    struct snapshot_client_config_t client_config;
+    snapshot_default_client_config( &client_config );
+
+    struct snapshot_client_t * client = snapshot_client_create( "0.0.0.0:30000", &client_config, time );
+
+    snapshot_check( client );
+
+    struct snapshot_server_config_t server_config;
+    snapshot_default_server_config( &server_config );
+    server_config.protocol_id = TEST_PROTOCOL_ID;
+    memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
+
+    struct snapshot_server_t * server = snapshot_server_create( "127.0.0.1:40000", &server_config, time );
+
+    snapshot_check( server );
+
+    snapshot_server_start( server, 1 );
+
+    const char * server_address = "127.0.0.1:40000";
+
+    uint8_t connect_token[SNAPSHOT_CONNECT_TOKEN_BYTES];
+
+    uint64_t client_id = 0;
+    snapshot_crypto_random_bytes( (uint8_t*) &client_id, 8 );
+
+    uint8_t user_data[SNAPSHOT_USER_DATA_BYTES];
+    snapshot_crypto_random_bytes(user_data, SNAPSHOT_USER_DATA_BYTES);
+
+    snapshot_check( snapshot_generate_connect_token( 1, &server_address, &server_address, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
+
+    snapshot_client_connect( client, connect_token );
+
+    while ( 1 )
+    {
+        snapshot_client_update( client, time );
+
+        snapshot_server_update( server, time );
+
+        if ( snapshot_client_state( client ) <= SNAPSHOT_CLIENT_STATE_DISCONNECTED )
+            break;
+
+        if ( snapshot_client_state( client ) == SNAPSHOT_CLIENT_STATE_CONNECTED )
+            break;
+
+        time += delta_time;
+    }
+
+    snapshot_check( snapshot_client_state( client ) == SNAPSHOT_CLIENT_STATE_CONNECTED );
+    snapshot_check( snapshot_client_index( client ) == 0 );
+    snapshot_check( snapshot_server_client_connected( server, 0 ) == 1 );
+    snapshot_check( snapshot_server_num_connected_clients( server ) == 1 );
+
+    // now disable updating the server and verify that the client times out
+
+    while ( 1 )
+    {
+        snapshot_client_update( client, time );
+
+        if ( snapshot_client_state( client ) <= SNAPSHOT_CLIENT_STATE_DISCONNECTED )
+            break;
+
+        time += delta_time;
+    }
+
+    snapshot_check( snapshot_client_state( client ) == SNAPSHOT_CLIENT_STATE_CONNECTION_TIMED_OUT );
+
+    snapshot_server_destroy( server );
+
+    snapshot_client_destroy( client );
+}
+
 #define RUN_TEST( test_function )                                           \
     do                                                                      \
     {                                                                       \
@@ -2361,12 +2504,11 @@ void test()
         RUN_TEST( test_client_server_network_simulator );
         RUN_TEST( test_client_server_keep_alive );
         RUN_TEST( test_client_server_multiple_clients );
-
         RUN_TEST( test_client_server_multiple_servers );
-
-        /*
         RUN_TEST( test_client_error_connect_token_expired );
         RUN_TEST( test_client_error_invalid_connect_token );
+
+        /*
         RUN_TEST( test_client_error_connection_timed_out );
         RUN_TEST( test_client_error_connection_response_timeout );
         RUN_TEST( test_client_error_connection_request_timeout );
