@@ -1849,6 +1849,8 @@ void client_send_loopback_packet_callback( void * context, int client_index, con
     (void) packet_data;
     (void) packet_bytes;
     (void) packet_sequence;
+
+    // todo: pass loopback packet to server
 }
 
 void server_send_loopback_packet_callback( void * context, int client_index, const uint8_t * packet_data, int packet_bytes, uint64_t packet_sequence )
@@ -1858,6 +1860,8 @@ void server_send_loopback_packet_callback( void * context, int client_index, con
     (void) packet_data;
     (void) packet_bytes;
     (void) packet_sequence;
+
+    // todo: pass loopback packet to client
 }
 
 void test_client_server_loopback()

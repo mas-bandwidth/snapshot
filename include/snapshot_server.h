@@ -59,7 +59,7 @@ int snapshot_server_client_loopback( struct snapshot_server_t * server, int clie
 
 void snapshot_server_process_loopback_packet( struct snapshot_server_t * server, int client_index, const uint8_t * packet_data, int packet_bytes, uint64_t packet_sequence );
 
-uint16_t snapshot_server_get_port( struct snapshot_server_t * server );
+uint16_t snapshot_server_port( struct snapshot_server_t * server );
 
 void snapshot_server_set_flags( struct snapshot_server_t * server, uint64_t flags );
 

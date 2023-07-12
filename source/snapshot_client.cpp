@@ -742,7 +742,7 @@ void snapshot_client_connect_loopback( struct snapshot_client_t * client, snapsh
     snapshot_assert( client );
     snapshot_assert( server_address );
     snapshot_assert( client->state <= SNAPSHOT_CLIENT_STATE_DISCONNECTED );
-    snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connected to server via loopback in client slot %d\n", client_index );
+    snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connected to server via loopback in client slot %d", client_index );
     client->state = SNAPSHOT_CLIENT_STATE_CONNECTED;
     client->server_address = *server_address;
     client->client_index = client_index;
@@ -754,7 +754,7 @@ void snapshot_client_disconnect_loopback( struct snapshot_client_t * client )
 {
     snapshot_assert( client );
     snapshot_assert( client->loopback );
-    snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client disconnected from server loopback in client slot %d\n", client->client_index );
+    snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client disconnected from server loopback in client slot %d", client->client_index );
     snapshot_client_reset_connection_data( client, SNAPSHOT_CLIENT_STATE_DISCONNECTED );
 }
 

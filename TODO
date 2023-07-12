@@ -1,10 +1,8 @@
 DONE
 
-TODO
-
 	Clean up the internal address stuff. I *really* don't think we need it.
 
-	-------------
+TODO
 
 	Setup a loopback.cpp example
 
@@ -22,6 +20,9 @@ TODO
 
 	-------------
 
+	Bring back the console platform code
+
+	-------------
 
 
 
@@ -42,15 +43,7 @@ TODO
 
 	-------------
 
-	Bring back the console platforms
-
-	-------------
-
-	Verify that we can compile for consoles -- probably need to setup some platform specific projects per-platform like with next SDK
-
-	-------------
-
-	Clean up pass before I go any further
+	Test on consoles
 
 	-------------
 

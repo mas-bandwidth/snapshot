@@ -112,3 +112,15 @@ project "server"
 		links { "pthread" }
 	filter "system:macosx"
 		linkoptions { "-framework SystemConfiguration -framework CoreFoundation" }
+
+project "listen"
+	kind "ConsoleApp"
+	links { "snapshot", "sodium" }
+	files { "listen.cpp" }
+	includedirs { "include", "source" }
+	filter "system:windows"
+		disablewarnings { "4324" }
+	filter "system:not windows"
+		links { "pthread" }
+	filter "system:macosx"
+		linkoptions { "-framework SystemConfiguration -framework CoreFoundation" }

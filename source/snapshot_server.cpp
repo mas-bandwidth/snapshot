@@ -1164,7 +1164,7 @@ int snapshot_server_client_loopback( struct snapshot_server_t * server, int clie
     return server->client_loopback[client_index];
 }
 
-uint16_t snapshot_server_get_port( struct snapshot_server_t * server )
+uint16_t snapshot_server_port( struct snapshot_server_t * server )
 {
     snapshot_assert( server );
     return server->address.port;
