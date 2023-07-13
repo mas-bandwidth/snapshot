@@ -1,38 +1,8 @@
 DONE
 
-	Clean up the internal address stuff. I *really* don't think we need it.
-
-	Setup a listen server example
-
-	Something is up with the loopback client connect -- the server is accepting loopback into slot 0, then accepting the next client into slot 0 as well... what?
-
-	Fixed. I just hadn't connected the loopback client on the server side.
-
-	Bring back the console platform code
-
-	Bring back ios.
-
-	Get client server network simulator test working
-
-	Apply network simulator to remainder of non-socket client server tests, this makes them more reliable across platforms so we don't have test failures due to timing or thread switching
-
-	Setup a semaphore job.
-
-	Test on linux w. GCC and all gcc versions, ubuntu 18 and 20.
-
-	Test on mac.
-
 TODO
 
-	Can I run custom semaphore nodes on windows yet? Yes.
-
-	Get office cleaned up and PCs setup again with networking
-
-	Setup custom agents on windows machine and build windows
-
-	Probably need to bring across and modify the testbed projects from next SDK
-
-	Setup custom agents on machines and set them up to build console versions
+	Fix up the crypto AEAD todos so they call into official snapshot_crypto_* functions.
 
 	-------------
 
@@ -43,6 +13,16 @@ TODO
 	-------------
 
 	Implement a passthrough packet type so we can pass through UE packets.
+
+	-------------
+
+	Get office cleaned up and PCs setup again with networking
+
+	Setup custom agents on windows machine and build windows
+
+	Probably need to bring across and modify the testbed projects from next SDK
+
+	Setup custom agents on machines and set them up to build console versions
 
 	-------------
 
@@ -71,25 +51,6 @@ TODO
 
 
 
-
-
-	-------------
-
-	Fix up the crypto AEAD todos so they call into official snapshot_crypto_* functions.
-
-	-------------
-
-	Let's get zero copy working on write packet, including across simulator
-
-	To do this, there should be a standard concept of a packet with a prefix in front, say 256 bytes.
-
-	snapshot_create_packet
-
-	snapshot_destroy_packet
-
-	When spending packets to the simulator, it's OK to copy. This is a non-release codepath
-
-	-------------
 
 
 
