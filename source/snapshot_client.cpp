@@ -66,7 +66,7 @@ struct snapshot_client_t
     uint8_t challenge_token_data[SNAPSHOT_CHALLENGE_TOKEN_BYTES];
     uint8_t read_packet_key[SNAPSHOT_KEY_BYTES];
     uint8_t write_packet_key[SNAPSHOT_KEY_BYTES];
-    uint8_t allowed_packets[SNAPSHOT_CONNECTION_NUM_PACKETS];
+    uint8_t allowed_packets[SNAPSHOT_NUM_PACKETS];
     uint8_t * sim_receive_packet_data[SNAPSHOT_CLIENT_MAX_SIM_RECEIVE_PACKETS];
     int sim_receive_packet_bytes[SNAPSHOT_CLIENT_MAX_SIM_RECEIVE_PACKETS];
     struct snapshot_address_t sim_receive_from[SNAPSHOT_CLIENT_MAX_SIM_RECEIVE_PACKETS];
@@ -154,9 +154,10 @@ struct snapshot_client_t * snapshot_client_create( const char * bind_address_str
 
     client->allowed_packets[SNAPSHOT_CONNECTION_DENIED_PACKET] = 1;
     client->allowed_packets[SNAPSHOT_CONNECTION_CHALLENGE_PACKET] = 1;
-    client->allowed_packets[SNAPSHOT_CONNECTION_KEEP_ALIVE_PACKET] = 1;
-    client->allowed_packets[SNAPSHOT_CONNECTION_PAYLOAD_PACKET] = 1;
-    client->allowed_packets[SNAPSHOT_CONNECTION_DISCONNECT_PACKET] = 1;
+    client->allowed_packets[SNAPSHOT_KEEP_ALIVE_PACKET] = 1;
+    client->allowed_packets[SNAPSHOT_PAYLOAD_PACKET] = 1;
+    client->allowed_packets[SNAPSHOT_PASSTHROUGH_PACKET] = 1;
+    client->allowed_packets[SNAPSHOT_DISCONNECT_PACKET] = 1;
 
     return client;
 }
@@ -306,21 +307,21 @@ void snapshot_client_process_packet( struct snapshot_client_t * client, struct s
         }
         break;
 
-        case SNAPSHOT_CONNECTION_KEEP_ALIVE_PACKET:
+        case SNAPSHOT_KEEP_ALIVE_PACKET:
         {
             if ( snapshot_address_equal( from, &client->server_address ) )
             {
-                struct snapshot_connection_keep_alive_packet_t * p = (struct snapshot_connection_keep_alive_packet_t*) packet;
+                struct snapshot_keep_alive_packet_t * p = (struct snapshot_keep_alive_packet_t*) packet;
 
                 if ( client->state == SNAPSHOT_CLIENT_STATE_CONNECTED )
                 {
-                    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client received connection keep alive packet from server" );
+                    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client received keep alive packet from server" );
 
                     client->last_packet_receive_time = client->time;
                 }
                 else if ( client->state == SNAPSHOT_CLIENT_STATE_SENDING_CONNECTION_RESPONSE )
                 {
-                    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client received connection keep alive packet from server" );
+                    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client received keep alive packet from server" );
 
                     client->last_packet_receive_time = client->time;
                     client->client_index = p->client_index;
@@ -336,13 +337,13 @@ void snapshot_client_process_packet( struct snapshot_client_t * client, struct s
         }
         break;
 
-        case SNAPSHOT_CONNECTION_PAYLOAD_PACKET:
+        case SNAPSHOT_PAYLOAD_PACKET:
         {
             if ( client->state == SNAPSHOT_CLIENT_STATE_CONNECTED && snapshot_address_equal( from, &client->server_address ) )
             {
-                snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client received connection payload packet from server" );
+                snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client received payload packet from server" );
 
-                struct snapshot_connection_payload_packet_t * p = (struct snapshot_connection_payload_packet_t*) packet;
+                struct snapshot_payload_packet_t * p = (struct snapshot_payload_packet_t*) packet;
 
                 snapshot_client_process_payload( client, sequence, p->payload_data, p->payload_bytes );
 
@@ -353,7 +354,26 @@ void snapshot_client_process_packet( struct snapshot_client_t * client, struct s
         }
         break;
 
-        case SNAPSHOT_CONNECTION_DISCONNECT_PACKET:
+        case SNAPSHOT_PASSTHROUGH_PACKET:
+        {
+            if ( client->state == SNAPSHOT_CLIENT_STATE_CONNECTED && snapshot_address_equal( from, &client->server_address ) )
+            {
+                snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client received passthrough packet from server" );
+
+                struct snapshot_passthrough_packet_t * p = (struct snapshot_passthrough_packet_t*) packet;
+
+                // todo: process passthrough function
+                (void) p;
+//                snapshot_client_process_passthrough( client, sequence, p->passthrough_data, p->passthrough_bytes );
+
+                client->last_packet_receive_time = client->time;
+
+                return;
+            }
+        }
+        break;
+
+        case SNAPSHOT_DISCONNECT_PACKET:
         {
             if ( client->state == SNAPSHOT_CLIENT_STATE_CONNECTED && snapshot_address_equal( from, &client->server_address ) )
             {
@@ -553,8 +573,8 @@ void snapshot_client_send_packets( struct snapshot_client_t * client )
 
             snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client sent connection keep-alive packet to server" );
 
-            struct snapshot_connection_keep_alive_packet_t packet;
-            packet.packet_type = SNAPSHOT_CONNECTION_KEEP_ALIVE_PACKET;
+            struct snapshot_keep_alive_packet_t packet;
+            packet.packet_type = SNAPSHOT_KEEP_ALIVE_PACKET;
             packet.client_index = 0;
             packet.max_clients = 0;
 
@@ -708,8 +728,8 @@ void snapshot_client_disconnect_internal( struct snapshot_client_t * client, int
         {
             snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client sent disconnect packet %d", i );
 
-            struct snapshot_connection_disconnect_packet_t packet;
-            packet.packet_type = SNAPSHOT_CONNECTION_DISCONNECT_PACKET;
+            struct snapshot_disconnect_packet_t packet;
+            packet.packet_type = SNAPSHOT_DISCONNECT_PACKET;
 
             snapshot_client_send_packet_to_server_internal( client, &packet );
         }

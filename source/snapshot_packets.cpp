@@ -9,48 +9,38 @@
 #include "snapshot_read_write.h"
 #include "snapshot_replay_protection.h"
 
-struct snapshot_connection_payload_packet_t * snapshot_create_payload_packet( void * context, int payload_bytes )
+void * snapshot_create_packet( void * context, int packet_bytes )
 {
     snapshot_assert( payload_bytes >= 0 );
     snapshot_assert( payload_bytes <= SNAPSHOT_MAX_PAYLOAD_BYTES );
 
-    uint8_t * buffer = (uint8_t*) snapshot_malloc( context, sizeof( struct snapshot_connection_payload_packet_t ) + payload_bytes );
+    uint8_t * buffer = (uint8_t*) snapshot_malloc( context, packet_bytes + SNAPSHOT_PACKET_PREFIX_BYTES );
     if ( !buffer )
     {
         return NULL;
     }
 
-    size_t offset = offsetof(snapshot_connection_payload_packet_t, payload_data);
-
-    struct snapshot_connection_payload_packet_t * packet = (snapshot_connection_payload_packet_t*)( buffer + sizeof(snapshot_connection_payload_packet_t) - offset );
-
-    packet->packet_type = SNAPSHOT_CONNECTION_PAYLOAD_PACKET;
-    packet->payload_bytes = payload_bytes;
-
-    return packet;
+    return buffer + SNAPSHOT_PACKET_PREFIX_BYTES;
 }
 
-void snapshot_destroy_payload_packet( void * context, snapshot_connection_payload_packet_t * packet )
+void snapshot_destroy_packet( void * context, void * packet )
 {
-    size_t offset = offsetof(snapshot_connection_payload_packet_t, payload_data);
-
-    uint8_t * buffer = ((uint8_t*)packet) + offset - sizeof(snapshot_connection_payload_packet_t);
-
+    uint8_t * buffer = ((uint8_t*)packet) - sizeof(SNAPSHOT_PACKET_PREFIX_BYTES);
     snapshot_free( context, buffer );
 }
 
-struct snapshot_connection_payload_packet_t * snapshot_wrap_payload_packet( uint8_t * payload_data, int payload_bytes )
+struct snapshot_payload_packet_t * snapshot_wrap_payload_packet( uint8_t * payload_data, int payload_bytes )
 {
     snapshot_assert( payload_bytes >= 0 );
     snapshot_assert( payload_bytes <= SNAPSHOT_MAX_PAYLOAD_BYTES );
 
-    size_t offset = offsetof(snapshot_connection_payload_packet_t, payload_data);
+    size_t offset = offsetof(snapshot_payload_packet_t, payload_data);
 
     uint8_t * buffer = payload_data - offset;
 
-    struct snapshot_connection_payload_packet_t * packet = (snapshot_connection_payload_packet_t*) buffer;
+    struct snapshot_payload_packet_t * packet = (snapshot_payload_packet_t*) buffer;
 
-    packet->packet_type = SNAPSHOT_CONNECTION_PAYLOAD_PACKET;
+    packet->packet_type = SNAPSHOT_PAYLOAD_PACKET;
     packet->payload_bytes = payload_bytes;
 
     return packet;
@@ -145,17 +135,17 @@ int snapshot_write_packet( void * packet, uint8_t * buffer, int buffer_length, u
             }
             break;
 
-            case SNAPSHOT_CONNECTION_KEEP_ALIVE_PACKET:
+            case SNAPSHOT_KEEP_ALIVE_PACKET:
             {
-                struct snapshot_connection_keep_alive_packet_t * p = (struct snapshot_connection_keep_alive_packet_t*) packet;
+                struct snapshot_keep_alive_packet_t * p = (struct snapshot_keep_alive_packet_t*) packet;
                 snapshot_write_uint32( &buffer, p->client_index );
                 snapshot_write_uint32( &buffer, p->max_clients );
             }
             break;
 
-            case SNAPSHOT_CONNECTION_PAYLOAD_PACKET:
+            case SNAPSHOT_PAYLOAD_PACKET:
             {
-                struct snapshot_connection_payload_packet_t * p = (struct snapshot_connection_payload_packet_t*) packet;
+                struct snapshot_payload_packet_t * p = (struct snapshot_payload_packet_t*) packet;
 
                 snapshot_assert( p->payload_bytes <= SNAPSHOT_MAX_PAYLOAD_BYTES );
 
@@ -163,7 +153,17 @@ int snapshot_write_packet( void * packet, uint8_t * buffer, int buffer_length, u
             }
             break;
 
-            case SNAPSHOT_CONNECTION_DISCONNECT_PACKET:
+            case SNAPSHOT_PASSTHROUGH_PACKET:
+            {
+                struct snapshot_passthrough_packet_t * p = (struct snapshot_passthrough_packet_t*) packet;
+
+                snapshot_assert( p->payload_bytes <= SNAPSHOT_MAX_PAYLOAD_BYTES );
+
+                snapshot_write_bytes( &buffer, p->passthrough_data, p->passthrough_bytes );
+            }
+            break;
+
+            case SNAPSHOT_DISCONNECT_PACKET:
             {
                 // ...
             }
@@ -346,7 +346,7 @@ void * snapshot_read_packet( uint8_t * buffer,
 
         int packet_type = prefix_byte & 0xF;
 
-        if ( packet_type >= SNAPSHOT_CONNECTION_NUM_PACKETS )
+        if ( packet_type >= SNAPSHOT_NUM_PACKETS )
         {
             snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "ignored encrypted packet. packet type %d is invalid", packet_type );
             return NULL;
@@ -383,7 +383,7 @@ void * snapshot_read_packet( uint8_t * buffer,
 
         // ignore the packet if it has already been received
 
-        if ( replay_protection && packet_type >= SNAPSHOT_CONNECTION_KEEP_ALIVE_PACKET )
+        if ( replay_protection && packet_type >= SNAPSHOT_KEEP_ALIVE_PACKET )
         {
             if ( snapshot_replay_protection_already_received( replay_protection, *sequence ) )
             {
@@ -427,7 +427,7 @@ void * snapshot_read_packet( uint8_t * buffer,
 
         // update the latest replay protection sequence #
 
-        if ( replay_protection && packet_type >= SNAPSHOT_CONNECTION_KEEP_ALIVE_PACKET )
+        if ( replay_protection && packet_type >= SNAPSHOT_KEEP_ALIVE_PACKET )
         {
             snapshot_replay_protection_advance_sequence( replay_protection, *sequence );
         }
@@ -446,12 +446,6 @@ void * snapshot_read_packet( uint8_t * buffer,
 
                 struct snapshot_connection_denied_packet_t * packet = (struct snapshot_connection_denied_packet_t*) out_packet_buffer;
 
-                if ( !packet )
-                {
-                    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "ignored connection denied packet. could not allocate packet struct" );
-                    return NULL;
-                }
-                
                 packet->packet_type = SNAPSHOT_CONNECTION_DENIED_PACKET;
                 
                 return packet;
@@ -468,12 +462,6 @@ void * snapshot_read_packet( uint8_t * buffer,
 
                 struct snapshot_connection_challenge_packet_t * packet = (struct snapshot_connection_challenge_packet_t*) out_packet_buffer;
 
-                if ( !packet )
-                {
-                    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "ignored connection challenge packet. could not allocate packet struct" );
-                    return NULL;
-                }
-                
                 packet->packet_type = SNAPSHOT_CONNECTION_CHALLENGE_PACKET;
                 packet->challenge_token_sequence = snapshot_read_uint64( &p );
                 snapshot_read_bytes( &p, packet->challenge_token_data, SNAPSHOT_CHALLENGE_TOKEN_BYTES );
@@ -492,12 +480,6 @@ void * snapshot_read_packet( uint8_t * buffer,
 
                 struct snapshot_connection_response_packet_t * packet = (struct snapshot_connection_response_packet_t*) out_packet_buffer;
 
-                if ( !packet )
-                {
-                    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "ignored connection response packet. could not allocate packet struct" );
-                    return NULL;
-                }
-                
                 packet->packet_type = SNAPSHOT_CONNECTION_RESPONSE_PACKET;
                 packet->challenge_token_sequence = snapshot_read_uint64( &p );
                 snapshot_read_bytes( &p, packet->challenge_token_data, SNAPSHOT_CHALLENGE_TOKEN_BYTES );
@@ -506,23 +488,17 @@ void * snapshot_read_packet( uint8_t * buffer,
             }
             break;
 
-            case SNAPSHOT_CONNECTION_KEEP_ALIVE_PACKET:
+            case SNAPSHOT_KEEP_ALIVE_PACKET:
             {
                 if ( decrypted_bytes != 8 )
                 {
-                    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "ignored connection keep alive packet. decrypted packet data is wrong size" );
+                    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "ignored keep alive packet. decrypted packet data is wrong size" );
                     return NULL;
                 }
 
-                struct snapshot_connection_keep_alive_packet_t * packet = (struct snapshot_connection_keep_alive_packet_t*) out_packet_buffer;
+                struct snapshot_keep_alive_packet_t * packet = (struct snapshot_keep_alive_packet_t*) out_packet_buffer;
 
-                if ( !packet )
-                {
-                    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "ignored connection keep alive packet. could not allocate packet struct" );
-                    return NULL;
-                }
-                
-                packet->packet_type = SNAPSHOT_CONNECTION_KEEP_ALIVE_PACKET;
+                packet->packet_type = SNAPSHOT_KEEP_ALIVE_PACKET;
                 packet->client_index = snapshot_read_uint32( &p );
                 packet->max_clients = snapshot_read_uint32( &p );
                 
@@ -530,17 +506,17 @@ void * snapshot_read_packet( uint8_t * buffer,
             }
             break;
             
-            case SNAPSHOT_CONNECTION_PAYLOAD_PACKET:
+            case SNAPSHOT_PAYLOAD_PACKET:
             {
                 if ( decrypted_bytes < 1 )
                 {
-                    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "ignored connection payload packet. payload is too small" );
+                    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "ignored connection payload packet. too small" );
                     return NULL;
                 }
 
                 if ( decrypted_bytes > SNAPSHOT_MAX_PAYLOAD_BYTES )
                 {
-                    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "ignored connection payload packet. payload is too large" );
+                    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "ignored connection payload packet. too large" );
                     return NULL;
                 }
 
@@ -548,23 +524,19 @@ void * snapshot_read_packet( uint8_t * buffer,
             }
             break;
 
-            case SNAPSHOT_CONNECTION_DISCONNECT_PACKET:
+            // todo: SNAPSHOT_PASSTHROUGH_PACKET
+
+            case SNAPSHOT_DISCONNECT_PACKET:
             {
                 if ( decrypted_bytes != 0 )
                 {
-                    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "ignored connection disconnect packet. decrypted packet data is wrong size" );
+                    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "ignored disconnect packet. decrypted packet data is wrong size" );
                     return NULL;
                 }
 
-                struct snapshot_connection_disconnect_packet_t * packet = (struct snapshot_connection_disconnect_packet_t*) out_packet_buffer;
+                struct snapshot_disconnect_packet_t * packet = (struct snapshot_disconnect_packet_t*) out_packet_buffer;
 
-                if ( !packet )
-                {
-                    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "ignored connection disconnect packet. could not allocate packet struct" );
-                    return NULL;
-                }
-                
-                packet->packet_type = SNAPSHOT_CONNECTION_DISCONNECT_PACKET;
+                packet->packet_type = SNAPSHOT_DISCONNECT_PACKET;
                 
                 return packet;
             }
