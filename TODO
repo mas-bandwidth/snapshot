@@ -1,18 +1,20 @@
 DONE
 
-TODO
+	Implement a passthrough packet type so we can pass through UE packets.
 
-	Fix up the crypto AEAD todos so they call into official snapshot_crypto_* functions.
-
-	-------------
-
-	Finish implementing zero copy on write for payload packets
+	Fix up the allowed packets in server to be initialized at create.
 
 	Make sure network simulator has padding at packet fronts etc.
 
+TODO
+
+	Finish implementing zero copy on write for payload packets
+
 	-------------
 
-	Implement a passthrough packet type so we can pass through UE packets.
+	-------------
+
+	Fix up the crypto AEAD todos so they call into official snapshot_crypto_* functions.
 
 	-------------
 

@@ -465,7 +465,7 @@ void snapshot_client_receive_packets( struct snapshot_client_t * client )
                 snapshot_client_process_packet( client, &client->sim_receive_from[i], (uint8_t*)packet, sequence );
             }
 
-            snapshot_free( client->config.context, client->sim_receive_packet_data[i] );
+            snapshot_destroy_packet( client->config.context, client->sim_receive_packet_data[i] );
         }
     }
 }

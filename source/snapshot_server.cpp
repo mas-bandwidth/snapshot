@@ -111,6 +111,7 @@ struct snapshot_server_t
     int num_connected_clients;
     uint64_t global_sequence;
     uint64_t challenge_sequence;
+    uint8_t allowed_packets[SNAPSHOT_NUM_PACKETS];
     uint8_t challenge_key[SNAPSHOT_KEY_BYTES];
     int client_connected[SNAPSHOT_MAX_CLIENTS];
     int client_timeout[SNAPSHOT_MAX_CLIENTS];
@@ -181,7 +182,7 @@ struct snapshot_server_t * snapshot_server_create( const char * server_address_s
         return NULL;
     }
 
-     memset( server, 0, sizeof(snapshot_server_t) );
+    memset( server, 0, sizeof(snapshot_server_t) );
 
     if ( !config->network_simulator )
     {
@@ -225,6 +226,13 @@ struct snapshot_server_t * snapshot_server_create( const char * server_address_s
     {
         snapshot_replay_protection_reset( &server->client_replay_protection[i] );
     }
+
+    server->allowed_packets[SNAPSHOT_CONNECTION_REQUEST_PACKET] = 1;
+    server->allowed_packets[SNAPSHOT_CONNECTION_RESPONSE_PACKET] = 1;
+    server->allowed_packets[SNAPSHOT_KEEP_ALIVE_PACKET] = 1;
+    server->allowed_packets[SNAPSHOT_PAYLOAD_PACKET] = 1;
+    server->allowed_packets[SNAPSHOT_PASSTHROUGH_PACKET] = 1;
+    server->allowed_packets[SNAPSHOT_DISCONNECT_PACKET] = 1;
 
     return server;
 }
@@ -276,13 +284,13 @@ void snapshot_server_send_global_packet( snapshot_server_t * server, void * pack
 
     snapshot_assert( packet_bytes <= SNAPSHOT_MAX_PACKET_BYTES );
 
-    if ( server->config.network_simulator )
+    if ( !server->config.network_simulator )
     {
-        snapshot_network_simulator_send_packet( server->config.network_simulator, &server->address, to, packet_data, packet_bytes );
+        snapshot_platform_socket_send_packet( server->socket, to, packet_data, packet_bytes );
     }
     else
     {
-        snapshot_platform_socket_send_packet( server->socket, to, packet_data, packet_bytes );
+        snapshot_network_simulator_send_packet( server->config.network_simulator, &server->address, to, packet_data, packet_bytes );
     }
 
     server->global_sequence++;
@@ -314,13 +322,13 @@ void snapshot_server_send_client_packet( struct snapshot_server_t * server, void
 
     snapshot_assert( packet_bytes <= SNAPSHOT_MAX_PACKET_BYTES );
 
-    if ( server->config.network_simulator )
+    if ( !server->config.network_simulator )
     {
-        snapshot_network_simulator_send_packet( server->config.network_simulator, &server->address, &server->client_address[client_index], packet_data, packet_bytes );
+        snapshot_platform_socket_send_packet( server->socket, &server->client_address[client_index], packet_data, packet_bytes );
     }
     else
     {
-        snapshot_platform_socket_send_packet( server->socket, &server->client_address[client_index], packet_data, packet_bytes );
+        snapshot_network_simulator_send_packet( server->config.network_simulator, &server->address, &server->client_address[client_index], packet_data, packet_bytes );
     }
 
     server->client_sequence[client_index]++;
@@ -782,7 +790,23 @@ void snapshot_server_process_packet( struct snapshot_server_t * server,
         }
         break;
 
-        // todo: SNAPSHOT_PASSTHROUGH_PACKET
+        case SNAPSHOT_PASSTHROUGH_PACKET:
+        {
+            if ( client_index != -1 )
+            {
+                snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server received passthrough packet from client %d", client_index );
+                server->client_last_packet_receive_time[client_index] = server->time;
+                if ( !server->client_confirmed[client_index] )
+                {
+                    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server confirmed connection with client %d", client_index );
+                    server->client_confirmed[client_index] = 1;
+                }
+                // todo: process passthrough packet in-place
+                printf( "server process passthrough packet\n" );
+                return;
+            }
+        }
+        break;
 
         case SNAPSHOT_DISCONNECT_PACKET:
         {
@@ -859,16 +883,6 @@ void snapshot_server_receive_packets( struct snapshot_server_t * server )
 {
     snapshot_assert( server );
 
-    // todo: move server allowed packets into create
-    uint8_t allowed_packets[SNAPSHOT_NUM_PACKETS];
-    memset( allowed_packets, 0, sizeof( allowed_packets ) );
-    allowed_packets[SNAPSHOT_CONNECTION_REQUEST_PACKET] = 1;
-    allowed_packets[SNAPSHOT_CONNECTION_RESPONSE_PACKET] = 1;
-    allowed_packets[SNAPSHOT_KEEP_ALIVE_PACKET] = 1;
-    allowed_packets[SNAPSHOT_PAYLOAD_PACKET] = 1;
-    allowed_packets[SNAPSHOT_PASSTHROUGH_PACKET] = 1;
-    allowed_packets[SNAPSHOT_DISCONNECT_PACKET] = 1;
-
     uint64_t current_timestamp = (uint64_t) time( NULL );
 
     if ( !server->config.network_simulator )
@@ -891,7 +905,7 @@ void snapshot_server_receive_packets( struct snapshot_server_t * server )
             if ( packet_bytes == 0 )
                 break;
 
-            snapshot_server_read_and_process_packet( server, &from, packet_data + SNAPSHOT_PACKET_PREFIX_BYTES, packet_bytes, current_timestamp, allowed_packets );
+            snapshot_server_read_and_process_packet( server, &from, packet_data + SNAPSHOT_PACKET_PREFIX_BYTES, packet_bytes, current_timestamp, server->allowed_packets );
         }
     }
     else
@@ -913,10 +927,9 @@ void snapshot_server_receive_packets( struct snapshot_server_t * server )
                                                      server->sim_receive_packet_data[i], 
                                                      server->sim_receive_packet_bytes[i], 
                                                      current_timestamp, 
-                                                     allowed_packets );
+                                                     server->allowed_packets );
 
-            // todo: this should become special "free packet" w. prefix
-            snapshot_free( server->config.context, server->sim_receive_packet_data[i] );
+            snapshot_destroy_packet( server->config.context, server->sim_receive_packet_data[i] );
         }
     }
 }

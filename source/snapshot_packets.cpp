@@ -9,29 +9,27 @@
 #include "snapshot_read_write.h"
 #include "snapshot_replay_protection.h"
 
-void * snapshot_create_packet( void * context, int packet_bytes )
+uint8_t * snapshot_create_packet( void * context, int packet_bytes )
 {
-    snapshot_assert( payload_bytes >= 0 );
-    snapshot_assert( payload_bytes <= SNAPSHOT_MAX_PAYLOAD_BYTES );
-
+    snapshot_assert( packet_bytes > 0 );
     uint8_t * buffer = (uint8_t*) snapshot_malloc( context, packet_bytes + SNAPSHOT_PACKET_PREFIX_BYTES );
     if ( !buffer )
     {
         return NULL;
     }
-
     return buffer + SNAPSHOT_PACKET_PREFIX_BYTES;
 }
 
-void snapshot_destroy_packet( void * context, void * packet )
+void snapshot_destroy_packet( void * context, uint8_t * packet )
 {
-    uint8_t * buffer = ((uint8_t*)packet) - sizeof(SNAPSHOT_PACKET_PREFIX_BYTES);
+    snapshot_assert( packet );
+    uint8_t * buffer = packet - SNAPSHOT_PACKET_PREFIX_BYTES;
     snapshot_free( context, buffer );
 }
 
 struct snapshot_payload_packet_t * snapshot_wrap_payload_packet( uint8_t * payload_data, int payload_bytes )
 {
-    snapshot_assert( payload_bytes >= 0 );
+    snapshot_assert( payload_bytes > 0 );
     snapshot_assert( payload_bytes <= SNAPSHOT_MAX_PAYLOAD_BYTES );
 
     size_t offset = offsetof(snapshot_payload_packet_t, payload_data);
@@ -48,7 +46,7 @@ struct snapshot_payload_packet_t * snapshot_wrap_payload_packet( uint8_t * paylo
 
 struct snapshot_passthrough_packet_t * snapshot_wrap_passthrough_packet( uint8_t * passthrough_data, int passthrough_bytes )
 {
-    snapshot_assert( passthrough_bytes >= 0 );
+    snapshot_assert( passthrough_bytes > 0 );
     snapshot_assert( passthrough_bytes <= SNAPSHOT_MAX_PASSTHROUGH_BYTES );
 
     size_t offset = offsetof(snapshot_passthrough_packet_t, passthrough_data);

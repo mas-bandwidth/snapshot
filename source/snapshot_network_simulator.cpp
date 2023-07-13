@@ -6,6 +6,7 @@
 #include "snapshot_network_simulator.h"
 
 #include "snapshot_address.h"
+#include "snapshot_packets.h"
 #include <stdlib.h>
 #include <math.h>
 
@@ -69,13 +70,19 @@ void snapshot_network_simulator_reset( struct snapshot_network_simulator_t * net
     int i;
     for ( i = 0; i < SNAPSHOT_NETWORK_SIMULATOR_NUM_PACKET_ENTRIES; ++i )
     {
-        snapshot_free( network_simulator->context, network_simulator->packet_entries[i].packet_data );
+        if ( network_simulator->packet_entries[i].packet_data != NULL )
+        {
+            snapshot_destroy_packet( network_simulator->context, network_simulator->packet_entries[i].packet_data );
+        }
         memset( &network_simulator->packet_entries[i], 0, sizeof( struct snapshot_network_simulator_packet_entry_t ) );
     }
 
     for ( i = 0; i < network_simulator->num_pending_receive_packets; ++i )
     {
-        snapshot_free( network_simulator->context, network_simulator->pending_receive_packets[i].packet_data );
+        if ( network_simulator->pending_receive_packets[i].packet_data != NULL )
+        {
+            snapshot_destroy_packet( network_simulator->context, network_simulator->pending_receive_packets[i].packet_data );
+        }
         memset( &network_simulator->pending_receive_packets[i], 0, sizeof( struct snapshot_network_simulator_packet_entry_t ) );
     }
 
@@ -119,7 +126,7 @@ void snapshot_network_simulator_queue_packet( struct snapshot_network_simulator_
 
     network_simulator->packet_entries[network_simulator->current_index].from = *from;
     network_simulator->packet_entries[network_simulator->current_index].to = *to;
-    network_simulator->packet_entries[network_simulator->current_index].packet_data = (uint8_t*) snapshot_malloc( network_simulator->context, packet_bytes );
+    network_simulator->packet_entries[network_simulator->current_index].packet_data = snapshot_create_packet( network_simulator->context, packet_bytes );
     memcpy( network_simulator->packet_entries[network_simulator->current_index].packet_data, packet_data, packet_bytes );
     network_simulator->packet_entries[network_simulator->current_index].packet_bytes = packet_bytes;
     network_simulator->packet_entries[network_simulator->current_index].delivery_time = network_simulator->time + delay;
@@ -147,7 +154,7 @@ void snapshot_network_simulator_send_packet( struct snapshot_network_simulator_t
 
     if ( network_simulator->packet_entries[network_simulator->current_index].packet_data )
     {
-        snapshot_free( network_simulator->context, network_simulator->packet_entries[network_simulator->current_index].packet_data );
+        snapshot_destroy_packet( network_simulator->context, network_simulator->packet_entries[network_simulator->current_index].packet_data );
         network_simulator->packet_entries[network_simulator->current_index].packet_data = NULL;
     }
 
@@ -219,7 +226,7 @@ void snapshot_network_simulator_update( struct snapshot_network_simulator_t * ne
     {
         if ( network_simulator->pending_receive_packets[i].packet_data )
         {
-            snapshot_free( network_simulator->context, network_simulator->pending_receive_packets[i].packet_data );
+            snapshot_destroy_packet( network_simulator->context, network_simulator->pending_receive_packets[i].packet_data );
             network_simulator->pending_receive_packets[i].packet_data = NULL;
         }
     }

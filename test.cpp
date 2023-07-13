@@ -1051,6 +1051,13 @@ void test_challenge_token()
     snapshot_check( memcmp( output_token.user_data, input_token.user_data, SNAPSHOT_USER_DATA_BYTES ) == 0 );
 }
 
+void test_create_and_destroy_packet()
+{
+    uint8_t * packet = snapshot_create_packet( NULL, 1024 );
+    snapshot_check( packet );
+    snapshot_destroy_packet( NULL, packet );
+}
+
 void test_connection_request_packet()
 {
     // generate a connect token
@@ -3259,6 +3266,7 @@ void test()
         RUN_TEST( test_connect_token_private );
         RUN_TEST( test_connect_token_public );
         RUN_TEST( test_challenge_token );
+        RUN_TEST( test_create_and_destroy_packet );
         RUN_TEST( test_connection_request_packet );
         RUN_TEST( test_connection_denied_packet );
         RUN_TEST( test_connection_challenge_packet );

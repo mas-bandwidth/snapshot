@@ -93,6 +93,10 @@ struct snapshot_disconnect_packet_t
     uint8_t packet_type;
 };
 
+uint8_t * snapshot_create_packet( void * context, int packet_bytes );
+
+void snapshot_destroy_packet( void * context, uint8_t * packet );
+
 struct snapshot_payload_packet_t * snapshot_wrap_payload_packet( uint8_t * payload_data, int payload_bytes );
 
 struct snapshot_passthrough_packet_t * snapshot_wrap_passthrough_packet( uint8_t * passthrough_data, int passthrough_bytes );
