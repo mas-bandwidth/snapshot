@@ -8,6 +8,7 @@
 #include "snapshot_platform.h"
 
 #include <stdarg.h>
+#include <stdlib.h>
 #include <memory.h>
 
 int snapshot_init()
