@@ -394,7 +394,7 @@ void snapshot_platform_socket_send_packet( snapshot_platform_socket_t * socket, 
 {
     snapshot_assert( socket );
     snapshot_assert( to );
-    sanpshot_assert( to->type == SNAPSHOT_ADDRESS_IPV4 );
+    snapshot_assert( to->type == SNAPSHOT_ADDRESS_IPV4 );
     snapshot_assert( packet_data );
     snapshot_assert( packet_bytes > 0 );
 

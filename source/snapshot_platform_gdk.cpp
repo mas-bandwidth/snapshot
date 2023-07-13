@@ -58,7 +58,7 @@ static DWORD WINAPI thread_function_shim( void * data )
 
 snapshot_platform_thread_t * snapshot_platform_thread_create( void * context, snapshot_platform_thread_func_t thread_function, void * arg )
 {
-    snapshot_platform_thread_t * thread = (snapshot_platform_thread_t*) sanpshot_malloc( context, sizeof( snapshot_platform_thread_t ) );
+    snapshot_platform_thread_t * thread = (snapshot_platform_thread_t*) snapshot_malloc( context, sizeof( snapshot_platform_thread_t ) );
 
     snapshot_assert( thread );
 
@@ -80,7 +80,7 @@ snapshot_platform_thread_t * snapshot_platform_thread_create( void * context, sn
     if ( thread->handle == NULL )
     {
         snapshot_free( context, thread );
-        sanpshot_free( context, shim_data );
+        snapshot_free( context, shim_data );
         return NULL;
     }
 

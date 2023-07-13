@@ -318,7 +318,7 @@ void snapshot_platform_socket_destroy( snapshot_platform_socket_t * socket )
 void snapshot_platform_socket_send_packet( snapshot_platform_socket_t * socket, const snapshot_address_t * to, const void * packet_data, int packet_bytes )
 {
     snapshot_assert( socket );
-    sanpshot_assert( to );
+    snapshot_assert( to );
     snapshot_assert( to->type == SNAPSHOT_ADDRESS_IPV6 || to->type == SNAPSHOT_ADDRESS_IPV4 );
     snapshot_assert( packet_data );
     snapshot_assert( packet_bytes > 0 );

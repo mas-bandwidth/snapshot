@@ -39,7 +39,7 @@ int snapshot_crypto_init();
 
 void snapshot_crypto_random_bytes( uint8_t * buffer, int bytes );
 
-int sanpshot_crypto_generichash( unsigned char * out, size_t outlen, const unsigned char * in, unsigned long long inlen, const unsigned char * key, size_t keylen );
+int snapshot_crypto_generichash( unsigned char * out, size_t outlen, const unsigned char * in, unsigned long long inlen, const unsigned char * key, size_t keylen );
 
 struct snapshot_crypto_sign_state_t
 {
