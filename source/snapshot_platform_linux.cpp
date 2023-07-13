@@ -7,6 +7,7 @@
 
 #if SNAPSHOT_PLATFORM == SNAPSHOT_PLATFORM_LINUX
 
+#include "snapshot_platform.h"
 #include "snapshot_address.h"
 
 #include <netdb.h>
