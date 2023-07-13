@@ -7,6 +7,8 @@
 
 #if SNAPSHOT_PLATFORM == SNAPSHOT_PLATFORM_LINUX
 
+#include "snapshot_address.h"
+
 #include <netdb.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -26,10 +28,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include <alloca.h>
-
-extern void * snapshot_malloc( void * context, size_t bytes );
-
-extern void snapshot_free( void * context, void * p );
 
 // ---------------------------------------------------
 

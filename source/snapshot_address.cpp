@@ -6,6 +6,8 @@
 #include "snapshot_address.h"
 #include "snapshot_platform.h"
 
+#include <stdlib.h>
+
 #define SNAPSHOT_ADDRESS_BUFFER_SAFETY 32
 
 int snapshot_address_parse( snapshot_address_t * address, const char * address_string_in )
