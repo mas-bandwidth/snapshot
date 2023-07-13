@@ -6,6 +6,7 @@
 #include "snapshot_network_simulator.h"
 
 #include "snapshot_address.h"
+#include <math.h>
 
 #define SNAPSHOT_NETWORK_SIMULATOR_NUM_PACKET_ENTRIES ( SNAPSHOT_MAX_CLIENTS * 256 )
 #define SNAPSHOT_NETWORK_SIMULATOR_NUM_PENDING_RECEIVE_PACKETS ( SNAPSHOT_MAX_CLIENTS * 64 )
