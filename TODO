@@ -1,4 +1,4 @@
-8520DONE
+DONE
 
 	Clean up the internal address stuff. I *really* don't think we need it.
 
@@ -18,35 +18,27 @@
 
 	Setup a semaphore job.
 
-TODO
-
-	Test on linux w. GCC and clang all versions matrix, warnings = errors.
+	Test on linux w. GCC and all gcc versions, ubuntu 18 and 20.
 
 	Test on mac.
 
+TODO
+
 	Can I run custom semaphore nodes on windows yet? Yes.
 
-	-------------
+	Get office cleaned up and PCs setup again with networking
 
-	Test on consoles
+	Setup custom agents on windows machine and build windows
 
-	Probably need to bring across and modify the testbed projects from next SDK...
-
-	-------------
+	Probably need to bring across and modify the testbed projects from next SDK
 
 	Setup custom agents on machines and set them up to build console versions
 
 	-------------
 
+	Finish implementing zero copy on write for payload packets
 
-
-
-
-
-
-
-
-
+	Make sure network simulator has padding at packet fronts etc.
 
 	-------------
 
