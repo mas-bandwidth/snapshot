@@ -95,6 +95,8 @@ struct snapshot_disconnect_packet_t
 
 struct snapshot_payload_packet_t * snapshot_wrap_payload_packet( uint8_t * payload_data, int payload_bytes );
 
+struct snapshot_passthrough_packet_t * snapshot_wrap_passthrough_packet( uint8_t * passthrough_data, int passthrough_bytes );
+
 int snapshot_write_packet( void * packet, uint8_t * buffer, int buffer_length, uint64_t sequence, uint8_t * write_packet_key, uint64_t protocol_id );
 
 void * snapshot_read_packet( uint8_t * buffer, 

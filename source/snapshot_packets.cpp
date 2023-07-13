@@ -46,6 +46,23 @@ struct snapshot_payload_packet_t * snapshot_wrap_payload_packet( uint8_t * paylo
     return packet;
 }
 
+struct snapshot_passthrough_packet_t * snapshot_wrap_passthrough_packet( uint8_t * passthrough_data, int passthrough_bytes )
+{
+    snapshot_assert( passthrough_bytes >= 0 );
+    snapshot_assert( passthrough_bytes <= SNAPSHOT_MAX_PASSTHROUGH_BYTES );
+
+    size_t offset = offsetof(snapshot_passthrough_packet_t, passthrough_data);
+
+    uint8_t * buffer = passthrough_data - offset;
+
+    struct snapshot_passthrough_packet_t * packet = (snapshot_passthrough_packet_t*) buffer;
+
+    packet->packet_type = SNAPSHOT_PASSTHROUGH_PACKET;
+    packet->passthrough_bytes = passthrough_bytes;
+
+    return packet;
+}
+
 int snapshot_write_packet( void * packet, uint8_t * buffer, int buffer_length, uint64_t sequence, uint8_t * write_packet_key, uint64_t protocol_id )
 {
     snapshot_assert( packet );
@@ -510,13 +527,13 @@ void * snapshot_read_packet( uint8_t * buffer,
             {
                 if ( decrypted_bytes < 1 )
                 {
-                    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "ignored connection payload packet. too small" );
+                    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "ignored payload packet. too small" );
                     return NULL;
                 }
 
                 if ( decrypted_bytes > SNAPSHOT_MAX_PAYLOAD_BYTES )
                 {
-                    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "ignored connection payload packet. too large" );
+                    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "ignored payload packet. too large" );
                     return NULL;
                 }
 
@@ -524,7 +541,23 @@ void * snapshot_read_packet( uint8_t * buffer,
             }
             break;
 
-            // todo: SNAPSHOT_PASSTHROUGH_PACKET
+            case SNAPSHOT_PASSTHROUGH_PACKET:
+            {
+                if ( decrypted_bytes < 1 )
+                {
+                    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "ignored passthrough packet. too small" );
+                    return NULL;
+                }
+
+                if ( decrypted_bytes > SNAPSHOT_MAX_PASSTHROUGH_BYTES )
+                {
+                    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "ignored passthrough packet. too large" );
+                    return NULL;
+                }
+
+                return snapshot_wrap_passthrough_packet( (uint8_t*)p, decrypted_bytes );
+            }
+            break;
 
             case SNAPSHOT_DISCONNECT_PACKET:
             {
