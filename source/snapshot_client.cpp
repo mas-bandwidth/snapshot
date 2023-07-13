@@ -261,7 +261,23 @@ void snapshot_client_process_payload( struct snapshot_client_t * client, uint64_
     snapshot_assert( bytes > 0 );
     snapshot_assert( bytes <= SNAPSHOT_MAX_PAYLOAD_BYTES );
 
-    // todo: process the payload ...
+    // todo: process the payload
+ 
+    (void) client;
+    (void) sequence;
+    (void) data;
+    (void) bytes;
+}
+
+void snapshot_client_process_passthrough( struct snapshot_client_t * client, uint64_t sequence, uint8_t * data, int bytes )
+{
+    snapshot_assert( client );
+    snapshot_assert( data );
+    snapshot_assert( bytes > 0 );
+    snapshot_assert( bytes <= SNAPSHOT_MAX_PASSTHROUGH_BYTES );
+
+    // todo: call a callback to process the passthrough
+ 
     (void) client;
     (void) sequence;
     (void) data;
@@ -362,9 +378,7 @@ void snapshot_client_process_packet( struct snapshot_client_t * client, struct s
 
                 struct snapshot_passthrough_packet_t * p = (struct snapshot_passthrough_packet_t*) packet;
 
-                // todo: process passthrough function
-                (void) p;
-//                snapshot_client_process_passthrough( client, sequence, p->passthrough_data, p->passthrough_bytes );
+                snapshot_client_process_passthrough( client, sequence, p->passthrough_data, p->passthrough_bytes );
 
                 client->last_packet_receive_time = client->time;
 
@@ -500,7 +514,8 @@ void snapshot_client_send_packet_to_server_internal( struct snapshot_client_t * 
     snapshot_assert( client );
     snapshot_assert( !client->loopback );
 
-    // todo: go zero copy on packet write
+    // todo: go zero copy on packet write (but only for payload and passthrough packets...)
+
     uint8_t packet_data[SNAPSHOT_MAX_PACKET_BYTES];
 
     int packet_bytes = snapshot_write_packet( packet, 

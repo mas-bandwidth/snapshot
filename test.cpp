@@ -1315,15 +1315,14 @@ void test_keep_alive_packet()
 
 void test_payload_packet()
 {
-    /*
     // setup a payload packet
 
-    uint8_t input_packet_buffer[SNAPSHOT_PACKET_PREFIX_BYTES + sizeof(snapshot_payload_packet_t) + SNAPSHOT_MAX_PAYLOAD_BYTES]
+    uint8_t input_packet_buffer[SNAPSHOT_PACKET_PREFIX_BYTES + sizeof(snapshot_payload_packet_t) + SNAPSHOT_MAX_PAYLOAD_BYTES];
 
-    struct snapshot_payload_packet_t * input_packet = (snapshot_payload_packet_t*) input_packet_buffer + SNAPSHOT_PACKET_PREFIX_BYTES;
+    struct snapshot_payload_packet_t * input_packet = (snapshot_payload_packet_t*) ( input_packet_buffer + SNAPSHOT_PACKET_PREFIX_BYTES );
 
-    snapshot_check( input_packet->packet_type == SNAPSHOT_PAYLOAD_PACKET );
-    snapshot_check( input_packet->payload_bytes == SNAPSHOT_MAX_PAYLOAD_BYTES );
+    input_packet->packet_type = SNAPSHOT_PAYLOAD_PACKET;
+    input_packet->payload_bytes = SNAPSHOT_MAX_PAYLOAD_BYTES;
 
     snapshot_crypto_random_bytes( input_packet->payload_data, SNAPSHOT_MAX_PAYLOAD_BYTES );
     
@@ -1356,14 +1355,50 @@ void test_payload_packet()
     snapshot_check( output_packet->packet_type == SNAPSHOT_PAYLOAD_PACKET );
     snapshot_check( output_packet->payload_bytes == input_packet->payload_bytes );
     snapshot_check( memcmp( output_packet->payload_data, input_packet->payload_data, SNAPSHOT_MAX_PAYLOAD_BYTES ) == 0 );
-
-    snapshot_payload_packet( NULL, input_packet );
-*/
 }
 
 void test_passthrough_packet()
 {
-    // todo
+    // setup a passthrough packet
+
+    uint8_t input_packet_buffer[SNAPSHOT_PACKET_PREFIX_BYTES + sizeof(snapshot_payload_packet_t) + SNAPSHOT_MAX_PAYLOAD_BYTES];
+
+    struct snapshot_payload_packet_t * input_packet = (snapshot_payload_packet_t*) ( input_packet_buffer + SNAPSHOT_PACKET_PREFIX_BYTES );
+
+    input_packet->packet_type = SNAPSHOT_PAYLOAD_PACKET;
+    input_packet->payload_bytes = SNAPSHOT_MAX_PAYLOAD_BYTES;
+
+    snapshot_crypto_random_bytes( input_packet->payload_data, SNAPSHOT_MAX_PAYLOAD_BYTES );
+    
+    // write the packet to a buffer
+
+    uint8_t buffer[SNAPSHOT_MAX_PACKET_BYTES];
+
+    uint8_t packet_key[SNAPSHOT_KEY_BYTES];
+    snapshot_crypto_random_bytes( packet_key, SNAPSHOT_KEY_BYTES );
+
+    int bytes_written = snapshot_write_packet( input_packet, buffer, sizeof( buffer ), 1000, packet_key, TEST_PROTOCOL_ID );
+
+    snapshot_check( bytes_written > 0 );
+
+    // read the packet back in from the buffer
+
+    uint64_t sequence;
+
+    uint8_t allowed_packet_types[SNAPSHOT_NUM_PACKETS];
+    memset( allowed_packet_types, 1, sizeof( allowed_packet_types ) );
+
+    uint8_t out_packet_data[2048];
+
+    struct snapshot_payload_packet_t * output_packet = (struct snapshot_payload_packet_t*) snapshot_read_packet( buffer, bytes_written, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, out_packet_data, NULL );
+
+    snapshot_check( output_packet );
+
+    // make sure the read packet matches what was written
+    
+    snapshot_check( output_packet->packet_type == SNAPSHOT_PAYLOAD_PACKET );
+    snapshot_check( output_packet->payload_bytes == input_packet->payload_bytes );
+    snapshot_check( memcmp( output_packet->payload_data, input_packet->payload_data, SNAPSHOT_MAX_PAYLOAD_BYTES ) == 0 );
 }
 
 void test_disconnect_packet()

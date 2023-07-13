@@ -8,9 +8,21 @@ DONE
 
 TODO
 
-	Finish implementing zero copy on write for payload packets
+	Add process payload packet to server
+
+	Add process passthrough packet to server (stubbed out...)
 
 	-------------
+
+	Setup functions to send passthrough packets
+
+	Process passthrough packet by calling a callback on client
+
+	Process passthrough packet by calling a callback on server
+
+	-------------
+
+	Finish implementing zero copy on write for payload packets and passthrough packets
 
 	-------------
 
