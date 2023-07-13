@@ -1929,13 +1929,13 @@ void test_client_server_loopback()
 
     snapshot_check( snapshot_server_client_loopback( server, 0 ) == 1 );
     snapshot_check( snapshot_server_client_connected( server, 0 ) == 1 );
-    snapshot_check( snapshot_server_num_connected_clients( server ) == 2 );
+    snapshot_check( snapshot_server_num_connected_clients( server ) == 1 );
 
     snapshot_server_disconnect_loopback_client( server, 0 );    
 
     snapshot_check( snapshot_server_client_loopback( server, 0 ) == 0 );
     snapshot_check( snapshot_server_client_connected( server, 0 ) == 0 );
-    snapshot_check( snapshot_server_num_connected_clients( server ) == 1 );
+    snapshot_check( snapshot_server_num_connected_clients( server ) == 0 );
 
     snapshot_client_disconnect_loopback( loopback_client );
 
@@ -1948,8 +1948,8 @@ void test_client_server_loopback()
     snapshot_check( snapshot_server_client_loopback( server, 0 ) == 1 );
     snapshot_check( snapshot_server_client_loopback( server, 1 ) == 0 );
     snapshot_check( snapshot_server_client_connected( server, 0 ) == 1 );
-    snapshot_check( snapshot_server_client_connected( server, 1 ) == 1 );
-    snapshot_check( snapshot_server_num_connected_clients( server ) == 2 );
+    snapshot_check( snapshot_server_client_connected( server, 1 ) == 0 );
+    snapshot_check( snapshot_server_num_connected_clients( server ) == 1 );
 
     snapshot_client_connect_loopback( loopback_client, &server_address, 0, max_clients );
     
@@ -1978,8 +1978,6 @@ void test_client_server_loopback()
     snapshot_check( snapshot_server_client_loopback( server, 0 ) == 1 );
 
     // clean up
-
-    snapshot_client_destroy( regular_client );
 
     snapshot_client_destroy( loopback_client );
 
