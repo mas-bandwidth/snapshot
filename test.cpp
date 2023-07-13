@@ -23,6 +23,7 @@
 
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static void snapshot_check_handler( const char * condition,
