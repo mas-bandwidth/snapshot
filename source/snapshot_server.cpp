@@ -834,7 +834,7 @@ void snapshot_server_read_and_process_packet( struct snapshot_server_t * server,
         return;
     }
 
-    uint8_t out_packet_data[1024];
+    uint8_t out_packet_data[2048];
 
     void * packet = snapshot_read_packet( packet_data, 
                                           packet_bytes, 
@@ -857,6 +857,7 @@ void snapshot_server_receive_packets( struct snapshot_server_t * server )
 {
     snapshot_assert( server );
 
+    // todo: move server allowed packets into create
     uint8_t allowed_packets[SNAPSHOT_CONNECTION_NUM_PACKETS];
     memset( allowed_packets, 0, sizeof( allowed_packets ) );
     allowed_packets[SNAPSHOT_CONNECTION_REQUEST_PACKET] = 1;
@@ -875,19 +876,19 @@ void snapshot_server_receive_packets( struct snapshot_server_t * server )
         {
             struct snapshot_address_t from;
             
-            uint8_t packet_data[SNAPSHOT_MAX_PACKET_BYTES];
+            uint8_t packet_data[SNAPSHOT_PACKET_PREFIX_BYTES + SNAPSHOT_MAX_PACKET_BYTES];
             
             int packet_bytes = 0;
             
             if ( server->socket != NULL )
             {
-                packet_bytes = snapshot_platform_socket_receive_packet( server->socket, &from, packet_data, SNAPSHOT_MAX_PACKET_BYTES );
+                packet_bytes = snapshot_platform_socket_receive_packet( server->socket, &from, packet_data + SNAPSHOT_PACKET_PREFIX_BYTES, SNAPSHOT_MAX_PACKET_BYTES );
             }
 
             if ( packet_bytes == 0 )
                 break;
 
-            snapshot_server_read_and_process_packet( server, &from, packet_data, packet_bytes, current_timestamp, allowed_packets );
+            snapshot_server_read_and_process_packet( server, &from, packet_data + SNAPSHOT_PACKET_PREFIX_BYTES, packet_bytes, current_timestamp, allowed_packets );
         }
     }
     else
@@ -911,6 +912,7 @@ void snapshot_server_receive_packets( struct snapshot_server_t * server )
                                                      current_timestamp, 
                                                      allowed_packets );
 
+            // todo: this should become special "free packet" w. prefix
             snapshot_free( server->config.context, server->sim_receive_packet_data[i] );
         }
     }

@@ -9,6 +9,8 @@
 #include "snapshot.h"
 #include "snapshot_challenge_token.h"
 
+#define SNAPSHOT_PACKET_PREFIX_BYTES               256
+
 #define SNAPSHOT_MAX_PAYLOAD_BYTES                1024
 
 #define SNAPSHOT_CONNECTION_REQUEST_PACKET           0

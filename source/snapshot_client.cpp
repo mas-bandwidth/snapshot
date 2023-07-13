@@ -168,13 +168,10 @@ void snapshot_client_destroy( struct snapshot_client_t * client )
     {
         snapshot_client_disconnect( client );
     }
-    // todo: bring across loopback disconnect
-    /*
     else
     {
         snapshot_client_disconnect_loopback( client );
     }
-    */
     if ( client->socket )
     {
         snapshot_platform_socket_destroy( client->socket );

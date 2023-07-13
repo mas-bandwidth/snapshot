@@ -10,18 +10,13 @@ solution "snapshot"
 	defines { "SNAPSHOT_COMPILE_WITH_TESTS" }
 	filter "configurations:Debug"
 		symbols "On"
-		defines { "_DEBUG" }
-	filter "configurations:Release"
 		optimize "Speed"
 		defines { "NDEBUG" }
 		editandcontinue "Off"
+--		defines { "_DEBUG" }
 	filter "configurations:Release"
 		optimize "Speed"
 		defines { "NDEBUG" }
-		editandcontinue "Off"
-	filter "configurations:MemoryCheck"
-		optimize "Speed"
-		defines { "NDEBUG", "SNAPSHOT_ENABLE_MEMORY_CHECKS=1", "SNAPSHOT_ASSERTS=1" }
 		editandcontinue "Off"
 	filter "system:windows"
 		location ("visualstudio")
