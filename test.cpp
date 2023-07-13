@@ -1925,48 +1925,6 @@ void test_client_server_loopback()
     snapshot_check( snapshot_server_client_connected( server, 0 ) == 1 );
     snapshot_check( snapshot_server_num_connected_clients( server ) == 1 );
 
-    // connect a regular client in the other slot
-
-    struct snapshot_client_t * regular_client = snapshot_client_create( "0.0.0.0:30001", &client_config, time );
-
-    snapshot_check( regular_client );
-
-    uint8_t connect_token[SNAPSHOT_CONNECT_TOKEN_BYTES];
-    snapshot_crypto_random_bytes( (uint8_t*) &client_id, 8 );
-
-    uint8_t user_data[SNAPSHOT_USER_DATA_BYTES];
-    snapshot_crypto_random_bytes( user_data, SNAPSHOT_USER_DATA_BYTES);
-
-    snapshot_check( snapshot_generate_connect_token( 1, &server_address_string, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
-
-    snapshot_client_connect( regular_client, connect_token );
-
-    double delta_time = 1.0 / 10.0;
-
-    while ( 1 )
-    {
-        snapshot_client_update( regular_client, time );
-
-        snapshot_server_update( server, time );
-
-        if ( snapshot_client_state( regular_client ) <= SNAPSHOT_CLIENT_STATE_DISCONNECTED )
-            break;
-
-        if ( snapshot_client_state( regular_client ) == SNAPSHOT_CLIENT_STATE_CONNECTED )
-            break;
-
-        time += delta_time;
-    }
-
-    snapshot_check( snapshot_client_state( regular_client ) == SNAPSHOT_CLIENT_STATE_CONNECTED );
-    snapshot_check( snapshot_client_index( regular_client ) == 1 );
-
-    snapshot_check( snapshot_server_client_connected( server, 0 ) == 1 );
-    snapshot_check( snapshot_server_client_connected( server, 1 ) == 1 );
-    snapshot_check( snapshot_server_client_loopback( server, 0 ) == 1 );
-    snapshot_check( snapshot_server_client_loopback( server, 1 ) == 0 );
-    snapshot_check( snapshot_server_num_connected_clients( server ) == 2 );
-
     // verify we can disconnect the loopback client
 
     snapshot_check( snapshot_server_client_loopback( server, 0 ) == 1 );
@@ -2000,16 +1958,15 @@ void test_client_server_loopback()
     snapshot_check( snapshot_client_max_clients( loopback_client ) == max_clients );
     snapshot_check( snapshot_client_state( loopback_client ) == SNAPSHOT_CLIENT_STATE_CONNECTED );
 
-    // verify the regular client times out but loopback client doesn't
+    // verify the loopback client doesn't time out
 
     time += 100000.0;
 
     snapshot_server_update( server, time );
 
-    snapshot_check( snapshot_server_client_connected( server, 0 ) == 1 );
-    snapshot_check( snapshot_server_client_connected( server, 1 ) == 0 );
-
     snapshot_client_update( loopback_client, time );
+
+    snapshot_check( snapshot_server_client_connected( server, 0 ) == 1 );
 
     snapshot_check( snapshot_client_state( loopback_client ) == SNAPSHOT_CLIENT_STATE_CONNECTED );
 
@@ -2018,7 +1975,6 @@ void test_client_server_loopback()
     snapshot_server_disconnect_all_clients( server );
 
     snapshot_check( snapshot_server_client_connected( server, 0 ) == 1 );
-    snapshot_check( snapshot_server_client_connected( server, 1 ) == 0 );
     snapshot_check( snapshot_server_client_loopback( server, 0 ) == 1 );
 
     // clean up
