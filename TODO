@@ -10,15 +10,15 @@ DONE
 
 	Add process passthrough packet to server (stubbed out...)
 
-TODO
-
-	-------------
-
-	Setup functions to send passthrough packets
-
 	Process passthrough packet by calling a callback on client
 
 	Process passthrough packet by calling a callback on server
+
+TODO
+
+	Add functions to send passthrough packet on client
+
+	Add function to send passthrough packet on server
 
 	Add unit test for client server connect and exchange passthrough packets
 
