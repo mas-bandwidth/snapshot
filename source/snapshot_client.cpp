@@ -262,7 +262,7 @@ void snapshot_client_process_payload( struct snapshot_client_t * client, uint64_
     snapshot_assert( bytes > 0 );
     snapshot_assert( bytes <= SNAPSHOT_MAX_PAYLOAD_BYTES );
 
-    // todo: process the payload
+    // process the payload ...
  
     (void) client;
     (void) sequence;

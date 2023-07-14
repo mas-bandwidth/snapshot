@@ -728,7 +728,7 @@ void snapshot_server_process_payload( struct snapshot_server_t * server, int cli
     snapshot_assert( payload_bytes > 0 );
     snapshot_assert( payload_bytes <= SNAPSHOT_MAX_PAYLOAD_BYTES );
 
-    // todo: process payload
+    // process payload ...
 
     (void) server;
     (void) client_index;
