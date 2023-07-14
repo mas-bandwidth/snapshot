@@ -6,18 +6,17 @@ DONE
 
 	Fix up all the process packet todos for loopback client
 
-TODO
     void (*send_loopback_packet_callback)(void*,snapshot_address_t*,uint8_t*,int);
 
 	Fix up all the process packet todos for loopback server
 
+TODO
+
+	Fix up the crypto AEAD todos so they call into official snapshot_crypto_* functions.
+
 	-------------
 
 	Implement zero copy on payload and passthrough packet writes
-
-	-------------
-
-	Fix up the crypto AEAD todos so they call into official snapshot_crypto_* functions.
 
 	-------------
 
