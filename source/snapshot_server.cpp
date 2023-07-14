@@ -718,6 +718,40 @@ void snapshot_server_process_connection_response_packet( struct snapshot_server_
     snapshot_server_connect_client( server, client_index, from, challenge_token.client_id, encryption_index, timeout_seconds, challenge_token.user_data );
 }
 
+void snapshot_server_process_payload( struct snapshot_server_t * server, int client_index, void * payload_data, int payload_bytes )
+{
+    snapshot_assert( server );
+    snapshot_assert( client_index >= 0 );
+    snapshot_assert( client_index < server->max_clients );
+    snapshot_assert( payload_data );
+    snapshot_assert( payload_bytes > 0 );
+    snapshot_assert( payload_bytes <= SNAPSHOT_MAX_PAYLOAD_BYTES );
+
+    // todo: process payload
+
+    (void) server;
+    (void) client_index;
+    (void) payload_data;
+    (void) payload_bytes;
+}
+
+void snapshot_server_process_passthrough( struct snapshot_server_t * server, int client_index, void * passthrough_data, int passthrough_bytes )
+{
+    snapshot_assert( server );
+    snapshot_assert( client_index >= 0 );
+    snapshot_assert( client_index < server->max_clients );
+    snapshot_assert( passthrough_data );
+    snapshot_assert( passthrough_bytes > 0 );
+    snapshot_assert( passthrough_bytes <= SNAPSHOT_MAX_PASSTHROUGH_BYTES );
+
+    // todo: call callback (if non-NULL), to process passthrough
+
+    (void) server;
+    (void) client_index;
+    (void) passthrough_data;
+    (void) passthrough_bytes;
+}
+
 void snapshot_server_process_packet( struct snapshot_server_t * server, 
                                      struct snapshot_address_t * from, 
                                      void * packet, 
@@ -783,9 +817,8 @@ void snapshot_server_process_packet( struct snapshot_server_t * server,
                     snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server confirmed connection with client %d", client_index );
                     server->client_confirmed[client_index] = 1;
                 }
-                // todo: process payload packet in-place
-                printf( "server process payload packet\n" );
-                return;
+                struct snapshot_payload_packet_t * payload_packet = (snapshot_payload_packet_t*) packet;
+                snapshot_server_process_payload( server, client_index, payload_packet->payload_data, payload_packet->payload_bytes );
             }
         }
         break;
@@ -801,9 +834,8 @@ void snapshot_server_process_packet( struct snapshot_server_t * server,
                     snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server confirmed connection with client %d", client_index );
                     server->client_confirmed[client_index] = 1;
                 }
-                // todo: process passthrough packet in-place
-                printf( "server process passthrough packet\n" );
-                return;
+                struct snapshot_payload_packet_t * payload_packet = (snapshot_payload_packet_t*) packet;
+                snapshot_server_process_payload( server, client_index, payload_packet->payload_data, payload_packet->payload_bytes );
             }
         }
         break;
