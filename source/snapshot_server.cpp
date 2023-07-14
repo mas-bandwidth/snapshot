@@ -752,121 +752,19 @@ void snapshot_server_process_passthrough( struct snapshot_server_t * server, int
     }
 }
 
-void snapshot_server_process_packet( struct snapshot_server_t * server, 
-                                     struct snapshot_address_t * from, 
-                                     void * packet, 
-                                     uint64_t sequence, 
-                                     int encryption_index, 
-                                     int client_index )
+bool snapshot_server_process_packet( struct snapshot_server_t * server, struct snapshot_address_t * from, uint8_t * packet_data, int packet_bytes )
 {
     snapshot_assert( server );
-    snapshot_assert( packet );
+    snapshot_assert( from );
+    snapshot_assert( packet_data );
+    snapshot_assert( packet_bytes > 0 );
+    snapshot_assert( packet_bytes <= SNAPSHOT_MAX_PACKET_BYTES );
 
-    (void) from;
-    (void) sequence;
-
-    uint8_t packet_type = ( (uint8_t*) packet ) [0];
-
-    switch ( packet_type )
-    {
-        case SNAPSHOT_CONNECTION_REQUEST_PACKET:
-        {    
-            if ( ( server->flags & SNAPSHOT_SERVER_FLAG_IGNORE_CONNECTION_REQUEST_PACKETS ) == 0 )
-            {
-                char from_address_string[SNAPSHOT_MAX_ADDRESS_STRING_LENGTH];
-                snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server received connection request from %s", snapshot_address_to_string( from, from_address_string ) );
-                snapshot_server_process_connection_request_packet( server, from, (struct snapshot_connection_request_packet_t*) packet );
-            }
-        }
-        break;
-
-        case SNAPSHOT_CONNECTION_RESPONSE_PACKET:
-        {    
-            if ( ( server->flags & SNAPSHOT_SERVER_FLAG_IGNORE_CONNECTION_RESPONSE_PACKETS ) == 0 )
-            {
-                char from_address_string[SNAPSHOT_MAX_ADDRESS_STRING_LENGTH];
-                snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server received connection response from %s", snapshot_address_to_string( from, from_address_string ) );
-                snapshot_server_process_connection_response_packet( server, from, (struct snapshot_connection_response_packet_t*) packet, encryption_index );
-            }
-        }
-        break;
-
-        case SNAPSHOT_KEEP_ALIVE_PACKET:
-        {
-            if ( client_index != -1 )
-            {
-                snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server received keep alive packet from client %d", client_index );
-                server->client_last_packet_receive_time[client_index] = server->time;
-                if ( !server->client_confirmed[client_index] )
-                {
-                    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server confirmed connection with client %d", client_index );
-                    server->client_confirmed[client_index] = 1;
-                }
-            }
-        }
-        break;
-
-        case SNAPSHOT_PAYLOAD_PACKET:
-        {
-            if ( client_index != -1 )
-            {
-                snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server received payload packet from client %d", client_index );
-                server->client_last_packet_receive_time[client_index] = server->time;
-                if ( !server->client_confirmed[client_index] )
-                {
-                    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server confirmed connection with client %d", client_index );
-                    server->client_confirmed[client_index] = 1;
-                }
-                struct snapshot_payload_packet_t * payload_packet = (snapshot_payload_packet_t*) packet;
-                snapshot_server_process_payload( server, client_index, sequence, payload_packet->payload_data, payload_packet->payload_bytes );
-            }
-        }
-        break;
-
-        case SNAPSHOT_PASSTHROUGH_PACKET:
-        {
-            if ( client_index != -1 )
-            {
-                snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server received passthrough packet from client %d", client_index );
-                server->client_last_packet_receive_time[client_index] = server->time;
-                if ( !server->client_confirmed[client_index] )
-                {
-                    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server confirmed connection with client %d", client_index );
-                    server->client_confirmed[client_index] = 1;
-                }
-                struct snapshot_passthrough_packet_t * passthrough_packet = (snapshot_passthrough_packet_t*) packet;
-                snapshot_server_process_passthrough( server, client_index, passthrough_packet->passthrough_data, passthrough_packet->passthrough_bytes );
-            }
-        }
-        break;
-
-        case SNAPSHOT_DISCONNECT_PACKET:
-        {
-            if ( client_index != -1 )
-            {
-                snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server received disconnect packet from client %d", client_index );
-                snapshot_server_disconnect_client_internal( server, client_index, 0 );
-           }
-        }
-        break;
-
-        default:
-            break;
-    }
-}
-
-void snapshot_server_read_and_process_packet( struct snapshot_server_t * server, 
-                                              struct snapshot_address_t * from, 
-                                              uint8_t * packet_data, 
-                                              int packet_bytes, 
-                                              uint64_t current_timestamp, 
-                                              uint8_t * allowed_packets )
-{
     if ( !server->running )
-        return;
+        return false;
 
     if ( packet_bytes <= 1 )
-        return;
+        return false;
 
     uint64_t sequence;
 
@@ -889,10 +787,12 @@ void snapshot_server_read_and_process_packet( struct snapshot_server_t * server,
     {
         char address_string[SNAPSHOT_MAX_ADDRESS_STRING_LENGTH];
         snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server could not process packet because no encryption mapping exists for %s", snapshot_address_to_string( from, address_string ) );
-        return;
+        return false;
     }
 
     uint8_t out_packet_data[2048];
+
+    uint64_t current_timestamp = snapshot_platform_time();
 
     void * packet = snapshot_read_packet( packet_data, 
                                           packet_bytes, 
@@ -901,21 +801,114 @@ void snapshot_server_read_and_process_packet( struct snapshot_server_t * server,
                                           server->config.protocol_id, 
                                           current_timestamp, 
                                           server->config.private_key, 
-                                          allowed_packets,
+                                          server->allowed_packets,
                                           out_packet_data,
                                           ( client_index != -1 ) ? &server->client_replay_protection[client_index] : NULL );
 
     if ( !packet )
-        return;
+        return false;
 
-    snapshot_server_process_packet( server, from, packet, sequence, encryption_index, client_index );
+    uint8_t packet_type = ( (uint8_t*) packet ) [0];
+
+    switch ( packet_type )
+    {
+        case SNAPSHOT_CONNECTION_REQUEST_PACKET:
+        {    
+            if ( ( server->flags & SNAPSHOT_SERVER_FLAG_IGNORE_CONNECTION_REQUEST_PACKETS ) == 0 )
+            {
+                char from_address_string[SNAPSHOT_MAX_ADDRESS_STRING_LENGTH];
+                snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server received connection request from %s", snapshot_address_to_string( from, from_address_string ) );
+                snapshot_server_process_connection_request_packet( server, from, (struct snapshot_connection_request_packet_t*) packet );
+                return true;
+            }
+        }
+        break;
+
+        case SNAPSHOT_CONNECTION_RESPONSE_PACKET:
+        {    
+            if ( ( server->flags & SNAPSHOT_SERVER_FLAG_IGNORE_CONNECTION_RESPONSE_PACKETS ) == 0 )
+            {
+                char from_address_string[SNAPSHOT_MAX_ADDRESS_STRING_LENGTH];
+                snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server received connection response from %s", snapshot_address_to_string( from, from_address_string ) );
+                snapshot_server_process_connection_response_packet( server, from, (struct snapshot_connection_response_packet_t*) packet, encryption_index );
+                return true;
+            }
+        }
+        break;
+
+        case SNAPSHOT_KEEP_ALIVE_PACKET:
+        {
+            if ( client_index != -1 )
+            {
+                snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server received keep alive packet from client %d", client_index );
+                server->client_last_packet_receive_time[client_index] = server->time;
+                if ( !server->client_confirmed[client_index] )
+                {
+                    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server confirmed connection with client %d", client_index );
+                    server->client_confirmed[client_index] = 1;
+                }
+                return true;
+            }
+        }
+        break;
+
+        case SNAPSHOT_PAYLOAD_PACKET:
+        {
+            if ( client_index != -1 )
+            {
+                snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server received payload packet from client %d", client_index );
+                server->client_last_packet_receive_time[client_index] = server->time;
+                if ( !server->client_confirmed[client_index] )
+                {
+                    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server confirmed connection with client %d", client_index );
+                    server->client_confirmed[client_index] = 1;
+                }
+                struct snapshot_payload_packet_t * payload_packet = (snapshot_payload_packet_t*) packet;
+                snapshot_server_process_payload( server, client_index, sequence, payload_packet->payload_data, payload_packet->payload_bytes );
+                return true;
+            }
+        }
+        break;
+
+        case SNAPSHOT_PASSTHROUGH_PACKET:
+        {
+            if ( client_index != -1 )
+            {
+                snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server received passthrough packet from client %d", client_index );
+                server->client_last_packet_receive_time[client_index] = server->time;
+                if ( !server->client_confirmed[client_index] )
+                {
+                    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server confirmed connection with client %d", client_index );
+                    server->client_confirmed[client_index] = 1;
+                }
+                struct snapshot_passthrough_packet_t * passthrough_packet = (snapshot_passthrough_packet_t*) packet;
+                snapshot_server_process_passthrough( server, client_index, passthrough_packet->passthrough_data, passthrough_packet->passthrough_bytes );
+                return true;
+            }
+        }
+        break;
+
+        case SNAPSHOT_DISCONNECT_PACKET:
+        {
+            if ( client_index != -1 )
+            {
+                snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server received disconnect packet from client %d", client_index );
+                snapshot_server_disconnect_client_internal( server, client_index, 0 );
+                return true;
+           }
+        }
+        break;
+
+        default:
+            break;
+    }
+
+    return false;
 }
 
 void snapshot_server_receive_packets( struct snapshot_server_t * server )
 {
     snapshot_assert( server );
-
-    uint64_t current_timestamp = (uint64_t) time( NULL );
 
     if ( !server->config.network_simulator )
     {
@@ -937,7 +930,7 @@ void snapshot_server_receive_packets( struct snapshot_server_t * server )
             if ( packet_bytes == 0 )
                 break;
 
-            snapshot_server_read_and_process_packet( server, &from, packet_data + SNAPSHOT_PACKET_PREFIX_BYTES, packet_bytes, current_timestamp, server->allowed_packets );
+            snapshot_server_process_packet( server, &from, packet_data + SNAPSHOT_PACKET_PREFIX_BYTES, packet_bytes );
         }
     }
     else
@@ -954,13 +947,7 @@ void snapshot_server_receive_packets( struct snapshot_server_t * server )
         int i;
         for ( i = 0; i < num_packets_received; ++i )
         {
-            snapshot_server_read_and_process_packet( server, 
-                                                     &server->sim_receive_from[i], 
-                                                     server->sim_receive_packet_data[i], 
-                                                     server->sim_receive_packet_bytes[i], 
-                                                     current_timestamp, 
-                                                     server->allowed_packets );
-
+            snapshot_server_process_packet( server, &server->sim_receive_from[i], server->sim_receive_packet_data[i], server->sim_receive_packet_bytes[i] );
             snapshot_destroy_packet( server->config.context, server->sim_receive_packet_data[i] );
         }
     }

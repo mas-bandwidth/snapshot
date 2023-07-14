@@ -38,6 +38,8 @@ int snapshot_server_max_clients( struct snapshot_server_t * server );
 
 void snapshot_server_update( struct snapshot_server_t * server, double time );
 
+bool snapshot_server_process_packet( struct snapshot_server_t * server, struct snapshot_address_t * from, uint8_t * packet_data, int packet_bytes );
+
 int snapshot_server_client_connected( struct snapshot_server_t * server, int client_index );
 
 uint64_t snapshot_server_client_id( struct snapshot_server_t * server, int client_index );
