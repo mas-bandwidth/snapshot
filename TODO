@@ -22,9 +22,15 @@ DONE
 
 	Implement passthrough send on server
 
+	Add unit test for client server connect and exchange passthrough packets
+
 TODO
 
-	Add unit test for client server connect and exchange passthrough packets
+	Extend passthrough with generate/verify packet to make sure content and length are correct.
+
+	-------------
+
+	Extend passthrough test to IPv6
 
 	-------------
 

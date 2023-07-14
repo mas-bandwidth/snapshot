@@ -1802,6 +1802,7 @@ struct passthrough_context_t
 
 void client_process_passthrough_callback( void * context, const uint8_t * passthrough_data, int passthrough_bytes )
 {
+    // todo: verify packet
     (void) passthrough_data;
     (void) passthrough_bytes;
     passthrough_context_t * passthrough_context = (passthrough_context_t*) context;
@@ -1810,6 +1811,7 @@ void client_process_passthrough_callback( void * context, const uint8_t * passth
 
 void server_process_passthrough_callback( void * context, int client_index, const uint8_t * passthrough_data, int passthrough_bytes )
 {
+    // todo: verify packet
     (void) client_index;
     (void) passthrough_data;
     (void) passthrough_bytes;
@@ -1887,14 +1889,18 @@ void test_ipv4_client_server_passthrough()
 
     while ( 1 )
     {
+        uint8_t passthrough_data[SNAPSHOT_MAX_PASSTHROUGH_BYTES];
+        snapshot_crypto_random_bytes( passthrough_data, SNAPSHOT_MAX_PASSTHROUGH_BYTES );       // todo: generate packet
+
+        snapshot_client_send_passthrough_packet( client, passthrough_data, SNAPSHOT_MAX_PASSTHROUGH_BYTES );
+
+        snapshot_server_send_passthrough_packet( server, 0, passthrough_data, SNAPSHOT_MAX_PASSTHROUGH_BYTES );
+
         snapshot_client_update( client, time );
 
         snapshot_server_update( server, time );
 
         if ( snapshot_client_state( client ) <= SNAPSHOT_CLIENT_STATE_DISCONNECTED )
-            break;
-
-        if ( snapshot_client_state( client ) == SNAPSHOT_CLIENT_STATE_CONNECTED )
             break;
 
         if ( passthrough_context.num_passthrough_packets_received_on_client > 100 && passthrough_context.num_passthrough_packets_received_on_server > 100 )
