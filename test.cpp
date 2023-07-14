@@ -2025,6 +2025,107 @@ void test_ipv6_client_server_connect()
     snapshot_client_destroy( client );
 }
 
+void test_ipv6_client_server_passthrough()
+{
+    passthrough_context_t passthrough_context;
+    memset( &passthrough_context, 0, sizeof(passthrough_context_t) );
+
+    double time = 0.0;
+    double delta_time = 1.0 / 10.0;
+
+    struct snapshot_client_config_t client_config;
+    snapshot_default_client_config( &client_config );
+    client_config.context = &passthrough_context;
+    client_config.process_passthrough_callback = client_process_passthrough_callback;
+
+    // connect client to server
+
+    struct snapshot_client_t * client = snapshot_client_create( "[::]:50000", &client_config, time );
+
+    snapshot_check( client );
+
+    uint8_t private_key[SNAPSHOT_KEY_BYTES];
+    snapshot_crypto_random_bytes( private_key, SNAPSHOT_KEY_BYTES );
+
+    struct snapshot_server_config_t server_config;
+    snapshot_default_server_config( &server_config );
+    server_config.context = &passthrough_context;
+    server_config.protocol_id = TEST_PROTOCOL_ID;
+    server_config.process_passthrough_callback = server_process_passthrough_callback;
+    memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
+
+    const char * server_address = "[::1]:40000";
+
+    struct snapshot_server_t * server = snapshot_server_create( server_address, &server_config, time );
+
+    snapshot_check( server );
+
+    snapshot_server_start( server, 1 );
+
+    uint8_t connect_token[SNAPSHOT_CONNECT_TOKEN_BYTES];
+
+    uint64_t client_id = 0;
+    snapshot_crypto_random_bytes( (uint8_t*) &client_id, 8 );
+
+    uint8_t user_data[SNAPSHOT_USER_DATA_BYTES];
+    snapshot_crypto_random_bytes(user_data, SNAPSHOT_USER_DATA_BYTES);
+
+    snapshot_check( snapshot_generate_connect_token( 1, &server_address, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
+
+    snapshot_client_connect( client, connect_token );
+
+    while ( 1 )
+    {
+        snapshot_client_update( client, time );
+
+        snapshot_server_update( server, time );
+
+        if ( snapshot_client_state( client ) <= SNAPSHOT_CLIENT_STATE_DISCONNECTED )
+            break;
+
+        if ( snapshot_client_state( client ) == SNAPSHOT_CLIENT_STATE_CONNECTED )
+            break;
+
+        time += delta_time;
+    }
+
+    snapshot_check( snapshot_client_state( client ) == SNAPSHOT_CLIENT_STATE_CONNECTED );
+
+    // exchange passthrough packets
+
+    while ( 1 )
+    {
+        int passthrough_bytes = 0;
+        uint8_t passthrough_data[SNAPSHOT_MAX_PASSTHROUGH_BYTES];
+        generate_passthrough_packet( passthrough_data, passthrough_bytes );
+
+        snapshot_client_send_passthrough_packet( client, passthrough_data, passthrough_bytes );
+
+        snapshot_server_send_passthrough_packet( server, 0, passthrough_data, passthrough_bytes );
+
+        snapshot_client_update( client, time );
+
+        snapshot_server_update( server, time );
+
+        if ( snapshot_client_state( client ) <= SNAPSHOT_CLIENT_STATE_DISCONNECTED )
+            break;
+
+        if ( passthrough_context.num_passthrough_packets_received_on_client > 100 && passthrough_context.num_passthrough_packets_received_on_server > 100 )
+            break;
+
+        time += delta_time;
+    }
+
+    snapshot_check( passthrough_context.num_passthrough_packets_received_on_client > 100 );
+    snapshot_check( passthrough_context.num_passthrough_packets_received_on_server > 100 );
+
+    // clean up
+
+    snapshot_server_destroy( server );
+
+    snapshot_client_destroy( client );
+}
+
 #endif // #if SNAPSHOT_PLATFORM_HAS_IPV6
 
 struct loopback_context_t
@@ -3460,6 +3561,7 @@ void test()
         RUN_TEST( test_ipv6_client_create_any_port );
         RUN_TEST( test_ipv6_client_create_specific_port );
         RUN_TEST( test_ipv6_client_server_connect );
+        RUN_TEST( test_ipv6_client_server_passthrough );
 #endif // if SNAPSHOT_PLATFORM_HAS_IPV6
         RUN_TEST( test_client_server_loopback );
         RUN_TEST( test_client_server_network_simulator );

@@ -2,9 +2,9 @@ DONE
 
 	Extend passthrough with generate/verify packet to make sure content and length are correct.
 
-TODO
-
 	Extend passthrough test to IPv6
+
+TODO
 
 	-------------
 
