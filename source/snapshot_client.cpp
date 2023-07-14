@@ -802,17 +802,21 @@ int snapshot_client_loopback( struct snapshot_client_t * client )
     return client->loopback;
 }
 
-void snapshot_client_send_passthrough_packet( struct snapshot_client_t * client, uint8_t * passthrough_data, int passthrough_bytes )
+void snapshot_client_send_passthrough_packet( struct snapshot_client_t * client, const uint8_t * passthrough_data, int passthrough_bytes )
 {
     snapshot_assert( client );
     snapshot_assert( passthrough_data );
     snapshot_assert( passthrough_bytes > 0 );
 
-    // todo: construct the passthrough packet and send it (non-zero copy, we can't assume the passthrough data is prefixed...)
+    uint8_t buffer[SNAPSHOT_PACKET_PREFIX_BYTES + sizeof(snapshot_passthrough_packet_t) + SNAPSHOT_MAX_PASSTHROUGH_BYTES];
 
-    (void) client;
-    (void) passthrough_data;
-    (void) passthrough_bytes;
+    struct snapshot_passthrough_packet_t * packet = (snapshot_passthrough_packet_t*) ( buffer + SNAPSHOT_PACKET_PREFIX_BYTES );
+
+    packet->packet_type = SNAPSHOT_PASSTHROUGH_PACKET;
+    packet->passthrough_bytes = passthrough_bytes;
+    memcpy( packet->passthrough_data, passthrough_data, passthrough_bytes );
+
+    snapshot_client_send_packet_to_server_internal( client, packet );
 }
 
 const struct snapshot_address_t * snapshot_client_server_address( struct snapshot_client_t * client )

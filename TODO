@@ -14,17 +14,17 @@ DONE
 
 	Process passthrough packet by calling a callback on server
 
-TODO
-
 	Add functions to send passthrough packet on client
 
 	Add function to send passthrough packet on server
 
+	Implement passthrough send on client
+
+	Implement passthrough send on server
+
+TODO
+
 	Add unit test for client server connect and exchange passthrough packets
-
-	-------------
-
-	Finish implementing zero copy on write for payload packets and passthrough packets
 
 	-------------
 

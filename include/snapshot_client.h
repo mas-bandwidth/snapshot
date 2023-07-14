@@ -51,7 +51,7 @@ void snapshot_client_process_packet( struct snapshot_client_t * client, struct s
 
 int snapshot_client_loopback( struct snapshot_client_t * client );
 
-void snapshot_client_send_passthrough_packet( struct snapshot_client_t * client, uint8_t * passthrough_data, int passthrough_bytes );
+void snapshot_client_send_passthrough_packet( struct snapshot_client_t * client, const uint8_t * passthrough_data, int passthrough_bytes );
 
 uint16_t snapshot_client_port( struct snapshot_client_t * client );
 

@@ -1361,14 +1361,14 @@ void test_passthrough_packet()
 {
     // setup a passthrough packet
 
-    uint8_t input_packet_buffer[SNAPSHOT_PACKET_PREFIX_BYTES + sizeof(snapshot_payload_packet_t) + SNAPSHOT_MAX_PAYLOAD_BYTES];
+    uint8_t input_packet_buffer[SNAPSHOT_PACKET_PREFIX_BYTES + sizeof(snapshot_payload_packet_t) + SNAPSHOT_MAX_PASSTHROUGH_BYTES];
 
     struct snapshot_payload_packet_t * input_packet = (snapshot_payload_packet_t*) ( input_packet_buffer + SNAPSHOT_PACKET_PREFIX_BYTES );
 
-    input_packet->packet_type = SNAPSHOT_PAYLOAD_PACKET;
-    input_packet->payload_bytes = SNAPSHOT_MAX_PAYLOAD_BYTES;
+    input_packet->packet_type = SNAPSHOT_PASSTHROUGH_PACKET;
+    input_packet->payload_bytes = SNAPSHOT_MAX_PASSTHROUGH_BYTES;
 
-    snapshot_crypto_random_bytes( input_packet->payload_data, SNAPSHOT_MAX_PAYLOAD_BYTES );
+    snapshot_crypto_random_bytes( input_packet->payload_data, SNAPSHOT_MAX_PASSTHROUGH_BYTES );
     
     // write the packet to a buffer
 
@@ -1396,9 +1396,9 @@ void test_passthrough_packet()
 
     // make sure the read packet matches what was written
     
-    snapshot_check( output_packet->packet_type == SNAPSHOT_PAYLOAD_PACKET );
+    snapshot_check( output_packet->packet_type == SNAPSHOT_PASSTHROUGH_PACKET );
     snapshot_check( output_packet->payload_bytes == input_packet->payload_bytes );
-    snapshot_check( memcmp( output_packet->payload_data, input_packet->payload_data, SNAPSHOT_MAX_PAYLOAD_BYTES ) == 0 );
+    snapshot_check( memcmp( output_packet->payload_data, input_packet->payload_data, SNAPSHOT_MAX_PASSTHROUGH_BYTES ) == 0 );
 }
 
 void test_disconnect_packet()
