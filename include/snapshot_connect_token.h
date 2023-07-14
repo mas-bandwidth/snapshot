@@ -82,16 +82,4 @@ int snapshot_read_connect_token_private( const uint8_t * buffer, int buffer_leng
 
 // ---------------------------------------------------------------
 
-// todo: these should go away and be replaced with direct calls to snapshot_crypto_* functions
-
-int snapshot_encrypt_aead_bignonce( uint8_t * message, uint64_t message_length, 
-                                    uint8_t * additional, uint64_t additional_length,
-                                    const uint8_t * nonce,
-                                    const uint8_t * key );
-
-int snapshot_decrypt_aead_bignonce( uint8_t * message, uint64_t message_length, 
-                                    uint8_t * additional, uint64_t additional_length,
-                                    uint8_t * nonce,
-                                    uint8_t * key );
-
 #endif // #ifndef SNAPSHOT_CONNECT_TOKEN_H

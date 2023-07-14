@@ -325,47 +325,6 @@ void snapshot_write_connect_token_private( struct snapshot_connect_token_private
     memset( buffer, 0, SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES - ( buffer - start ) );
 }
 
-int snapshot_encrypt_aead_bignonce( uint8_t * message, uint64_t message_length, 
-                                    uint8_t * additional, uint64_t additional_length,
-                                    const uint8_t * nonce,
-                                    const uint8_t * key )
-{
-    unsigned long long encrypted_length;
-
-    int result = snapshot_crypto_aead_xchacha20poly1305_ietf_encrypt( message, &encrypted_length,
-                                                                      message, (unsigned long long) message_length,
-                                                                      additional, (unsigned long long) additional_length,
-                                                                      NULL, nonce, key );
-    
-    if ( result != 0 )
-        return SNAPSHOT_ERROR;
-
-    snapshot_assert( encrypted_length == message_length + SNAPSHOT_MAC_BYTES );
-
-    return SNAPSHOT_OK;
-}
-
-int snapshot_decrypt_aead_bignonce( uint8_t * message, uint64_t message_length, 
-                                    uint8_t * additional, uint64_t additional_length,
-                                    uint8_t * nonce,
-                                    uint8_t * key )
-{
-    unsigned long long decrypted_length;
-
-    int result = snapshot_crypto_aead_xchacha20poly1305_ietf_decrypt( message, &decrypted_length,
-                                                                      NULL,
-                                                                      message, (unsigned long long) message_length,
-                                                                      additional, (unsigned long long) additional_length,
-                                                                      nonce, key );
-
-    if ( result != 0 )
-        return SNAPSHOT_ERROR;
-
-    snapshot_assert( decrypted_length == message_length - SNAPSHOT_MAC_BYTES );
-
-    return SNAPSHOT_OK;
-}
-
 int snapshot_encrypt_connect_token_private( uint8_t * buffer, 
                                             int buffer_length, 
                                             uint8_t * version_info, 
@@ -388,7 +347,7 @@ int snapshot_encrypt_connect_token_private( uint8_t * buffer,
         snapshot_write_uint64( &p, expire_timestamp );
     }
 
-    return snapshot_encrypt_aead_bignonce( buffer, SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES - SNAPSHOT_MAC_BYTES, additional_data, sizeof( additional_data ), nonce, key );
+    return snapshot_crypto_encrypt_aead_bignonce( buffer, SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES - SNAPSHOT_MAC_BYTES, additional_data, sizeof( additional_data ), nonce, key );
 }
 
 int snapshot_decrypt_connect_token_private( uint8_t * buffer, 
@@ -412,7 +371,7 @@ int snapshot_decrypt_connect_token_private( uint8_t * buffer,
         snapshot_write_uint64( &p, protocol_id );
         snapshot_write_uint64( &p, expire_timestamp );
     }
-    return snapshot_decrypt_aead_bignonce( buffer, SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES, additional_data, sizeof( additional_data ), nonce, key );
+    return snapshot_crypto_decrypt_aead_bignonce( buffer, SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES, additional_data, sizeof( additional_data ), nonce, key );
 }
 
 int snapshot_read_connect_token_private( const uint8_t * buffer, int buffer_length, struct snapshot_connect_token_private_t * connect_token )

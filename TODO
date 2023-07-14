@@ -10,11 +10,9 @@ DONE
 
 	Fix up all the process packet todos for loopback server
 
-TODO
-
 	Fix up the crypto AEAD todos so they call into official snapshot_crypto_* functions.
 
-	-------------
+TODO
 
 	Implement zero copy on payload and passthrough packet writes
 
@@ -27,6 +25,22 @@ TODO
 	Probably need to bring across and modify the testbed projects from next SDK
 
 	Setup custom agents on machines and set them up to build console versions
+
+	-------------
+
+	Get windows tests building and passing
+
+	Get ps4 tests building and passing
+
+	Get ps5 tests building and passing
+
+	Get xboxone tests building and passing
+
+	Get gdk tests building and passing on series x
+
+	Get nintendo switch tests building and passing (need to order new devkit...)
+
+	Get ios tests building and passing
 
 	-------------
 

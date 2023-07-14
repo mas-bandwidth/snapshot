@@ -8,6 +8,7 @@
 #include "snapshot_challenge_token.h"
 #include "snapshot_read_write.h"
 #include "snapshot_replay_protection.h"
+#include "snapshot_crypto.h"
 
 uint8_t * snapshot_create_packet( void * context, int packet_bytes )
 {
@@ -209,10 +210,10 @@ int snapshot_write_packet( void * packet, uint8_t * buffer, int buffer_length, u
             snapshot_write_uint64( &p, sequence );
         }
 
-        if ( snapshot_encrypt_aead( encrypted_start, 
-                                    encrypted_finish - encrypted_start, 
-                                    additional_data, sizeof( additional_data ), 
-                                    nonce, write_packet_key ) != SNAPSHOT_OK )
+        if ( snapshot_crypto_encrypt_aead( encrypted_start, 
+                                           encrypted_finish - encrypted_start, 
+                                           additional_data, sizeof( additional_data ), 
+                                           nonce, write_packet_key ) != SNAPSHOT_OK )
         {
             return SNAPSHOT_ERROR;
         }
@@ -432,7 +433,7 @@ void * snapshot_read_packet( uint8_t * buffer,
             return NULL;
         }
 
-        if ( snapshot_decrypt_aead( (uint8_t*)p, encrypted_bytes, additional_data, sizeof( additional_data ), nonce, read_packet_key ) != SNAPSHOT_OK )
+        if ( snapshot_crypto_decrypt_aead( (uint8_t*)p, encrypted_bytes, additional_data, sizeof( additional_data ), nonce, read_packet_key ) != SNAPSHOT_OK )
         {
             snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "ignored encrypted packet. failed to decrypt" );
             return NULL;

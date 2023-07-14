@@ -28,47 +28,6 @@ void snapshot_write_challenge_token( struct snapshot_challenge_token_t * challen
     snapshot_assert( buffer - start <= SNAPSHOT_CHALLENGE_TOKEN_BYTES - SNAPSHOT_MAC_BYTES );
 }
 
-int snapshot_encrypt_aead( uint8_t * message, uint64_t message_length, 
-                           uint8_t * additional, uint64_t additional_length,
-                           const uint8_t * nonce,
-                           const uint8_t * key )
-{
-    unsigned long long encrypted_length;
-
-    int result = snapshot_crypto_aead_chacha20poly1305_ietf_encrypt( message, &encrypted_length,
-                                                                     message, (unsigned long long) message_length,
-                                                                     additional, (unsigned long long) additional_length,
-                                                                     NULL, nonce, key );
-    
-    if ( result != 0 )
-        return SNAPSHOT_ERROR;
-
-    snapshot_assert( encrypted_length == message_length + SNAPSHOT_MAC_BYTES );
-
-    return SNAPSHOT_OK;
-}
-
-int snapshot_decrypt_aead( uint8_t * message, uint64_t message_length, 
-                           uint8_t * additional, uint64_t additional_length,
-                           uint8_t * nonce,
-                           uint8_t * key )
-{
-    unsigned long long decrypted_length;
-
-    int result = snapshot_crypto_aead_chacha20poly1305_ietf_decrypt( message, &decrypted_length,
-                                                                     NULL,
-                                                                     message, (unsigned long long) message_length,
-                                                                     additional, (unsigned long long) additional_length,
-                                                                     nonce, key );
-
-    if ( result != 0 )
-        return SNAPSHOT_ERROR;
-
-    snapshot_assert( decrypted_length == message_length - SNAPSHOT_MAC_BYTES );
-
-    return SNAPSHOT_OK;
-}
-
 int snapshot_encrypt_challenge_token( uint8_t * buffer, int buffer_length, uint64_t sequence, uint8_t * key )
 {
     snapshot_assert( buffer );
@@ -84,7 +43,7 @@ int snapshot_encrypt_challenge_token( uint8_t * buffer, int buffer_length, uint6
         snapshot_write_uint64( &p, sequence );
     }
 
-    return snapshot_encrypt_aead( buffer, SNAPSHOT_CHALLENGE_TOKEN_BYTES - SNAPSHOT_MAC_BYTES, NULL, 0, nonce, key );
+    return snapshot_crypto_encrypt_aead( buffer, SNAPSHOT_CHALLENGE_TOKEN_BYTES - SNAPSHOT_MAC_BYTES, NULL, 0, nonce, key );
 }
 
 int snapshot_decrypt_challenge_token( uint8_t * buffer, int buffer_length, uint64_t sequence, uint8_t * key )
@@ -102,7 +61,7 @@ int snapshot_decrypt_challenge_token( uint8_t * buffer, int buffer_length, uint6
         snapshot_write_uint64( &p, sequence );
     }
 
-    return snapshot_decrypt_aead( buffer, SNAPSHOT_CHALLENGE_TOKEN_BYTES, NULL, 0, nonce, key );
+    return snapshot_crypto_decrypt_aead( buffer, SNAPSHOT_CHALLENGE_TOKEN_BYTES, NULL, 0, nonce, key );
 }
 
 int snapshot_read_challenge_token( const uint8_t * buffer, int buffer_length, struct snapshot_challenge_token_t * challenge_token )

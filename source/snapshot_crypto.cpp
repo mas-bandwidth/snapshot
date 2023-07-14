@@ -145,3 +145,85 @@ int snapshot_crypto_box_open_easy( unsigned char * m, const unsigned char * c, u
 {
     return crypto_box_open_easy( m, c, clen, n, pk, sk );
 }
+
+int snapshot_crypto_encrypt_aead( uint8_t * message, uint64_t message_length, 
+                                  uint8_t * additional, uint64_t additional_length,
+                                  const uint8_t * nonce,
+                                  const uint8_t * key )
+{
+    unsigned long long encrypted_length;
+
+    int result = snapshot_crypto_aead_chacha20poly1305_ietf_encrypt( message, &encrypted_length,
+                                                                     message, (unsigned long long) message_length,
+                                                                     additional, (unsigned long long) additional_length,
+                                                                     NULL, nonce, key );
+    
+    if ( result != 0 )
+        return SNAPSHOT_ERROR;
+
+    snapshot_assert( encrypted_length == message_length + SNAPSHOT_MAC_BYTES );
+
+    return SNAPSHOT_OK;
+}
+
+int snapshot_crypto_decrypt_aead( uint8_t * message, uint64_t message_length, 
+                                  uint8_t * additional, uint64_t additional_length,
+                                  uint8_t * nonce,
+                                  uint8_t * key )
+{
+    unsigned long long decrypted_length;
+
+    int result = snapshot_crypto_aead_chacha20poly1305_ietf_decrypt( message, &decrypted_length,
+                                                                     NULL,
+                                                                     message, (unsigned long long) message_length,
+                                                                     additional, (unsigned long long) additional_length,
+                                                                     nonce, key );
+
+    if ( result != 0 )
+        return SNAPSHOT_ERROR;
+
+    snapshot_assert( decrypted_length == message_length - SNAPSHOT_MAC_BYTES );
+
+    return SNAPSHOT_OK;
+}
+
+int snapshot_crypto_encrypt_aead_bignonce( uint8_t * message, uint64_t message_length, 
+                                           uint8_t * additional, uint64_t additional_length,
+                                           const uint8_t * nonce,
+                                           const uint8_t * key )
+{
+    unsigned long long encrypted_length;
+
+    int result = snapshot_crypto_aead_xchacha20poly1305_ietf_encrypt( message, &encrypted_length,
+                                                                      message, (unsigned long long) message_length,
+                                                                      additional, (unsigned long long) additional_length,
+                                                                      NULL, nonce, key );
+    
+    if ( result != 0 )
+        return SNAPSHOT_ERROR;
+
+    snapshot_assert( encrypted_length == message_length + SNAPSHOT_MAC_BYTES );
+
+    return SNAPSHOT_OK;
+}
+
+int snapshot_crypto_decrypt_aead_bignonce( uint8_t * message, uint64_t message_length, 
+                                           uint8_t * additional, uint64_t additional_length,
+                                           uint8_t * nonce,
+                                           uint8_t * key )
+{
+    unsigned long long decrypted_length;
+
+    int result = snapshot_crypto_aead_xchacha20poly1305_ietf_decrypt( message, &decrypted_length,
+                                                                      NULL,
+                                                                      message, (unsigned long long) message_length,
+                                                                      additional, (unsigned long long) additional_length,
+                                                                      nonce, key );
+
+    if ( result != 0 )
+        return SNAPSHOT_ERROR;
+
+    snapshot_assert( decrypted_length == message_length - SNAPSHOT_MAC_BYTES );
+
+    return SNAPSHOT_OK;
+}

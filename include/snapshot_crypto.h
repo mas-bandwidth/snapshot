@@ -90,4 +90,24 @@ int snapshot_crypto_box_easy( unsigned char * c, const unsigned char * m, unsign
 
 int snapshot_crypto_box_open_easy( unsigned char * m, const unsigned char * c, unsigned long long clen, const unsigned char * n, const unsigned char * pk, const unsigned char * sk );
 
+int snapshot_crypto_encrypt_aead( uint8_t * message, uint64_t message_length, 
+                                  uint8_t * additional, uint64_t additional_length,
+                                  const uint8_t * nonce,
+                                  const uint8_t * key );
+
+int snapshot_crypto_decrypt_aead( uint8_t * message, uint64_t message_length, 
+                                  uint8_t * additional, uint64_t additional_length,
+                                  uint8_t * nonce,
+                                  uint8_t * key );
+
+int snapshot_crypto_encrypt_aead_bignonce( uint8_t * message, uint64_t message_length, 
+                                           uint8_t * additional, uint64_t additional_length,
+                                           const uint8_t * nonce,
+                                           const uint8_t * key );
+
+int snapshot_crypto_decrypt_aead_bignonce( uint8_t * message, uint64_t message_length, 
+                                           uint8_t * additional, uint64_t additional_length,
+                                           uint8_t * nonce,
+                                           uint8_t * key );
+
 #endif // #ifndef SNAPSHOT_CRYPTO_H

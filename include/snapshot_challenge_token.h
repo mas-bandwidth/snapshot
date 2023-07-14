@@ -24,15 +24,4 @@ int snapshot_decrypt_challenge_token( uint8_t * buffer, int buffer_length, uint6
 
 int snapshot_read_challenge_token( const uint8_t * buffer, int buffer_length, struct snapshot_challenge_token_t * challenge_token );
 
-// todo: these should be removed and replaced with direct calls no snapshot_crypto_* functions
-int snapshot_encrypt_aead( uint8_t * message, uint64_t message_length, 
-                           uint8_t * additional, uint64_t additional_length,
-                           const uint8_t * nonce,
-                           const uint8_t * key );
-
-int snapshot_decrypt_aead( uint8_t * message, uint64_t message_length, 
-                           uint8_t * additional, uint64_t additional_length,
-                           uint8_t * nonce,
-                           uint8_t * key );
-
 #endif // #ifndef SNAPSHOT_CHALLENGE_TOKEN_H
