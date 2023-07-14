@@ -2132,30 +2132,18 @@ struct loopback_context_t
 {
     struct snapshot_client_t * client;
     struct snapshot_server_t * server;
-    int num_loopback_packets_sent_to_client;
-    int num_loopback_packets_sent_to_server;
 };
 
-void client_send_loopback_packet_callback( void * context, int client_index, const uint8_t * packet_data, int packet_bytes, uint64_t packet_sequence )
+void client_send_loopback_packet_callback( void * context, snapshot_address_t * from, uint8_t * packet_data, int packet_bytes )
 {
-    (void) context;
-    (void) client_index;
-    (void) packet_data;
-    (void) packet_bytes;
-    (void) packet_sequence;
-
-    // todo: pass loopback packet to server
+    loopback_context_t * loopback_context = (loopback_context_t*) context;
+    snapshot_server_process_packet( loopback_context->server, from, packet_data, packet_bytes );
 }
 
-void server_send_loopback_packet_callback( void * context, int client_index, const uint8_t * packet_data, int packet_bytes, uint64_t packet_sequence )
+void server_send_loopback_packet_callback( void * context, snapshot_address_t * from, uint8_t * packet_data, int packet_bytes )
 {
-    (void) context;
-    (void) client_index;
-    (void) packet_data;
-    (void) packet_bytes;
-    (void) packet_sequence;
-
-    // todo: pass loopback packet to client
+    loopback_context_t * loopback_context = (loopback_context_t*) context;
+    snapshot_client_process_packet( loopback_context->client, from, packet_data, packet_bytes );
 }
 
 void test_client_server_loopback()

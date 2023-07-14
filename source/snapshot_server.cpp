@@ -1043,7 +1043,7 @@ uint64_t snapshot_server_next_packet_sequence( struct snapshot_server_t * server
     return server->client_sequence[client_index];    
 }
 
-void snapshot_server_send_packet( struct snapshot_server_t * server, int client_index, const uint8_t * packet_data, int packet_bytes )
+void snapshot_server_send_packet( struct snapshot_server_t * server, int client_index, uint8_t * packet_data, int packet_bytes )
 {
     snapshot_assert( server );
     snapshot_assert( packet_data );
@@ -1084,10 +1084,9 @@ void snapshot_server_send_packet( struct snapshot_server_t * server, int client_
         snapshot_assert( server->config.send_loopback_packet_callback );
 
         server->config.send_loopback_packet_callback( server->config.context,
-                                                      client_index, 
+                                                      &server->client_address[client_index],
                                                       packet_data, 
-                                                      packet_bytes, 
-                                                      server->client_sequence[client_index]++ );
+                                                      packet_bytes );
 
         server->client_last_packet_send_time[client_index] = server->time;
     }

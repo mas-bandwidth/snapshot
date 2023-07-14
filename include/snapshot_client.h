@@ -13,7 +13,7 @@ struct snapshot_client_config_t
     void * context;
     struct snapshot_network_simulator_t * network_simulator;
     void (*state_change_callback)(void*,int,int);
-    void (*send_loopback_packet_callback)(void*,int,const uint8_t*,int,uint64_t);
+    void (*send_loopback_packet_callback)(void*,struct snapshot_address_t*,uint8_t*,int);
     void (*process_passthrough_callback)(void*,const uint8_t*,int);
 };
 

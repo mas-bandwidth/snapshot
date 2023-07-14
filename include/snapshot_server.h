@@ -18,7 +18,7 @@ struct snapshot_server_config_t
     uint8_t private_key[SNAPSHOT_KEY_BYTES];
     struct snapshot_network_simulator_t * network_simulator;
     void (*connect_disconnect_callback)(void*,int,int);
-    void (*send_loopback_packet_callback)(void*,int,const uint8_t*,int,uint64_t);
+    void (*send_loopback_packet_callback)(void*,struct snapshot_address_t*,uint8_t*,int);
     void (*process_passthrough_callback)(void*,int,const uint8_t*,int);
 };
 
