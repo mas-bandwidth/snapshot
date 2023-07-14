@@ -165,17 +165,31 @@ uint8_t * snapshot_write_packet( void * packet, uint8_t * buffer, int buffer_len
 
             case SNAPSHOT_PAYLOAD_PACKET:
             {
+                // zero copy
                 struct snapshot_payload_packet_t * payload_packet = (struct snapshot_payload_packet_t*) packet;
                 snapshot_assert( payload_packet->payload_bytes <= SNAPSHOT_MAX_PAYLOAD_BYTES );
-                snapshot_write_bytes( &p, payload_packet->payload_data, payload_packet->payload_bytes );
+                int payload_bytes = payload_packet->payload_bytes;
+                int header_bytes = p - start;
+                uint8_t * header = start;
+                start = ( (uint8_t*) packet ) + offsetof(snapshot_payload_packet_t, payload_data) - header_bytes;
+                encrypted_start = start + header_bytes;
+                memcpy( start, header, header_bytes );
+                p = start + header_bytes + payload_bytes;
             }
             break;
 
             case SNAPSHOT_PASSTHROUGH_PACKET:
             {
+                // zero copy
                 struct snapshot_passthrough_packet_t * passthrough_packet = (struct snapshot_passthrough_packet_t*) packet;
-                snapshot_assert( passthrough_packet->payload_bytes <= SNAPSHOT_MAX_PAYLOAD_BYTES );
-                snapshot_write_bytes( &p, passthrough_packet->passthrough_data, passthrough_packet->passthrough_bytes );
+                snapshot_assert( passthrough_packet->passthrough_bytes <= SNAPSHOT_MAX_PASSTHROUGH_BYTES );
+                int passthrough_bytes = passthrough_packet->passthrough_bytes;
+                int header_bytes = p - start;
+                uint8_t * header = start;
+                start = ( (uint8_t*) packet ) + offsetof(snapshot_passthrough_packet_t, passthrough_data) - header_bytes;
+                encrypted_start = start + header_bytes;
+                memcpy( start, header, header_bytes );
+                p = start + header_bytes + passthrough_bytes;
             }
             break;
 
