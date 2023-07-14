@@ -1796,38 +1796,38 @@ void test_ipv4_client_server_connect()
 
 struct passthrough_context_t
 {
-    struct snapshot_client_t * client;
-    struct snapshot_server_t * server;
     int num_passthrough_packets_received_on_client;
     int num_passthrough_packets_received_on_server;
 };
 
 void client_process_passthrough_callback( void * context, const uint8_t * passthrough_data, int passthrough_bytes )
 {
-    (void) context;
     (void) passthrough_data;
     (void) passthrough_bytes;
-
-    // todo: increase num_passthrough_packets_received_on_client
+    passthrough_context_t * passthrough_context = (passthrough_context_t*) context;
+    passthrough_context->num_passthrough_packets_received_on_client++; 
 }
 
 void server_process_passthrough_callback( void * context, int client_index, const uint8_t * passthrough_data, int passthrough_bytes )
 {
-    (void) context;
     (void) client_index;
     (void) passthrough_data;
     (void) passthrough_bytes;
-
-    // todo: increase num_passthrough_packets_received_on_server
+    passthrough_context_t * passthrough_context = (passthrough_context_t*) context;
+    passthrough_context->num_passthrough_packets_received_on_server++;    
 }
 
 void test_ipv4_client_server_passthrough()
 {
+    passthrough_context_t passthrough_context;
+    memset( &passthrough_context, 0, sizeof(passthrough_context_t) );
+
     double time = 0.0;
     double delta_time = 1.0 / 10.0;
 
     struct snapshot_client_config_t client_config;
     snapshot_default_client_config( &client_config );
+    client_config.context = &passthrough_context;
     client_config.process_passthrough_callback = client_process_passthrough_callback;
 
     // connect client to server
@@ -1841,6 +1841,7 @@ void test_ipv4_client_server_passthrough()
 
     struct snapshot_server_config_t server_config;
     snapshot_default_server_config( &server_config );
+    server_config.context = &passthrough_context;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.process_passthrough_callback = server_process_passthrough_callback;
     memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
@@ -1884,7 +1885,26 @@ void test_ipv4_client_server_passthrough()
 
     // exchange passthrough packets
 
-    // todo
+    while ( 1 )
+    {
+        snapshot_client_update( client, time );
+
+        snapshot_server_update( server, time );
+
+        if ( snapshot_client_state( client ) <= SNAPSHOT_CLIENT_STATE_DISCONNECTED )
+            break;
+
+        if ( snapshot_client_state( client ) == SNAPSHOT_CLIENT_STATE_CONNECTED )
+            break;
+
+        if ( passthrough_context.num_passthrough_packets_received_on_client > 100 && passthrough_context.num_passthrough_packets_received_on_server > 100 )
+            break;
+
+        time += delta_time;
+    }
+
+    snapshot_check( passthrough_context.num_passthrough_packets_received_on_client > 100 );
+    snapshot_check( passthrough_context.num_passthrough_packets_received_on_server > 100 );
 
     // clean up
 
