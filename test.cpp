@@ -1792,6 +1792,107 @@ void test_ipv4_client_server_connect()
     snapshot_client_destroy( client );
 }
 
+// todo: generate/validate packet
+
+struct passthrough_context_t
+{
+    struct snapshot_client_t * client;
+    struct snapshot_server_t * server;
+    int num_passthrough_packets_received_on_client;
+    int num_passthrough_packets_received_on_server;
+};
+
+void client_process_passthrough_callback( void * context, const uint8_t * passthrough_data, int passthrough_bytes )
+{
+    (void) context;
+    (void) passthrough_data;
+    (void) passthrough_bytes;
+
+    // todo: increase num_passthrough_packets_received_on_client
+}
+
+void server_process_passthrough_callback( void * context, int client_index, const uint8_t * passthrough_data, int passthrough_bytes )
+{
+    (void) context;
+    (void) client_index;
+    (void) passthrough_data;
+    (void) passthrough_bytes;
+
+    // todo: increase num_passthrough_packets_received_on_server
+}
+
+void test_ipv4_client_server_passthrough()
+{
+    double time = 0.0;
+    double delta_time = 1.0 / 10.0;
+
+    struct snapshot_client_config_t client_config;
+    snapshot_default_client_config( &client_config );
+    client_config.process_passthrough_callback = client_process_passthrough_callback;
+
+    // connect client to server
+
+    struct snapshot_client_t * client = snapshot_client_create( "0.0.0.0:50000", &client_config, time );
+
+    snapshot_check( client );
+
+    uint8_t private_key[SNAPSHOT_KEY_BYTES];
+    snapshot_crypto_random_bytes( private_key, SNAPSHOT_KEY_BYTES );
+
+    struct snapshot_server_config_t server_config;
+    snapshot_default_server_config( &server_config );
+    server_config.protocol_id = TEST_PROTOCOL_ID;
+    server_config.process_passthrough_callback = server_process_passthrough_callback;
+    memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
+
+    const char * server_address = "127.0.0.1:40000";
+
+    struct snapshot_server_t * server = snapshot_server_create( server_address, &server_config, time );
+
+    snapshot_check( server );
+
+    snapshot_server_start( server, 1 );
+
+    uint8_t connect_token[SNAPSHOT_CONNECT_TOKEN_BYTES];
+
+    uint64_t client_id = 0;
+    snapshot_crypto_random_bytes( (uint8_t*) &client_id, 8 );
+
+    uint8_t user_data[SNAPSHOT_USER_DATA_BYTES];
+    snapshot_crypto_random_bytes(user_data, SNAPSHOT_USER_DATA_BYTES);
+
+    snapshot_check( snapshot_generate_connect_token( 1, &server_address, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
+
+    snapshot_client_connect( client, connect_token );
+
+    while ( 1 )
+    {
+        snapshot_client_update( client, time );
+
+        snapshot_server_update( server, time );
+
+        if ( snapshot_client_state( client ) <= SNAPSHOT_CLIENT_STATE_DISCONNECTED )
+            break;
+
+        if ( snapshot_client_state( client ) == SNAPSHOT_CLIENT_STATE_CONNECTED )
+            break;
+
+        time += delta_time;
+    }
+
+    snapshot_check( snapshot_client_state( client ) == SNAPSHOT_CLIENT_STATE_CONNECTED );
+
+    // exchange passthrough packets
+
+    // todo
+
+    // clean up
+
+    snapshot_server_destroy( server );
+
+    snapshot_client_destroy( client );
+}
+
 #if SNAPSHOT_PLATFORM_HAS_IPV6
 
 void test_ipv6_client_create_any_port()
@@ -3314,6 +3415,7 @@ void test()
         RUN_TEST( test_ipv4_client_create_any_port );
         RUN_TEST( test_ipv4_client_create_specific_port );
         RUN_TEST( test_ipv4_client_server_connect );
+        RUN_TEST( test_ipv4_client_server_passthrough );
 #if SNAPSHOT_PLATFORM_HAS_IPV6
         RUN_TEST( test_ipv6_client_create_any_port );
         RUN_TEST( test_ipv6_client_create_specific_port );
