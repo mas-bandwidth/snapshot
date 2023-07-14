@@ -47,7 +47,7 @@ void snapshot_client_connect_loopback( struct snapshot_client_t * client, struct
 
 void snapshot_client_disconnect_loopback( struct snapshot_client_t * client );
 
-void snapshot_client_process_packet( struct snapshot_client_t * client, struct snapshot_address_t * from, uint8_t * packet_data, int packet_bytes );
+bool snapshot_client_process_packet( struct snapshot_client_t * client, struct snapshot_address_t * from, uint8_t * packet_data, int packet_bytes );
 
 int snapshot_client_loopback( struct snapshot_client_t * client );
 

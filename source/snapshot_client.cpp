@@ -283,10 +283,30 @@ void snapshot_client_process_passthrough( struct snapshot_client_t * client, uin
     }
 }
 
-void snapshot_client_process_packet( struct snapshot_client_t * client, struct snapshot_address_t * from, uint8_t * packet, uint64_t sequence )
+bool snapshot_client_process_packet( struct snapshot_client_t * client, struct snapshot_address_t * from, uint8_t * packet_data, int packet_bytes )
 {
     snapshot_assert( client );
     snapshot_assert( packet );
+
+    uint64_t current_timestamp = (uint64_t) time( NULL );
+
+    uint8_t out_packet_buffer[1024];
+
+    uint64_t sequence;
+
+    void * packet = snapshot_read_packet( packet_data, 
+                                          packet_bytes, 
+                                          &sequence, 
+                                          client->read_packet_key, 
+                                          client->connect_token.protocol_id, 
+                                          current_timestamp, 
+                                          NULL, 
+                                          client->allowed_packets, 
+                                          out_packet_buffer,
+                                          &client->replay_protection );
+
+    if ( !packet )
+        return false;
 
     uint8_t packet_type = ( (uint8_t*) packet ) [0];
 
@@ -302,6 +322,7 @@ void snapshot_client_process_packet( struct snapshot_client_t * client, struct s
                 client->should_disconnect = 1;
                 client->should_disconnect_state = SNAPSHOT_CLIENT_STATE_CONNECTION_DENIED;
                 client->last_packet_receive_time = client->time;
+                return true;
             }
         }
         break;
@@ -318,6 +339,8 @@ void snapshot_client_process_packet( struct snapshot_client_t * client, struct s
                 client->last_packet_receive_time = client->time;
 
                 snapshot_client_set_state( client, SNAPSHOT_CLIENT_STATE_SENDING_CONNECTION_RESPONSE );
+
+                return true;
             }
         }
         break;
@@ -333,6 +356,8 @@ void snapshot_client_process_packet( struct snapshot_client_t * client, struct s
                     snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client received keep alive packet from server" );
 
                     client->last_packet_receive_time = client->time;
+
+                    return true;
                 }
                 else if ( client->state == SNAPSHOT_CLIENT_STATE_SENDING_CONNECTION_RESPONSE )
                 {
@@ -347,6 +372,8 @@ void snapshot_client_process_packet( struct snapshot_client_t * client, struct s
                     char server_address_string[SNAPSHOT_MAX_ADDRESS_STRING_LENGTH];
                     snapshot_address_to_string( &client->server_address, server_address_string );
                     snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connected to server %s slot %d", server_address_string, p->client_index );
+    
+                    return true;
                 }
             }
         }
@@ -364,7 +391,7 @@ void snapshot_client_process_packet( struct snapshot_client_t * client, struct s
 
                 client->last_packet_receive_time = client->time;
 
-                return;
+                return true;
             }
         }
         break;
@@ -381,7 +408,7 @@ void snapshot_client_process_packet( struct snapshot_client_t * client, struct s
 
                 client->last_packet_receive_time = client->time;
 
-                return;
+                return true;
             }
         }
         break;
@@ -395,6 +422,8 @@ void snapshot_client_process_packet( struct snapshot_client_t * client, struct s
                 client->should_disconnect = 1;
                 client->should_disconnect_state = SNAPSHOT_CLIENT_STATE_DISCONNECTED;
                 client->last_packet_receive_time = client->time;
+
+                return true;
             }
         }
         break;
@@ -402,14 +431,14 @@ void snapshot_client_process_packet( struct snapshot_client_t * client, struct s
         default:
             break;
     }
+
+    return false;
 }
 
 void snapshot_client_receive_packets( struct snapshot_client_t * client )
 {
     snapshot_assert( client );
     snapshot_assert( !client->loopback );
-
-    uint64_t current_timestamp = (uint64_t) time( NULL );
 
     if ( !client->config.network_simulator )
     {
@@ -423,25 +452,7 @@ void snapshot_client_receive_packets( struct snapshot_client_t * client )
             if ( packet_bytes == 0 )
                 break;
 
-            uint8_t out_packet_buffer[1024];
-
-            uint64_t sequence;
-
-            void * packet = snapshot_read_packet( packet_data, 
-                                                  packet_bytes, 
-                                                  &sequence, 
-                                                  client->read_packet_key, 
-                                                  client->connect_token.protocol_id, 
-                                                  current_timestamp, 
-                                                  NULL, 
-                                                  client->allowed_packets, 
-                                                  out_packet_buffer,
-                                                  &client->replay_protection );
-
-            if ( !packet )
-                continue;
-
-            snapshot_client_process_packet( client, &from, (uint8_t*)packet, sequence );
+            snapshot_client_process_packet( client, &from, packet_data, packet_bytes );
         }
     }
     else
@@ -455,30 +466,11 @@ void snapshot_client_receive_packets( struct snapshot_client_t * client )
                                                                                client->sim_receive_packet_bytes, 
                                                                                client->sim_receive_from );
 
-        int i;
-        for ( i = 0; i < num_packets_received; ++i )
+        for ( int i = 0; i < num_packets_received; ++i )
         {
-            uint64_t sequence;
-
-            uint8_t out_packet_data[1024];
-
-            void * packet = snapshot_read_packet( client->sim_receive_packet_data[i], 
-                                                  client->sim_receive_packet_bytes[i], 
-                                                  &sequence, 
-                                                  client->read_packet_key, 
-                                                  client->connect_token.protocol_id, 
-                                                  current_timestamp, 
-                                                  NULL, 
-                                                  client->allowed_packets, 
-                                                  out_packet_data,
-                                                  &client->replay_protection );
-
-            if ( packet )
-            {
-                snapshot_client_process_packet( client, &client->sim_receive_from[i], (uint8_t*)packet, sequence );
-            }
-
+            snapshot_client_process_packet( client, &client->sim_receive_from[i], client->sim_receive_packet_data[i], client->sim_receive_packet_bytes[i] );
             snapshot_destroy_packet( client->config.context, client->sim_receive_packet_data[i] );
+            client->sim_receive_packet_data[i] = NULL;
         }
     }
 }

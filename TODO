@@ -4,11 +4,11 @@ DONE
 
 	Extend passthrough test to IPv6
 
+	Fix up all the process packet todos for loopback client
+
 TODO
 
 	Fix up all the process packet todos for loopback server
-
-	Fix up all the process packet todos for loopback client
 
 	-------------
 
