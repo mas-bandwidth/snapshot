@@ -1211,6 +1211,22 @@ void snapshot_server_disconnect_loopback_client( struct snapshot_server_t * serv
     snapshot_assert( server->num_connected_clients >= 0 );
 }
 
+void snapshot_server_send_passthrough_packet( struct snapshot_server_t * server, int client_index, uint8_t * passthrough_data, int passthrough_bytes )
+{
+    snapshot_assert( server );
+    snapshot_assert( client_index >= 0 );
+    snapshot_assert( client_index < server->max_clients );
+    snapshot_assert( passthrough_data );
+    snapshot_assert( passthrough_bytes > 0 );
+
+    // todo: construct the passthrough packet and send it (non-zero copy, we can't assume the passthrough data is prefixed...)
+
+    (void) server;
+    (void) client_index;
+    (void) passthrough_data;
+    (void) passthrough_bytes;
+}
+
 int snapshot_server_client_loopback( struct snapshot_server_t * server, int client_index )
 {
     snapshot_assert( server );

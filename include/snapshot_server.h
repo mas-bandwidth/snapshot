@@ -56,9 +56,9 @@ void snapshot_server_connect_loopback_client( struct snapshot_server_t * server,
 
 void snapshot_server_disconnect_loopback_client( struct snapshot_server_t * server, int client_index );
 
-int snapshot_server_client_loopback( struct snapshot_server_t * server, int client_index );
+void snapshot_server_send_passthrough_packet( struct snapshot_server_t * server, int client_index, uint8_t * passthrough_data, int passthrough_bytes );
 
-void snapshot_server_process_loopback_packet( struct snapshot_server_t * server, int client_index, const uint8_t * packet_data, int packet_bytes, uint64_t packet_sequence );
+int snapshot_server_client_loopback( struct snapshot_server_t * server, int client_index );
 
 uint16_t snapshot_server_port( struct snapshot_server_t * server );
 
