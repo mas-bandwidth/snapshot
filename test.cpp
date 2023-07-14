@@ -1332,7 +1332,7 @@ void test_payload_packet()
 {
     // setup a payload packet
 
-    uint8_t input_packet_buffer[SNAPSHOT_PACKET_PREFIX_BYTES + sizeof(snapshot_payload_packet_t) + SNAPSHOT_MAX_PAYLOAD_BYTES];
+    uint8_t input_packet_buffer[SNAPSHOT_PACKET_PREFIX_BYTES * 10 + sizeof(snapshot_payload_packet_t) + SNAPSHOT_MAX_PAYLOAD_BYTES];
 
     struct snapshot_payload_packet_t * input_packet = (snapshot_payload_packet_t*) ( input_packet_buffer + SNAPSHOT_PACKET_PREFIX_BYTES );
 
