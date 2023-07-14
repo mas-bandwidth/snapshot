@@ -1332,7 +1332,7 @@ void test_payload_packet()
 {
     // setup a payload packet
 
-    uint8_t input_packet_buffer[SNAPSHOT_PACKET_PREFIX_BYTES * 10 + sizeof(snapshot_payload_packet_t) + SNAPSHOT_MAX_PAYLOAD_BYTES];
+    uint8_t input_packet_buffer[SNAPSHOT_PACKET_PREFIX_BYTES + sizeof(snapshot_payload_packet_t) + SNAPSHOT_MAX_PAYLOAD_BYTES + SNAPSHOT_PACKET_POSTFIX_BYTES];
 
     struct snapshot_payload_packet_t * input_packet = (snapshot_payload_packet_t*) ( input_packet_buffer + SNAPSHOT_PACKET_PREFIX_BYTES );
 
@@ -1379,24 +1379,27 @@ void test_payload_packet()
     snapshot_check( output_packet->packet_type == SNAPSHOT_PAYLOAD_PACKET );
     snapshot_check( output_packet->payload_bytes == input_payload_bytes );
     snapshot_check( memcmp( output_packet->payload_data, input_payload_data, SNAPSHOT_MAX_PAYLOAD_BYTES ) == 0 );
-
-    printf( "finished\n" );
 }
 
 void test_passthrough_packet()
 {
-/*
     // setup a passthrough packet
 
-    uint8_t input_packet_buffer[SNAPSHOT_PACKET_PREFIX_BYTES + sizeof(snapshot_payload_packet_t) + SNAPSHOT_MAX_PASSTHROUGH_BYTES];
+    uint8_t input_packet_buffer[SNAPSHOT_PACKET_PREFIX_BYTES + sizeof(snapshot_passthrough_packet_t) + SNAPSHOT_MAX_PASSTHROUGH_BYTES + SNAPSHOT_PACKET_POSTFIX_BYTES];
 
-    struct snapshot_payload_packet_t * input_packet = (snapshot_payload_packet_t*) ( input_packet_buffer + SNAPSHOT_PACKET_PREFIX_BYTES );
+    struct snapshot_passthrough_packet_t * input_packet = (snapshot_passthrough_packet_t*) ( input_packet_buffer + SNAPSHOT_PACKET_PREFIX_BYTES );
 
     input_packet->packet_type = SNAPSHOT_PASSTHROUGH_PACKET;
-    input_packet->payload_bytes = SNAPSHOT_MAX_PASSTHROUGH_BYTES;
+    input_packet->passthrough_bytes = SNAPSHOT_MAX_PASSTHROUGH_BYTES;
 
-    snapshot_crypto_random_bytes( input_packet->payload_data, SNAPSHOT_MAX_PASSTHROUGH_BYTES );
+    snapshot_crypto_random_bytes( input_packet->passthrough_data, SNAPSHOT_MAX_PASSTHROUGH_BYTES );
     
+    // save the input packet data somewhere else, since it is zero copy, the input packet will get trashed
+
+    uint32_t input_passthrough_bytes = input_packet->passthrough_bytes;
+    uint8_t input_passthrough_data[SNAPSHOT_MAX_PASSTHROUGH_BYTES];
+    memcpy( input_passthrough_data, input_packet->passthrough_data, input_passthrough_bytes );
+
     // write the packet to a buffer
 
     uint8_t buffer[SNAPSHOT_MAX_PACKET_BYTES];
@@ -1420,16 +1423,15 @@ void test_passthrough_packet()
 
     uint8_t out_packet_data[2048];
 
-    struct snapshot_payload_packet_t * output_packet = (struct snapshot_payload_packet_t*) snapshot_read_packet( packet_data, packet_bytes, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, out_packet_data, NULL );
+    struct snapshot_passthrough_packet_t * output_packet = (struct snapshot_passthrough_packet_t*) snapshot_read_packet( packet_data, packet_bytes, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, out_packet_data, NULL );
 
     snapshot_check( output_packet );
 
     // make sure the read packet matches what was written
     
     snapshot_check( output_packet->packet_type == SNAPSHOT_PASSTHROUGH_PACKET );
-    snapshot_check( output_packet->payload_bytes == input_packet->payload_bytes );
-    snapshot_check( memcmp( output_packet->payload_data, input_packet->payload_data, SNAPSHOT_MAX_PASSTHROUGH_BYTES ) == 0 );
-*/
+    snapshot_check( output_packet->passthrough_bytes == input_passthrough_bytes );
+    snapshot_check( memcmp( output_packet->passthrough_data, input_passthrough_data, SNAPSHOT_MAX_PASSTHROUGH_BYTES ) == 0 );
 }
 
 void test_disconnect_packet()
@@ -1868,8 +1870,6 @@ void server_process_passthrough_callback( void * context, int client_index, cons
 
 void test_ipv4_client_server_passthrough()
 {
-    // todo
-    /*
     passthrough_context_t passthrough_context;
     memset( &passthrough_context, 0, sizeof(passthrough_context_t) );
 
@@ -1967,7 +1967,6 @@ void test_ipv4_client_server_passthrough()
     snapshot_server_destroy( server );
 
     snapshot_client_destroy( client );
-    */
 }
 
 #if SNAPSHOT_PLATFORM_HAS_IPV6

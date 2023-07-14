@@ -505,8 +505,6 @@ void snapshot_client_send_packet_to_server_internal( struct snapshot_client_t * 
     snapshot_assert( client );
     snapshot_assert( !client->loopback );
 
-    // todo: go zero copy on packet write (but only for payload and passthrough packets...)
-
     uint8_t buffer[SNAPSHOT_MAX_PACKET_BYTES];
 
     int packet_bytes = 0;
@@ -803,7 +801,7 @@ void snapshot_client_send_passthrough_packet( struct snapshot_client_t * client,
     snapshot_assert( passthrough_data );
     snapshot_assert( passthrough_bytes > 0 );
 
-    uint8_t buffer[SNAPSHOT_PACKET_PREFIX_BYTES + sizeof(snapshot_passthrough_packet_t) + SNAPSHOT_MAX_PASSTHROUGH_BYTES];
+    uint8_t buffer[SNAPSHOT_PACKET_PREFIX_BYTES + sizeof(snapshot_passthrough_packet_t) + SNAPSHOT_MAX_PASSTHROUGH_BYTES + SNAPSHOT_PACKET_POSTFIX_BYTES];
 
     struct snapshot_passthrough_packet_t * packet = (snapshot_passthrough_packet_t*) ( buffer + SNAPSHOT_PACKET_PREFIX_BYTES );
 

@@ -13,7 +13,7 @@
 uint8_t * snapshot_create_packet( void * context, int packet_bytes )
 {
     snapshot_assert( packet_bytes > 0 );
-    uint8_t * buffer = (uint8_t*) snapshot_malloc( context, packet_bytes + SNAPSHOT_PACKET_PREFIX_BYTES );
+    uint8_t * buffer = (uint8_t*) snapshot_malloc( context, SNAPSHOT_PACKET_PREFIX_BYTES + packet_bytes + SNAPSHOT_PACKET_POSTFIX_BYTES );
     if ( !buffer )
     {
         return NULL;
