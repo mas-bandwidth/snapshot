@@ -41,6 +41,7 @@ void snapshot_default_client_config( struct snapshot_client_config_t * config )
     config->network_simulator = NULL;
     config->state_change_callback = NULL;
     config->send_loopback_packet_callback = NULL;
+    config->process_passthrough_callback = NULL;
 };
 
 struct snapshot_client_t
@@ -269,19 +270,17 @@ void snapshot_client_process_payload( struct snapshot_client_t * client, uint64_
     (void) bytes;
 }
 
-void snapshot_client_process_passthrough( struct snapshot_client_t * client, uint64_t sequence, uint8_t * data, int bytes )
+void snapshot_client_process_passthrough( struct snapshot_client_t * client, uint8_t * data, int bytes )
 {
     snapshot_assert( client );
     snapshot_assert( data );
     snapshot_assert( bytes > 0 );
     snapshot_assert( bytes <= SNAPSHOT_MAX_PASSTHROUGH_BYTES );
 
-    // todo: call a callback to process the passthrough
- 
-    (void) client;
-    (void) sequence;
-    (void) data;
-    (void) bytes;
+    if ( client->config.process_passthrough_callback != NULL )
+    {
+        client->config.process_passthrough_callback( client->config.context, data, bytes );
+    }
 }
 
 void snapshot_client_process_packet( struct snapshot_client_t * client, struct snapshot_address_t * from, uint8_t * packet, uint64_t sequence )
@@ -378,7 +377,7 @@ void snapshot_client_process_packet( struct snapshot_client_t * client, struct s
 
                 struct snapshot_passthrough_packet_t * p = (struct snapshot_passthrough_packet_t*) packet;
 
-                snapshot_client_process_passthrough( client, sequence, p->passthrough_data, p->passthrough_bytes );
+                snapshot_client_process_passthrough( client, p->passthrough_data, p->passthrough_bytes );
 
                 client->last_packet_receive_time = client->time;
 

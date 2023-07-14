@@ -6,11 +6,11 @@ DONE
 
 	Make sure network simulator has padding at packet fronts etc.
 
-TODO
-
 	Add process payload packet to server
 
 	Add process passthrough packet to server (stubbed out...)
+
+TODO
 
 	-------------
 
@@ -19,6 +19,8 @@ TODO
 	Process passthrough packet by calling a callback on client
 
 	Process passthrough packet by calling a callback on server
+
+	Add unit test for client server connect and exchange passthrough packets
 
 	-------------
 

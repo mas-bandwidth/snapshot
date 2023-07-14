@@ -25,6 +25,7 @@ void snapshot_default_server_config( struct snapshot_server_config_t * config )
     config->network_simulator = NULL;
     config->connect_disconnect_callback = NULL;
     config->send_loopback_packet_callback = NULL;
+    config->process_passthrough_callback = NULL;
 };
 
 // ------------------------------------------------------------------------------------------
@@ -718,7 +719,7 @@ void snapshot_server_process_connection_response_packet( struct snapshot_server_
     snapshot_server_connect_client( server, client_index, from, challenge_token.client_id, encryption_index, timeout_seconds, challenge_token.user_data );
 }
 
-void snapshot_server_process_payload( struct snapshot_server_t * server, int client_index, void * payload_data, int payload_bytes )
+void snapshot_server_process_payload( struct snapshot_server_t * server, int client_index, uint64_t sequence, uint8_t * payload_data, int payload_bytes )
 {
     snapshot_assert( server );
     snapshot_assert( client_index >= 0 );
@@ -731,11 +732,12 @@ void snapshot_server_process_payload( struct snapshot_server_t * server, int cli
 
     (void) server;
     (void) client_index;
+    (void) sequence;
     (void) payload_data;
     (void) payload_bytes;
 }
 
-void snapshot_server_process_passthrough( struct snapshot_server_t * server, int client_index, void * passthrough_data, int passthrough_bytes )
+void snapshot_server_process_passthrough( struct snapshot_server_t * server, int client_index, uint8_t * passthrough_data, int passthrough_bytes )
 {
     snapshot_assert( server );
     snapshot_assert( client_index >= 0 );
@@ -744,12 +746,10 @@ void snapshot_server_process_passthrough( struct snapshot_server_t * server, int
     snapshot_assert( passthrough_bytes > 0 );
     snapshot_assert( passthrough_bytes <= SNAPSHOT_MAX_PASSTHROUGH_BYTES );
 
-    // todo: call callback (if non-NULL), to process passthrough
-
-    (void) server;
-    (void) client_index;
-    (void) passthrough_data;
-    (void) passthrough_bytes;
+    if ( server->config.process_passthrough_callback != NULL )
+    {
+        server->config.process_passthrough_callback( server->config.context, client_index, passthrough_data, passthrough_bytes );
+    }
 }
 
 void snapshot_server_process_packet( struct snapshot_server_t * server, 
@@ -818,7 +818,7 @@ void snapshot_server_process_packet( struct snapshot_server_t * server,
                     server->client_confirmed[client_index] = 1;
                 }
                 struct snapshot_payload_packet_t * payload_packet = (snapshot_payload_packet_t*) packet;
-                snapshot_server_process_payload( server, client_index, payload_packet->payload_data, payload_packet->payload_bytes );
+                snapshot_server_process_payload( server, client_index, sequence, payload_packet->payload_data, payload_packet->payload_bytes );
             }
         }
         break;
@@ -834,8 +834,8 @@ void snapshot_server_process_packet( struct snapshot_server_t * server,
                     snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server confirmed connection with client %d", client_index );
                     server->client_confirmed[client_index] = 1;
                 }
-                struct snapshot_payload_packet_t * payload_packet = (snapshot_payload_packet_t*) packet;
-                snapshot_server_process_payload( server, client_index, payload_packet->payload_data, payload_packet->payload_bytes );
+                struct snapshot_passthrough_packet_t * passthrough_packet = (snapshot_passthrough_packet_t*) packet;
+                snapshot_server_process_passthrough( server, client_index, passthrough_packet->passthrough_data, passthrough_packet->passthrough_bytes );
             }
         }
         break;
