@@ -1792,7 +1792,24 @@ void test_ipv4_client_server_connect()
     snapshot_client_destroy( client );
 }
 
-// todo: generate/validate packet
+void generate_passthrough_packet( uint8_t * packet_data, int & packet_bytes )
+{
+    packet_bytes = rand() % SNAPSHOT_MAX_PASSTHROUGH_BYTES;
+    const int start = packet_bytes % 256;
+    for ( int i = 0; i < packet_bytes; ++i )
+    {
+        packet_data[i] = (uint8_t) ( start + i ) % 256;
+    }
+}
+
+void verify_passthrough_packet( const uint8_t * packet_data, int packet_bytes )
+{
+    const int start = packet_bytes % 256;
+    for ( int i = 0; i < packet_bytes; ++i )
+    {
+        snapshot_check( packet_data[i] == (uint8_t) ( ( start + i ) % 256 ) );
+    }
+}
 
 struct passthrough_context_t
 {
@@ -1802,19 +1819,15 @@ struct passthrough_context_t
 
 void client_process_passthrough_callback( void * context, const uint8_t * passthrough_data, int passthrough_bytes )
 {
-    // todo: verify packet
-    (void) passthrough_data;
-    (void) passthrough_bytes;
+    verify_passthrough_packet( passthrough_data, passthrough_bytes );
     passthrough_context_t * passthrough_context = (passthrough_context_t*) context;
     passthrough_context->num_passthrough_packets_received_on_client++; 
 }
 
 void server_process_passthrough_callback( void * context, int client_index, const uint8_t * passthrough_data, int passthrough_bytes )
 {
-    // todo: verify packet
     (void) client_index;
-    (void) passthrough_data;
-    (void) passthrough_bytes;
+    verify_passthrough_packet( passthrough_data, passthrough_bytes );
     passthrough_context_t * passthrough_context = (passthrough_context_t*) context;
     passthrough_context->num_passthrough_packets_received_on_server++;    
 }
@@ -1889,12 +1902,13 @@ void test_ipv4_client_server_passthrough()
 
     while ( 1 )
     {
+        int passthrough_bytes = 0;
         uint8_t passthrough_data[SNAPSHOT_MAX_PASSTHROUGH_BYTES];
-        snapshot_crypto_random_bytes( passthrough_data, SNAPSHOT_MAX_PASSTHROUGH_BYTES );       // todo: generate packet
+        generate_passthrough_packet( passthrough_data, passthrough_bytes );
 
-        snapshot_client_send_passthrough_packet( client, passthrough_data, SNAPSHOT_MAX_PASSTHROUGH_BYTES );
+        snapshot_client_send_passthrough_packet( client, passthrough_data, passthrough_bytes );
 
-        snapshot_server_send_passthrough_packet( server, 0, passthrough_data, SNAPSHOT_MAX_PASSTHROUGH_BYTES );
+        snapshot_server_send_passthrough_packet( server, 0, passthrough_data, passthrough_bytes );
 
         snapshot_client_update( client, time );
 

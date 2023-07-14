@@ -1,34 +1,8 @@
 DONE
 
-	Implement a passthrough packet type so we can pass through UE packets.
-
-	Fix up the allowed packets in server to be initialized at create.
-
-	Make sure network simulator has padding at packet fronts etc.
-
-	Add process payload packet to server
-
-	Add process passthrough packet to server (stubbed out...)
-
-	Process passthrough packet by calling a callback on client
-
-	Process passthrough packet by calling a callback on server
-
-	Add functions to send passthrough packet on client
-
-	Add function to send passthrough packet on server
-
-	Implement passthrough send on client
-
-	Implement passthrough send on server
-
-	Add unit test for client server connect and exchange passthrough packets
-
-TODO
-
 	Extend passthrough with generate/verify packet to make sure content and length are correct.
 
-	-------------
+TODO
 
 	Extend passthrough test to IPv6
 
