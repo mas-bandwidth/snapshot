@@ -507,14 +507,17 @@ void snapshot_client_send_packet_to_server_internal( struct snapshot_client_t * 
 
     // todo: go zero copy on packet write (but only for payload and passthrough packets...)
 
-    uint8_t packet_data[SNAPSHOT_MAX_PACKET_BYTES];
+    uint8_t buffer[SNAPSHOT_MAX_PACKET_BYTES];
 
-    int packet_bytes = snapshot_write_packet( packet, 
-                                              packet_data, 
-                                              SNAPSHOT_MAX_PACKET_BYTES, 
-                                              client->sequence++, 
-                                              client->write_packet_key, 
-                                              client->connect_token.protocol_id );
+    int packet_bytes = 0;
+
+    uint8_t * packet_data = snapshot_write_packet( packet, 
+                                                   buffer, 
+                                                   SNAPSHOT_MAX_PACKET_BYTES, 
+                                                   client->sequence++, 
+                                                   client->write_packet_key, 
+                                                   client->connect_token.protocol_id,
+                                                   &packet_bytes );
 
     snapshot_assert( packet_bytes <= SNAPSHOT_MAX_PACKET_BYTES );
 

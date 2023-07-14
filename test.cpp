@@ -1126,9 +1126,12 @@ void test_connection_request_packet()
     uint8_t packet_key[SNAPSHOT_KEY_BYTES];
     snapshot_crypto_random_bytes( packet_key, SNAPSHOT_KEY_BYTES );
 
-    int bytes_written = snapshot_write_packet( &input_packet, buffer, sizeof( buffer ), 1000, packet_key, TEST_PROTOCOL_ID );
+    int packet_bytes = 0;
 
-    snapshot_check( bytes_written > 0 );
+    uint8_t * packet_data = snapshot_write_packet( &input_packet, buffer, sizeof( buffer ), 1000, packet_key, TEST_PROTOCOL_ID, &packet_bytes );
+
+    snapshot_check( packet_data == buffer );
+    snapshot_check( packet_bytes > 0 );
 
     // read the connection request packet back in from the buffer (the connect token data is decrypted as part of the read packet validation)
 
@@ -1139,7 +1142,7 @@ void test_connection_request_packet()
 
     uint8_t out_packet_data[2048];
 
-    struct snapshot_connection_request_packet_t * output_packet = (struct snapshot_connection_request_packet_t*) snapshot_read_packet( buffer, bytes_written, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), connect_token_key, allowed_packets, out_packet_data, NULL );
+    struct snapshot_connection_request_packet_t * output_packet = (struct snapshot_connection_request_packet_t*) snapshot_read_packet( packet_data, packet_bytes, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), connect_token_key, allowed_packets, out_packet_data, NULL );
 
     snapshot_check( output_packet );
 
@@ -1168,9 +1171,12 @@ void test_connection_denied_packet()
     uint8_t packet_key[SNAPSHOT_KEY_BYTES];
     snapshot_crypto_random_bytes( packet_key, SNAPSHOT_KEY_BYTES );
 
-    int bytes_written = snapshot_write_packet( &input_packet, buffer, sizeof( buffer ), 1000, packet_key, TEST_PROTOCOL_ID );
+    int packet_bytes = 0;
 
-    snapshot_check( bytes_written > 0 );
+    uint8_t * packet_data = snapshot_write_packet( &input_packet, buffer, sizeof( buffer ), 1000, packet_key, TEST_PROTOCOL_ID, &packet_bytes );
+
+    snapshot_check( packet_data == buffer );
+    snapshot_check( packet_bytes > 0 );
 
     // read the packet back in from the buffer
 
@@ -1181,7 +1187,7 @@ void test_connection_denied_packet()
 
     uint8_t out_packet_data[2048];
 
-    struct snapshot_connection_denied_packet_t * output_packet = (struct snapshot_connection_denied_packet_t*) snapshot_read_packet( buffer, bytes_written, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, out_packet_data, NULL );
+    struct snapshot_connection_denied_packet_t * output_packet = (struct snapshot_connection_denied_packet_t*) snapshot_read_packet( packet_data, packet_bytes, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, out_packet_data, NULL );
 
     snapshot_check( output_packet );
 
@@ -1207,9 +1213,12 @@ void test_connection_challenge_packet()
     uint8_t packet_key[SNAPSHOT_KEY_BYTES];
     snapshot_crypto_random_bytes( packet_key, SNAPSHOT_KEY_BYTES );
 
-    int bytes_written = snapshot_write_packet( &input_packet, buffer, sizeof( buffer ), 1000, packet_key, TEST_PROTOCOL_ID );
+    int packet_bytes = 0;
 
-    snapshot_check( bytes_written > 0 );
+    uint8_t * packet_data = snapshot_write_packet( &input_packet, buffer, sizeof( buffer ), 1000, packet_key, TEST_PROTOCOL_ID, &packet_bytes );
+
+    snapshot_check( packet_data == buffer );
+    snapshot_check( packet_bytes > 0 );
 
     // read the packet back in from the buffer
 
@@ -1220,7 +1229,7 @@ void test_connection_challenge_packet()
 
     uint8_t out_packet_data[2048];
 
-    struct snapshot_connection_challenge_packet_t * output_packet = (struct snapshot_connection_challenge_packet_t*) snapshot_read_packet( buffer, bytes_written, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, out_packet_data, NULL );
+    struct snapshot_connection_challenge_packet_t * output_packet = (struct snapshot_connection_challenge_packet_t*) snapshot_read_packet( packet_data, packet_bytes, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, out_packet_data, NULL );
 
     snapshot_check( output_packet );
 
@@ -1248,9 +1257,12 @@ void test_connection_response_packet()
     uint8_t packet_key[SNAPSHOT_KEY_BYTES];
     snapshot_crypto_random_bytes( packet_key, SNAPSHOT_KEY_BYTES );
     
-    int bytes_written = snapshot_write_packet( &input_packet, buffer, sizeof( buffer ), 1000, packet_key, TEST_PROTOCOL_ID );
+    int packet_bytes = 0; 
 
-    snapshot_check( bytes_written > 0 );
+    uint8_t * packet_data = snapshot_write_packet( &input_packet, buffer, sizeof( buffer ), 1000, packet_key, TEST_PROTOCOL_ID, &packet_bytes );
+
+    snapshot_check( packet_data == buffer );
+    snapshot_check( packet_bytes > 0 );
 
     // read the packet back in from the buffer
 
@@ -1261,7 +1273,7 @@ void test_connection_response_packet()
 
     uint8_t out_packet_data[2048];
 
-    struct snapshot_connection_response_packet_t * output_packet = (struct snapshot_connection_response_packet_t*) snapshot_read_packet( buffer, bytes_written, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, out_packet_data, NULL );
+    struct snapshot_connection_response_packet_t * output_packet = (struct snapshot_connection_response_packet_t*) snapshot_read_packet( packet_data, packet_bytes, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, out_packet_data, NULL );
 
     snapshot_check( output_packet );
 
@@ -1289,9 +1301,12 @@ void test_keep_alive_packet()
     uint8_t packet_key[SNAPSHOT_KEY_BYTES];
     snapshot_crypto_random_bytes( packet_key, SNAPSHOT_KEY_BYTES );
 
-    int bytes_written = snapshot_write_packet( &input_packet, buffer, sizeof( buffer ), 1000, packet_key, TEST_PROTOCOL_ID );
+    int packet_bytes = 0;
 
-    snapshot_check( bytes_written > 0 );
+    uint8_t * packet_data = snapshot_write_packet( &input_packet, buffer, sizeof( buffer ), 1000, packet_key, TEST_PROTOCOL_ID, &packet_bytes );
+
+    snapshot_check( packet_data == buffer );
+    snapshot_check( packet_bytes > 0 );
 
     // read the packet back in from the buffer
 
@@ -1302,7 +1317,7 @@ void test_keep_alive_packet()
 
     uint8_t out_packet_data[2048];
     
-    struct snapshot_keep_alive_packet_t * output_packet = (struct snapshot_keep_alive_packet_t*) snapshot_read_packet( buffer, bytes_written, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, out_packet_data, NULL );
+    struct snapshot_keep_alive_packet_t * output_packet = (struct snapshot_keep_alive_packet_t*) snapshot_read_packet( packet_data, packet_bytes, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, out_packet_data, NULL );
 
     snapshot_check( output_packet );
 
@@ -1333,9 +1348,13 @@ void test_payload_packet()
     uint8_t packet_key[SNAPSHOT_KEY_BYTES];
     snapshot_crypto_random_bytes( packet_key, SNAPSHOT_KEY_BYTES );
 
-    int bytes_written = snapshot_write_packet( input_packet, buffer, sizeof( buffer ), 1000, packet_key, TEST_PROTOCOL_ID );
+    int packet_bytes = 0;
 
-    snapshot_check( bytes_written > 0 );
+    uint8_t * packet_data = snapshot_write_packet( input_packet, buffer, sizeof( buffer ), 1000, packet_key, TEST_PROTOCOL_ID, &packet_bytes );
+
+    // todo
+    // snapshot_check( packet_data != buffer );
+    snapshot_check( packet_bytes > 0 );
 
     // read the packet back in from the buffer
 
@@ -1346,7 +1365,7 @@ void test_payload_packet()
 
     uint8_t out_packet_data[2048];
 
-    struct snapshot_payload_packet_t * output_packet = (struct snapshot_payload_packet_t*) snapshot_read_packet( buffer, bytes_written, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, out_packet_data, NULL );
+    struct snapshot_payload_packet_t * output_packet = (struct snapshot_payload_packet_t*) snapshot_read_packet( packet_data, packet_bytes, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, out_packet_data, NULL );
 
     snapshot_check( output_packet );
 
@@ -1377,9 +1396,13 @@ void test_passthrough_packet()
     uint8_t packet_key[SNAPSHOT_KEY_BYTES];
     snapshot_crypto_random_bytes( packet_key, SNAPSHOT_KEY_BYTES );
 
-    int bytes_written = snapshot_write_packet( input_packet, buffer, sizeof( buffer ), 1000, packet_key, TEST_PROTOCOL_ID );
+    int packet_bytes = 0;
 
-    snapshot_check( bytes_written > 0 );
+    uint8_t * packet_data = snapshot_write_packet( input_packet, buffer, sizeof( buffer ), 1000, packet_key, TEST_PROTOCOL_ID, &packet_bytes );
+
+    // todo
+    // snapshot_check( packet_data != buffer );
+    snapshot_check( packet_bytes > 0 );
 
     // read the packet back in from the buffer
 
@@ -1390,7 +1413,7 @@ void test_passthrough_packet()
 
     uint8_t out_packet_data[2048];
 
-    struct snapshot_payload_packet_t * output_packet = (struct snapshot_payload_packet_t*) snapshot_read_packet( buffer, bytes_written, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, out_packet_data, NULL );
+    struct snapshot_payload_packet_t * output_packet = (struct snapshot_payload_packet_t*) snapshot_read_packet( packet_data, packet_bytes, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, out_packet_data, NULL );
 
     snapshot_check( output_packet );
 
@@ -1416,9 +1439,12 @@ void test_disconnect_packet()
     uint8_t packet_key[SNAPSHOT_KEY_BYTES];
     snapshot_crypto_random_bytes( packet_key, SNAPSHOT_KEY_BYTES );
 
-    int bytes_written = snapshot_write_packet( &input_packet, buffer, sizeof( buffer ), 1000, packet_key, TEST_PROTOCOL_ID );
+    int packet_bytes = 0;
 
-    snapshot_check( bytes_written > 0 );
+    uint8_t * packet_data = snapshot_write_packet( &input_packet, buffer, sizeof( buffer ), 1000, packet_key, TEST_PROTOCOL_ID, &packet_bytes );
+
+    snapshot_check( packet_data == buffer );
+    snapshot_check( packet_bytes > 0 );
 
     // read the packet back in from the buffer
 
@@ -1429,7 +1455,7 @@ void test_disconnect_packet()
 
     uint8_t out_packet_data[2048];
 
-    struct snapshot_disconnect_packet_t * output_packet = (struct snapshot_disconnect_packet_t*) snapshot_read_packet( buffer, bytes_written, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, out_packet_data, NULL );
+    struct snapshot_disconnect_packet_t * output_packet = (struct snapshot_disconnect_packet_t*) snapshot_read_packet( packet_data, packet_bytes, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, out_packet_data, NULL );
 
     snapshot_check( output_packet );
 

@@ -62,7 +62,7 @@ struct snapshot_passthrough_packet_t * snapshot_wrap_passthrough_packet( uint8_t
     return packet;
 }
 
-int snapshot_write_packet( void * packet, uint8_t * buffer, int buffer_length, uint64_t sequence, uint8_t * write_packet_key, uint64_t protocol_id )
+uint8_t * snapshot_write_packet( void * packet, uint8_t * buffer, int buffer_length, uint64_t sequence, uint8_t * write_packet_key, uint64_t protocol_id, int * out_bytes )
 {
     snapshot_assert( packet );
     snapshot_assert( buffer );
@@ -78,24 +78,28 @@ int snapshot_write_packet( void * packet, uint8_t * buffer, int buffer_length, u
 
         snapshot_assert( buffer_length >= 1 + SNAPSHOT_VERSION_INFO_BYTES + 8 + 8 + SNAPSHOT_CONNECT_TOKEN_NONCE_BYTES + SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES );
 
-        struct snapshot_connection_request_packet_t * p = (struct snapshot_connection_request_packet_t*) packet;
+        struct snapshot_connection_request_packet_t * connection_request_packet = (struct snapshot_connection_request_packet_t*) packet;
 
         uint8_t * start = buffer;
 
         snapshot_write_uint8( &buffer, SNAPSHOT_CONNECTION_REQUEST_PACKET );
-        snapshot_write_bytes( &buffer, p->version_info, SNAPSHOT_VERSION_INFO_BYTES );
-        snapshot_write_uint64( &buffer, p->protocol_id );
-        snapshot_write_uint64( &buffer, p->connect_token_expire_timestamp );
-        snapshot_write_bytes( &buffer, p->connect_token_nonce, SNAPSHOT_CONNECT_TOKEN_NONCE_BYTES );
-        snapshot_write_bytes( &buffer, p->connect_token_data, SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES );
+        snapshot_write_bytes( &buffer, connection_request_packet->version_info, SNAPSHOT_VERSION_INFO_BYTES );
+        snapshot_write_uint64( &buffer, connection_request_packet->protocol_id );
+        snapshot_write_uint64( &buffer, connection_request_packet->connect_token_expire_timestamp );
+        snapshot_write_bytes( &buffer, connection_request_packet->connect_token_nonce, SNAPSHOT_CONNECT_TOKEN_NONCE_BYTES );
+        snapshot_write_bytes( &buffer, connection_request_packet->connect_token_data, SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES );
 
         snapshot_assert( buffer - start == 1 + SNAPSHOT_VERSION_INFO_BYTES + 8 + 8 + SNAPSHOT_CONNECT_TOKEN_NONCE_BYTES + SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES );
 
-        return (int) ( buffer - start );
+        *out_bytes = (int) ( buffer - start );
+
+        return start;
     }
     else
     {
         // *** encrypted packets ***
+
+        uint8_t * p = buffer;
 
         // write the prefix byte (this is a combination of the packet type and number of sequence bytes)
 
@@ -110,7 +114,7 @@ int snapshot_write_packet( void * packet, uint8_t * buffer, int buffer_length, u
 
         uint8_t prefix_byte = packet_type | ( sequence_bytes << 4 );
 
-        snapshot_write_uint8( &buffer, prefix_byte );
+        snapshot_write_uint8( &p, prefix_byte );
 
         // write the variable length sequence number [1,8] bytes.
 
@@ -119,13 +123,13 @@ int snapshot_write_packet( void * packet, uint8_t * buffer, int buffer_length, u
         int i;
         for ( i = 0; i < sequence_bytes; ++i )
         {
-            snapshot_write_uint8( &buffer, (uint8_t) ( sequence_temp & 0xFF ) );
+            snapshot_write_uint8( &p, (uint8_t) ( sequence_temp & 0xFF ) );
             sequence_temp >>= 8;
         }
 
         // write packet data according to type. this data will be encrypted.
 
-        uint8_t * encrypted_start = buffer;
+        uint8_t * encrypted_start = p;
 
         switch ( packet_type )
         {
@@ -137,45 +141,41 @@ int snapshot_write_packet( void * packet, uint8_t * buffer, int buffer_length, u
 
             case SNAPSHOT_CONNECTION_CHALLENGE_PACKET:
             {
-                struct snapshot_connection_challenge_packet_t * p = (struct snapshot_connection_challenge_packet_t*) packet;
-                snapshot_write_uint64( &buffer, p->challenge_token_sequence );
-                snapshot_write_bytes( &buffer, p->challenge_token_data, SNAPSHOT_CHALLENGE_TOKEN_BYTES );
+                struct snapshot_connection_challenge_packet_t * connection_challenge_packet = (struct snapshot_connection_challenge_packet_t*) packet;
+                snapshot_write_uint64( &p, connection_challenge_packet->challenge_token_sequence );
+                snapshot_write_bytes( &p, connection_challenge_packet->challenge_token_data, SNAPSHOT_CHALLENGE_TOKEN_BYTES );
             }
             break;
 
             case SNAPSHOT_CONNECTION_RESPONSE_PACKET:
             {
-                struct snapshot_connection_response_packet_t * p = (struct snapshot_connection_response_packet_t*) packet;
-                snapshot_write_uint64( &buffer, p->challenge_token_sequence );
-                snapshot_write_bytes( &buffer, p->challenge_token_data, SNAPSHOT_CHALLENGE_TOKEN_BYTES );
+                struct snapshot_connection_response_packet_t * connection_response_packet = (struct snapshot_connection_response_packet_t*) packet;
+                snapshot_write_uint64( &p, connection_response_packet->challenge_token_sequence );
+                snapshot_write_bytes( &p, connection_response_packet->challenge_token_data, SNAPSHOT_CHALLENGE_TOKEN_BYTES );
             }
             break;
 
             case SNAPSHOT_KEEP_ALIVE_PACKET:
             {
-                struct snapshot_keep_alive_packet_t * p = (struct snapshot_keep_alive_packet_t*) packet;
-                snapshot_write_uint32( &buffer, p->client_index );
-                snapshot_write_uint32( &buffer, p->max_clients );
+                struct snapshot_keep_alive_packet_t * keep_alive_packet = (struct snapshot_keep_alive_packet_t*) packet;
+                snapshot_write_uint32( &p, keep_alive_packet->client_index );
+                snapshot_write_uint32( &p, keep_alive_packet->max_clients );
             }
             break;
 
             case SNAPSHOT_PAYLOAD_PACKET:
             {
-                struct snapshot_payload_packet_t * p = (struct snapshot_payload_packet_t*) packet;
-
-                snapshot_assert( p->payload_bytes <= SNAPSHOT_MAX_PAYLOAD_BYTES );
-
-                snapshot_write_bytes( &buffer, p->payload_data, p->payload_bytes );
+                struct snapshot_payload_packet_t * payload_packet = (struct snapshot_payload_packet_t*) packet;
+                snapshot_assert( payload_packet->payload_bytes <= SNAPSHOT_MAX_PAYLOAD_BYTES );
+                snapshot_write_bytes( &p, payload_packet->payload_data, payload_packet->payload_bytes );
             }
             break;
 
             case SNAPSHOT_PASSTHROUGH_PACKET:
             {
-                struct snapshot_passthrough_packet_t * p = (struct snapshot_passthrough_packet_t*) packet;
-
-                snapshot_assert( p->payload_bytes <= SNAPSHOT_MAX_PAYLOAD_BYTES );
-
-                snapshot_write_bytes( &buffer, p->passthrough_data, p->passthrough_bytes );
+                struct snapshot_passthrough_packet_t * passthrough_packet = (struct snapshot_passthrough_packet_t*) packet;
+                snapshot_assert( passthrough_packet->payload_bytes <= SNAPSHOT_MAX_PAYLOAD_BYTES );
+                snapshot_write_bytes( &p, passthrough_packet->passthrough_data, passthrough_packet->passthrough_bytes );
             }
             break;
 
@@ -189,9 +189,9 @@ int snapshot_write_packet( void * packet, uint8_t * buffer, int buffer_length, u
                 snapshot_assert( 0 );
         }
 
-        snapshot_assert( buffer - start <= buffer_length - SNAPSHOT_MAC_BYTES );
+        snapshot_assert( p - start <= buffer_length - SNAPSHOT_MAC_BYTES );
 
-        uint8_t * encrypted_finish = buffer;
+        uint8_t * encrypted_finish = p;
 
         // encrypt the per-packet packet written with the prefix byte, protocol id and version as the associated data. this must match to decrypt.
 
@@ -215,14 +215,16 @@ int snapshot_write_packet( void * packet, uint8_t * buffer, int buffer_length, u
                                            additional_data, sizeof( additional_data ), 
                                            nonce, write_packet_key ) != SNAPSHOT_OK )
         {
-            return SNAPSHOT_ERROR;
+            return NULL;
         }
 
-        buffer += SNAPSHOT_MAC_BYTES;
+        p += SNAPSHOT_MAC_BYTES;
 
-        snapshot_assert( buffer - start <= buffer_length );
+        snapshot_assert( p - start <= buffer_length );
 
-        return (int) ( buffer - start );
+        *out_bytes = (int) ( p - start );
+
+        return start;
     }
 }
 

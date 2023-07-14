@@ -279,9 +279,11 @@ void snapshot_server_send_global_packet( snapshot_server_t * server, void * pack
     snapshot_assert( to );
     snapshot_assert( packet_key );
 
-    uint8_t packet_data[SNAPSHOT_MAX_PACKET_BYTES];
+    uint8_t buffer[SNAPSHOT_MAX_PACKET_BYTES];
 
-    int packet_bytes = snapshot_write_packet( packet, packet_data, SNAPSHOT_MAX_PACKET_BYTES, server->global_sequence, packet_key, server->config.protocol_id );
+    int packet_bytes = 0;
+
+    uint8_t * packet_data = snapshot_write_packet( packet, buffer, SNAPSHOT_MAX_PACKET_BYTES, server->global_sequence, packet_key, server->config.protocol_id, &packet_bytes );
 
     snapshot_assert( packet_bytes <= SNAPSHOT_MAX_PACKET_BYTES );
 
@@ -306,8 +308,6 @@ void snapshot_server_send_client_packet( struct snapshot_server_t * server, void
     snapshot_assert( server->client_connected[client_index] );
     snapshot_assert( !server->client_loopback[client_index] );
 
-    uint8_t packet_data[SNAPSHOT_MAX_PACKET_BYTES];
-
     if ( !snapshot_encryption_manager_touch( &server->encryption_manager, 
                                              server->client_encryption_index[client_index], 
                                              &server->client_address[client_index], 
@@ -319,7 +319,11 @@ void snapshot_server_send_client_packet( struct snapshot_server_t * server, void
 
     uint8_t * packet_key = snapshot_encryption_manager_get_send_key( &server->encryption_manager, server->client_encryption_index[client_index] );
 
-    int packet_bytes = snapshot_write_packet( packet, packet_data, SNAPSHOT_MAX_PACKET_BYTES, server->client_sequence[client_index], packet_key, server->config.protocol_id );
+    uint8_t buffer[SNAPSHOT_MAX_PACKET_BYTES];
+
+    int packet_bytes = 0;
+
+    uint8_t * packet_data = snapshot_write_packet( packet, buffer, SNAPSHOT_MAX_PACKET_BYTES, server->client_sequence[client_index], packet_key, server->config.protocol_id, &packet_bytes );
 
     snapshot_assert( packet_bytes <= SNAPSHOT_MAX_PACKET_BYTES );
 
