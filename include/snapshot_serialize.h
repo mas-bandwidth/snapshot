@@ -8,6 +8,14 @@
 
 #include "snapshot.h"
 
+#if defined( _MSC_VER )
+#pragma warning(push)
+#pragma warning(disable:4996)
+#pragma warning(disable:4127)
+#pragma warning(disable:4244)
+#pragma warning(disable:4668)
+#endif
+
 namespace snapshot
 {
     template <typename Stream> bool serialize_float_internal( Stream & stream, float & value )
@@ -484,5 +492,9 @@ namespace snapshot
             }                                                                                       \
         } while (0)
 }
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 #endif // #ifndef SNAPSHOT_SERIALIZE_H
