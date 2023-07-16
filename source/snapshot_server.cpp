@@ -12,6 +12,7 @@
 #include "snapshot_replay_protection.h"
 #include "snapshot_encryption_manager.h"
 #include "snapshot_network_simulator.h"
+#include <time.h>
 
 #define SNAPSHOT_MAX_CONNECT_TOKEN_ENTRIES            ( SNAPSHOT_MAX_CLIENTS * 4 )
 #define SNAPSHOT_SERVER_MAX_SIM_RECEIVE_PACKETS     ( 256 * SNAPSHOT_MAX_CLIENTS )
@@ -154,7 +155,7 @@ struct snapshot_server_t * snapshot_server_create( const char * server_address_s
         bind_address.type = server_address.type;
         bind_address.port = server_address.port;
 
-        socket = snapshot_platform_socket_create( config->context, &bind_address, 0.0f, SNAPSHOT_PLATFORM_SOCKET_NON_BLOCKING, SNAPSHOT_SERVER_SOCKET_SNDBUF_SIZE, SNAPSHOT_SERVER_SOCKET_RCVBUF_SIZE );
+        socket = snapshot_platform_socket_create( config->context, &bind_address, SNAPSHOT_PLATFORM_SOCKET_NON_BLOCKING, 0.0f, SNAPSHOT_SERVER_SOCKET_SNDBUF_SIZE, SNAPSHOT_SERVER_SOCKET_RCVBUF_SIZE );
 
         if ( socket == NULL )
         {
@@ -796,7 +797,7 @@ bool snapshot_server_process_packet( struct snapshot_server_t * server, struct s
 
     uint8_t out_packet_data[2048];
 
-    uint64_t current_timestamp = snapshot_platform_time();
+    uint64_t current_timestamp = time( NULL );
 
     void * packet = snapshot_read_packet( packet_data, 
                                           packet_bytes, 

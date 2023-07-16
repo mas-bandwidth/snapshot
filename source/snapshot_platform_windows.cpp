@@ -7,6 +7,9 @@
 
 #if SNAPSHOT_PLATFORM == SNAPSHOT_PLATFORM_WINDOWS
 
+#include "snapshot_platform.h"
+#include "snapshot_address.h"
+
 #if SNAPSHOT_UNREAL_ENGINE
 #include "Windows/AllowWindowsPlatformTypes.h"
 #include "Windows/PreWindowsApi.h"

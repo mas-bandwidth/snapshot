@@ -211,17 +211,17 @@ uint8_t * snapshot_write_packet( void * packet, uint8_t * buffer, int buffer_len
 
         uint8_t additional_data[SNAPSHOT_VERSION_INFO_BYTES+8+1];
         {
-            uint8_t * p = additional_data;
-            snapshot_write_bytes( &p, SNAPSHOT_VERSION_INFO, SNAPSHOT_VERSION_INFO_BYTES );
-            snapshot_write_uint64( &p, protocol_id );
-            snapshot_write_uint8( &p, prefix_byte );
+            uint8_t * q = additional_data;
+            snapshot_write_bytes( &q, SNAPSHOT_VERSION_INFO, SNAPSHOT_VERSION_INFO_BYTES );
+            snapshot_write_uint64( &q, protocol_id );
+            snapshot_write_uint8( &q, prefix_byte );
         }
 
         uint8_t nonce[12];
         {
-            uint8_t * p = nonce;
-            snapshot_write_uint32( &p, 0 );
-            snapshot_write_uint64( &p, sequence );
+            uint8_t * q = nonce;
+            snapshot_write_uint32( &q, 0 );
+            snapshot_write_uint64( &q, sequence );
         }
 
         if ( snapshot_crypto_encrypt_aead( encrypted_start, 
@@ -436,9 +436,9 @@ void * snapshot_read_packet( uint8_t * buffer,
 
         uint8_t nonce[12];
         {
-            uint8_t * p = nonce;
-            snapshot_write_uint32( &p, 0 );
-            snapshot_write_uint64( &p, *sequence );
+            uint8_t * q = nonce;
+            snapshot_write_uint32( &q, 0 );
+            snapshot_write_uint64( &q, *sequence );
         }
 
         int encrypted_bytes = (int) ( buffer_length - ( p - start ) );

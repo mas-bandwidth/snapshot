@@ -11,6 +11,7 @@
 #include "snapshot_replay_protection.h"
 #include "snapshot_packets.h"
 #include "snapshot_network_simulator.h"
+#include <time.h>
 
 #define SNAPSHOT_CLIENT_MAX_SIM_RECEIVE_PACKETS 256
 
@@ -92,7 +93,7 @@ struct snapshot_client_t * snapshot_client_create( const char * bind_address_str
 
     if ( !config->network_simulator )
     {
-        socket = snapshot_platform_socket_create( config->context, &bind_address, 0.0f, SNAPSHOT_PLATFORM_SOCKET_NON_BLOCKING, SNAPSHOT_CLIENT_SOCKET_SNDBUF_SIZE, SNAPSHOT_CLIENT_SOCKET_RCVBUF_SIZE );
+        socket = snapshot_platform_socket_create( config->context, &bind_address, SNAPSHOT_PLATFORM_SOCKET_NON_BLOCKING, 0.0f, SNAPSHOT_CLIENT_SOCKET_SNDBUF_SIZE, SNAPSHOT_CLIENT_SOCKET_RCVBUF_SIZE );
 
         if ( socket == NULL )
         {
@@ -473,31 +474,6 @@ void snapshot_client_receive_packets( struct snapshot_client_t * client )
             client->sim_receive_packet_data[i] = NULL;
         }
     }
-}
-
-void snapshot_client_inject_packet( struct snapshot_client_t * client, struct snapshot_address_t * from, uint8_t * packet_data, int packet_bytes )
-{
-    uint64_t current_timestamp = (uint64_t) time( NULL );
-
-    uint64_t sequence;
-
-    uint8_t out_packet_data[1024];
-
-    void * packet = snapshot_read_packet( packet_data, 
-                                          packet_bytes, 
-                                          &sequence, 
-                                          client->read_packet_key, 
-                                          client->connect_token.protocol_id, 
-                                          current_timestamp, 
-                                          NULL, 
-                                          client->allowed_packets, 
-                                          out_packet_data,
-                                          &client->replay_protection );
-
-    if ( !packet )
-        return;
-    
-    snapshot_client_process_packet( client, from, (uint8_t*)packet, sequence );
 }
 
 void snapshot_client_send_packet_to_server_internal( struct snapshot_client_t * client, void * packet )
