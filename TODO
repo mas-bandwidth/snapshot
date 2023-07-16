@@ -16,11 +16,11 @@ DONE
 
 	Implement zero copy on payload and passthrough packet writes
 
-TODO
-
 	Get windows tests building and passing
 
-	Setup custom semaphore agents on windows PCs
+TODO
+
+	Setup custom semaphore agents on windows PC
 
 	Run windows tests on semaphore
 
