@@ -287,7 +287,8 @@ void snapshot_client_process_passthrough( struct snapshot_client_t * client, uin
 bool snapshot_client_process_packet( struct snapshot_client_t * client, struct snapshot_address_t * from, uint8_t * packet_data, int packet_bytes )
 {
     snapshot_assert( client );
-    snapshot_assert( packet );
+    snapshot_assert( packet_data );
+    snapshot_assert( packet_bytes > 0 );
 
     uint64_t current_timestamp = (uint64_t) time( NULL );
 
@@ -448,7 +449,8 @@ void snapshot_client_receive_packets( struct snapshot_client_t * client )
         while ( 1 )
         {
             struct snapshot_address_t from;
-            uint8_t packet_data[SNAPSHOT_MAX_PACKET_BYTES];
+            uint8_t buffer[SNAPSHOT_PACKET_PREFIX_BYTES + SNAPSHOT_MAX_PACKET_BYTES + SNAPSHOT_PACKET_POSTFIX_BYTES];
+            uint8_t * packet_data = buffer + SNAPSHOT_PACKET_PREFIX_BYTES;
             int packet_bytes = snapshot_platform_socket_receive_packet( client->socket, &from, packet_data, SNAPSHOT_MAX_PACKET_BYTES );
             if ( packet_bytes == 0 )
                 break;

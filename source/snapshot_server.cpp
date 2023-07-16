@@ -923,8 +923,9 @@ void snapshot_server_receive_packets( struct snapshot_server_t * server )
         {
             struct snapshot_address_t from;
             
-            uint8_t packet_data[SNAPSHOT_PACKET_PREFIX_BYTES + SNAPSHOT_MAX_PACKET_BYTES];
-            
+            uint8_t buffer[SNAPSHOT_PACKET_PREFIX_BYTES + SNAPSHOT_MAX_PACKET_BYTES + SNAPSHOT_PACKET_POSTFIX_BYTES];
+            uint8_t* packet_data = buffer + SNAPSHOT_PACKET_PREFIX_BYTES;
+
             int packet_bytes = 0;
             
             if ( server->socket != NULL )
