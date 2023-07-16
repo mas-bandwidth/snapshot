@@ -10,10 +10,7 @@ solution "snapshot"
 	defines { "SNAPSHOT_COMPILE_WITH_TESTS" }
 	filter "configurations:Debug"
 		symbols "On"
-		optimize "Speed"
-		defines { "NDEBUG" }
-		editandcontinue "Off"
---		defines { "_DEBUG" }
+		defines { "_DEBUG" }
 	filter "configurations:Release"
 		optimize "Speed"
 		defines { "NDEBUG" }
