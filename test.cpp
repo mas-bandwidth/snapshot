@@ -2111,9 +2111,6 @@ void test_ipv6_client_server_passthrough()
 
     snapshot_client_connect( client, connect_token );
 
-    // todo
-    printf("waiting for client to connect\n");
-
     while ( 1 )
     {
         snapshot_client_update( client, time );
@@ -2131,13 +2128,7 @@ void test_ipv6_client_server_passthrough()
 
     snapshot_check( snapshot_client_state( client ) == SNAPSHOT_CLIENT_STATE_CONNECTED );
 
-    // todo
-    printf("client connected\n");
-
     // exchange passthrough packets
-
-    // todo
-    printf("exchanging passthrough packets\n");
 
     while ( 1 )
     {
@@ -2164,8 +2155,6 @@ void test_ipv6_client_server_passthrough()
 
     snapshot_check( passthrough_context.num_passthrough_packets_received_on_client > 100 );
     snapshot_check( passthrough_context.num_passthrough_packets_received_on_server > 100 );
-
-    printf("cleaning up\n");
 
     // clean up
 
