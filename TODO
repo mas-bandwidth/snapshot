@@ -1,5 +1,7 @@
 DONE
 
+	Fabru9-zuvkac-pukhuc
+
 	Extend passthrough with generate/verify packet to make sure content and length are correct.
 
 	Extend passthrough test to IPv6
@@ -12,23 +14,17 @@ DONE
 
 	Fix up the crypto AEAD todos so they call into official snapshot_crypto_* functions.
 
-TODO
-
 	Implement zero copy on payload and passthrough packet writes
 
-	-------------
-
-	Get office cleaned up and PCs setup again with networking
-
-	Setup custom agents on windows machine and build windows
-
-	Probably need to bring across and modify the testbed projects from next SDK
-
-	Setup custom agents on machines and set them up to build console versions
-
-	-------------
+TODO
 
 	Get windows tests building and passing
+
+	Setup custom semaphore agents on windows PCs
+
+	Run windows tests on semaphore
+
+	-------------
 
 	Get ps4 tests building and passing
 
@@ -41,6 +37,10 @@ TODO
 	Get nintendo switch tests building and passing (need to order new devkit...)
 
 	Get ios tests building and passing
+
+	-------------
+
+	Setup console tests to run on semaphore via custom agents
 
 	-------------
 
