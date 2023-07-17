@@ -92,4 +92,4 @@ blocks:
         - name: test
           commands:
             - premake5 vs2019
-            - \"c:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\IDE\devenv.com\" snapshot.sln /rebuild
+            - 'c:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\IDE\devenv.com' snapshot.sln /rebuild
