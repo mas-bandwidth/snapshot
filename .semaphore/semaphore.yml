@@ -90,11 +90,12 @@ blocks:
           type: s1-windows
       jobs:
         - name: test
+           matrix:
+            - env_var: CONFIG
+              values: [ "debug_portable", "release_portable" ]
           commands:
             - premake5 vs2019
-            - "& \"c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\IDE\\devenv.com\" visualstudio\\snapshot.sln /rebuild \"debug|x64\""
-            - "& .\\bin\\test.exe"
-            - "& \"c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\IDE\\devenv.com\" visualstudio\\snapshot.sln /rebuild \"release|x64\""
+            - "& \"c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\IDE\\devenv.com\" visualstudio\\snapshot.sln /rebuild $Env:CONFIG"
             - "& .\\bin\\test.exe"
 
   - name: "PS4"

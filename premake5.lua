@@ -1,13 +1,12 @@
 
 solution "snapshot"
 	platforms { "portable", "x86", "x64", "avx", "avx2" }
-	configurations { "Debug", "Release", "MemoryCheck" }
+	configurations { "Debug", "Release" }
 	targetdir "bin/"
 	rtti "Off"
 	warnings "Extra"
 	floatingpoint "Fast"
 	flags { "FatalWarnings" }
-	defines { "SNAPSHOT_COMPILE_WITH_TESTS" }
 	filter "configurations:Debug"
 		symbols "On"
 		defines { "_DEBUG" }
