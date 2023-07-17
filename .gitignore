@@ -30,3 +30,9 @@
 bin
 obj
 visualstudio
+int
+.vs
+debug
+release
+*.vcproj.filters
+*.vcproj.user
