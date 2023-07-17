@@ -9,6 +9,9 @@
 
 #if SNAPSHOT_PLATFORM == SNAPSHOT_PLATFORM_XBOX_ONE
 
+#include "snapshot_platform.h"
+#include "snapshot_address.h"
+
 #include <sodium.h>
 
 #define NOMINMAX
@@ -328,7 +331,7 @@ void snapshot_platform_socket_destroy( snapshot_platform_socket_t * );
 snapshot_platform_socket_t * snapshot_platform_socket_create( void * context, snapshot_address_t * address, int socket_type, float timeout_seconds, int send_buffer_size, int receive_buffer_size )
 {
     snapshot_assert( address );
-    snapshot_assert( address->type != SANPSHOT_ADDRESS_NONE );
+    snapshot_assert( address->type != SNAPSHOT_ADDRESS_NONE );
 
     snapshot_platform_socket_t * s = (snapshot_platform_socket_t *) snapshot_malloc( context, sizeof( snapshot_platform_socket_t ) );
 

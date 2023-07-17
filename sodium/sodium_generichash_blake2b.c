@@ -9,6 +9,10 @@
 #include "sodium_private_implementations.h"
 #include <stdio.h>
 
+#if defined( _MSC_VER )
+#pragma warning(disable:4702)
+#endif
+
 int
 crypto_generichash_blake2b(unsigned char *out, size_t outlen,
                            const unsigned char *in, unsigned long long inlen,

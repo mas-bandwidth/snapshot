@@ -59,7 +59,8 @@
     <LinkIncremental>false</LinkIncremental>
     <IntDir>int\$(Configuration)\</IntDir>
     <OutDir>$(Configuration)\</OutDir>
-    <CustomBuildAfterTargets>Build</CustomBuildAfterTargets>
+    <CustomBuildAfterTargets>
+    </CustomBuildAfterTargets>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Durango'">
     <ReferencePath>$(Console_SdkLibPath);$(Console_SdkWindowsMetadataPath)</ReferencePath>
@@ -70,11 +71,12 @@
     <LinkIncremental>true</LinkIncremental>
     <IntDir>int\$(Configuration)\</IntDir>
     <OutDir>$(Configuration)\</OutDir>
-    <CustomBuildAfterTargets>Build</CustomBuildAfterTargets>
+    <CustomBuildAfterTargets>
+    </CustomBuildAfterTargets>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Durango'">
     <Link>
-      <AdditionalDependencies>d3d12_x.lib;combase.lib;kernelx.lib;uuid.lib;%(XboxExtensionsDependencies);../../lib/XBoxOne/Debug/next-xboxone-4.0.16.lib</AdditionalDependencies>
+      <AdditionalDependencies>Durango\Release\sodium.lib;ws2_32.lib;combase.lib;kernelx.lib;uuid.lib;bcrypt.lib;d3d12_x.lib;combase.lib;kernelx.lib;uuid.lib;%(XboxExtensionsDependencies)</AdditionalDependencies>
       <EntryPointSymbol>
       </EntryPointSymbol>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -86,7 +88,7 @@
       <AdditionalOptions>/ignore:4221 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalUsingDirectories>$(Console_SdkPackagesRoot);$(Console_SdkWindowsMetadataPath);%(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <Optimization>MaxSpeed</Optimization>
@@ -94,23 +96,27 @@
       <WarningLevel>Level4</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>..\..\include;..\..\sodium</AdditionalIncludeDirectories>
     </ClCompile>
     <FXCompile>
       <ShaderModel>5.1</ShaderModel>
     </FXCompile>
     <CustomBuildStep>
-      <Command>copy ..\..\lib\XBoxOne\Release\next-xboxone-4.0.16.dll Release</Command>
+      <Command>
+      </Command>
     </CustomBuildStep>
     <CustomBuildStep>
-      <Message>Copying network next dll</Message>
+      <Message>
+      </Message>
     </CustomBuildStep>
     <CustomBuildStep>
-      <Outputs>Release\next-xboxone-4.0.16.dll</Outputs>
+      <Outputs>
+      </Outputs>
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Durango'">
     <Link>
-      <AdditionalDependencies>pixEvt.lib;d3d12_x.lib;combase.lib;kernelx.lib;uuid.lib;%(XboxExtensionsDependencies);../../lib/XBoxOne/Debug/next-xboxone-4.0.16.lib</AdditionalDependencies>
+      <AdditionalDependencies>Durango\Debug\sodium.lib;ws2_32.lib;combase.lib;kernelx.lib;uuid.lib;bcrypt.lib;d3d12_x.lib;combase.lib;kernelx.lib;uuid.lib;%(XboxExtensionsDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
@@ -121,31 +127,81 @@
     </Link>
     <ClCompile>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <MinimalRebuild>false</MinimalRebuild>
       <AdditionalUsingDirectories>$(Console_SdkPackagesRoot);$(Console_SdkWindowsMetadataPath);%(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;__WRL_NO_DEFAULT_LIB__;NEXT_SHARED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\include;..\..\sodium</AdditionalIncludeDirectories>
     </ClCompile>
     <FXCompile>
       <ShaderModel>5.1</ShaderModel>
     </FXCompile>
     <CustomBuildStep>
-      <Command>copy ..\..\lib\XBoxOne\Debug\next-xboxone-4.0.16.dll Debug</Command>
+      <Command>
+      </Command>
     </CustomBuildStep>
     <CustomBuildStep>
-      <Message>Copying network next dll</Message>
+      <Message>
+      </Message>
     </CustomBuildStep>
     <CustomBuildStep>
-      <Outputs>Debug\next-xboxone-4.0.16.dll</Outputs>
+      <Outputs>
+      </Outputs>
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\include\snapshot.h" />
+    <ClInclude Include="..\..\include\snapshot_address.h" />
+    <ClInclude Include="..\..\include\snapshot_bitpacker.h" />
+    <ClInclude Include="..\..\include\snapshot_challenge_token.h" />
+    <ClInclude Include="..\..\include\snapshot_client.h" />
+    <ClInclude Include="..\..\include\snapshot_connect_token.h" />
+    <ClInclude Include="..\..\include\snapshot_crypto.h" />
+    <ClInclude Include="..\..\include\snapshot_encryption_manager.h" />
+    <ClInclude Include="..\..\include\snapshot_network_simulator.h" />
+    <ClInclude Include="..\..\include\snapshot_packets.h" />
+    <ClInclude Include="..\..\include\snapshot_platform.h" />
+    <ClInclude Include="..\..\include\snapshot_platform_gdk.h" />
+    <ClInclude Include="..\..\include\snapshot_platform_ios.h" />
+    <ClInclude Include="..\..\include\snapshot_platform_linux.h" />
+    <ClInclude Include="..\..\include\snapshot_platform_mac.h" />
+    <ClInclude Include="..\..\include\snapshot_platform_ps4.h" />
+    <ClInclude Include="..\..\include\snapshot_platform_ps5.h" />
+    <ClInclude Include="..\..\include\snapshot_platform_switch.h" />
+    <ClInclude Include="..\..\include\snapshot_platform_windows.h" />
+    <ClInclude Include="..\..\include\snapshot_platform_xboxone.h" />
+    <ClInclude Include="..\..\include\snapshot_read_write.h" />
+    <ClInclude Include="..\..\include\snapshot_replay_protection.h" />
+    <ClInclude Include="..\..\include\snapshot_serialize.h" />
+    <ClInclude Include="..\..\include\snapshot_server.h" />
+    <ClInclude Include="..\..\include\snapshot_stream.h" />
+    <ClInclude Include="..\..\include\snapshot_tests.h" />
     <ClInclude Include="StepTimer.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\source\snapshot.cpp" />
+    <ClCompile Include="..\..\source\snapshot_address.cpp" />
+    <ClCompile Include="..\..\source\snapshot_challenge_token.cpp" />
+    <ClCompile Include="..\..\source\snapshot_client.cpp" />
+    <ClCompile Include="..\..\source\snapshot_connect_token.cpp" />
+    <ClCompile Include="..\..\source\snapshot_crypto.cpp" />
+    <ClCompile Include="..\..\source\snapshot_encryption_manager.cpp" />
+    <ClCompile Include="..\..\source\snapshot_network_simulator.cpp" />
+    <ClCompile Include="..\..\source\snapshot_packets.cpp" />
+    <ClCompile Include="..\..\source\snapshot_platform_gdk.cpp" />
+    <ClCompile Include="..\..\source\snapshot_platform_ios.cpp" />
+    <ClCompile Include="..\..\source\snapshot_platform_linux.cpp" />
+    <ClCompile Include="..\..\source\snapshot_platform_mac.cpp" />
+    <ClCompile Include="..\..\source\snapshot_platform_ps4.cpp" />
+    <ClCompile Include="..\..\source\snapshot_platform_ps5.cpp" />
+    <ClCompile Include="..\..\source\snapshot_platform_switch.cpp" />
+    <ClCompile Include="..\..\source\snapshot_platform_windows.cpp" />
+    <ClCompile Include="..\..\source\snapshot_platform_xboxone.cpp" />
+    <ClCompile Include="..\..\source\snapshot_server.cpp" />
+    <ClCompile Include="..\..\source\snapshot_tests.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Durango'">Create</PrecompiledHeader>

@@ -4,7 +4,8 @@
 
 #include "pch.h"
 #include <ppltasks.h>
-#include "next.h"
+#include "snapshot.h"
+#include "snapshot_tests.h"
 
 using namespace concurrency;
 using namespace Windows::ApplicationModel;
@@ -14,17 +15,8 @@ using namespace Windows::UI::Core;
 using namespace Windows::Foundation;
 using namespace DirectX;
 
-const char * customer_public_key = "UoFYERKJnCt18mU53IsWzlEXD2pYD9yd+TiZiq9+cMF9cHG4kMwRtw==";
-
-void packet_received( next_client_t * client, void * context, const uint8_t * packet_data, int packet_bytes )
-{
-    (void) client;
-    (void) context;
-    (void) packet_data;
-    (void) packet_bytes;
-    // ...
-}
-
+// todo: custom logs
+/*
 extern const char * next_log_level_str( int level )
 {
     if ( level == NEXT_LOG_LEVEL_DEBUG )
@@ -58,12 +50,13 @@ void xbox_printf( int level, const char * format, ... )
     OutputDebugStringA( buffer2 );
     va_end( args );
 }
+*/
 
 ref class ViewProvider sealed : public IFrameworkView
 {
 private:
     bool exit;
-    next_client_t * client;
+    //next_client_t * client;
 
 public:
     ViewProvider() :
@@ -85,18 +78,12 @@ public:
 
         CoreApplication::DisableKinectGpuReservation = true;
 
-        next_config_t config;
-        next_default_config(&config);
-        strncpy_s(config.customer_public_key, customer_public_key, sizeof(config.customer_public_key) - 1);
-
-        next_init(NULL, &config);
-
-        next_log_function( xbox_printf );
+        snapshot_init();
     }
 
     virtual void Uninitialize()
     {
-        next_term();
+        snapshot_term();
     }
 
     virtual void SetWindow(CoreWindow^ window)
@@ -113,12 +100,12 @@ public:
     {
         OutputDebugStringA("\nRunning tests...\n\n");
 
-        next_log_level(NEXT_LOG_LEVEL_NONE);
-
-        next_test();
+        snapshot_run_tests();
 
         OutputDebugStringA("\nAll tests passed successfully!\n\n");
 
+        // todo
+        /*
         next_log_level(NEXT_LOG_LEVEL_INFO);
 
         OutputDebugStringA("Starting client...\n\n");
@@ -145,6 +132,7 @@ public:
         OutputDebugStringA("\nShutting down...\n\n");
 
         next_client_destroy( client );
+        */
     }
 
 protected:
