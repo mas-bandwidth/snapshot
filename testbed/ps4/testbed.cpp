@@ -4,13 +4,22 @@
 */
 
 #include "snapshot.h"
-#include "snapshot_tests.h"
+#include "snapshot_tests.cpp"
 #include <stdio.h>
 
-int main()
+unsigned int sceLibcHeapExtendedAlloc = 1;
+
+size_t sceLibcHeapSize = SCE_LIBC_HEAP_SIZE_EXTENDED_ALLOC_NO_LIMIT;
+
+static volatile int quit = 0;
+
+int32_t main( int argc, const char * const argv[] )
 {
-    snapshot_init();
+    snapshot_init( NULL );
+
     snapshot_run_tests();
+
     snapshot_term();
+
     return 0;
 }

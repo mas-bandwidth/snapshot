@@ -18,27 +18,25 @@ DONE
 
 	Get windows tests building and passing
 
+	Generalize tests so they are included in the lib and can be called from multiple programs
+
 TODO
+
+	Bring across ps4 testbed.
+
+	Bring across ps5 testbed.
+
+	Get nintendo switch tests building.
+
+	Get xboxone tests building.
+
+	Get seriesx tests building.
+
+	-------------
 
 	Setup custom semaphore agents on windows PC
 
 	Run windows tests on semaphore
-
-	-------------
-
-	Get ps4 tests building and passing
-
-	Get ps5 tests building and passing
-
-	Get xboxone tests building and passing
-
-	Get gdk tests building and passing on series x
-
-	Get nintendo switch tests building and passing (need to order new devkit...)
-
-	Get ios tests building and passing
-
-	-------------
 
 	Setup console tests to run on semaphore via custom agents
 
@@ -46,9 +44,15 @@ TODO
 
 	Setup a snapshot UE4 plugin
 
+	Verify client and server can connect and operate in testbed.
+
 	-------------
 
 	Setup memory checks
+
+	-------------
+
+	Create a soak test and run it with memory checks enabled.
 
 	-------------
 

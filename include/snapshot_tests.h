@@ -3,14 +3,9 @@
     Commercial licensing under different terms is available. Please email licensing@mas-bandwidth.com for details.
 */
 
-#include "snapshot.h"
-#include "snapshot_tests.h"
-#include <stdio.h>
+#ifndef SNAPSHOT_TESTS_H
+#define SNAPSHOT_TESTS_H
 
-int main()
-{
-    snapshot_init();
-    snapshot_run_tests();
-    snapshot_term();
-    return 0;
-}
+void snapshot_run_tests();
+
+#endif // #ifndef SNAPSHOT_TESTS_H
