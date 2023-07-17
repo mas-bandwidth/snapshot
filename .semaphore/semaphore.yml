@@ -109,9 +109,11 @@ blocks:
           type: s1-windows
       jobs:
         - name: test
+          matrix:
+            - env_var: CONFIG
+              values: [ "debug", "release" ]
           commands:
-            - "& \"c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\IDE\\devenv.com\" testbed\\ps4\\ps4.sln /rebuild debug"
-            - "& \"c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\IDE\\devenv.com\" testbed\\ps4\\ps4.sln /rebuild release"
+            - "& \"c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\IDE\\devenv.com\" testbed\\ps4\\ps4.sln /rebuild $CONFIG"
 
   - name: "PS5"
     dependencies: []
@@ -124,9 +126,11 @@ blocks:
           type: s1-windows
       jobs:
         - name: test
+          matrix:
+            - env_var: CONFIG
+              values: [ "debug", "release" ]
           commands:
-            - "& \"c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\IDE\\devenv.com\" testbed\\ps5\\ps5.sln /rebuild debug"
-            - "& \"c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\IDE\\devenv.com\" testbed\\ps5\\ps5.sln /rebuild release"
+            - "& \"c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\IDE\\devenv.com\" testbed\\ps5\\ps5.sln /rebuild $CONFIG"
 
   - name: "Switch"
     dependencies: []
@@ -139,9 +143,11 @@ blocks:
           type: s1-windows
       jobs:
         - name: test
+          matrix:
+            - env_var: CONFIG
+              values: [ "debug", "release" ]
           commands:
-            - "& \"c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\IDE\\devenv.com\" testbed\\switch\\switch.sln /rebuild debug"
-            - "& \"c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\IDE\\devenv.com\" testbed\\switch\\switch.sln /rebuild release"
+            - "& \"c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\IDE\\devenv.com\" testbed\\switch\\switch.sln /rebuild $CONFIG"
 
   - name: "XBox One"
     dependencies: []
@@ -154,6 +160,8 @@ blocks:
           type: s1-windows
       jobs:
         - name: test
+          matrix:
+            - env_var: CONFIG
+              values: [ "debug", "release" ]
           commands:
-            - "& \"c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\IDE\\devenv.com\" testbed\\xboxone\\xboxone.sln /rebuild debug"
-            - "& \"c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\IDE\\devenv.com\" testbed\\xboxone\\xboxone.sln /rebuild release"
+            - "& \"c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\IDE\\devenv.com\" testbed\\xboxone\\xboxone.sln /rebuild $CONFIG"
