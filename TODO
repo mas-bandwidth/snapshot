@@ -1,42 +1,10 @@
 DONE
 
-	Fabru9-zuvkac-pukhuc
-
-	Extend passthrough with generate/verify packet to make sure content and length are correct.
-
-	Extend passthrough test to IPv6
-
-	Fix up all the process packet todos for loopback client
-
-    void (*send_loopback_packet_callback)(void*,snapshot_address_t*,uint8_t*,int);
-
-	Fix up all the process packet todos for loopback server
-
-	Fix up the crypto AEAD todos so they call into official snapshot_crypto_* functions.
-
-	Implement zero copy on payload and passthrough packet writes
-
-	Get windows tests building and passing
-
-	Generalize tests so they are included in the lib and can be called from multiple programs
-
-	Bring across ps4 testbed.
-
-	Bring across ps5 testbed.
-
-	Bring across win32 testbed.
-
-	Bring across win64 testbed.
-
-	Bring across switch testbed
+	Bring across xboxone testbed
 
 TODO
 
-	Bring across xboxone testbed
-
-	------------
-
-	Bring across seriesx testbed
+	Bring across seriesx testbed (gdk)
 
 	-------------
 
