@@ -7,6 +7,9 @@
 
 #if SNAPSHOT_PLATFORM == SNAPSHOT_PLATFORM_SWITCH
 
+#include "snapshot_platform.h"
+#include "snapshot_address.h"
+
 #include <nn/socket.h>
 #include <nn/crypto.h>
 #include <nn/nifm.h>
@@ -158,14 +161,23 @@ static randombytes_implementation snapshot_random_implementation =
     &snapshot_randombytes_close,
 };
 
+static nn::socket::ConfigDefaultWithMemory socket_config_with_memory;
+
 int snapshot_platform_init()
 {
+    nn::Result result = nn::socket::Initialize( socket_config_with_memory );
+    if ( result.IsFailure() )
+    {
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to initialize nintendo sockets" );
+        return SNAPSHOT_ERROR;
+    }
+
     if ( randombytes_set_implementation( &snapshot_random_implementation ) != 0 )
         return SNAPSHOT_ERROR;
 
     time_start = nn::os::GetSystemTick();
 
-    nn::Result result = nn::nifm::Initialize(); // it's valid to call this multiple times
+    result = nn::nifm::Initialize(); // it's valid to call this multiple times
     if ( result.IsFailure() )
     {
         snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to initialize nintendo network connection manager" );
@@ -182,6 +194,7 @@ double snapshot_platform_time()
 
 void snapshot_platform_term()
 {
+    nn::socket::Finalize();
 }
 
 const char * snapshot_platform_getenv( const char * var )

@@ -10,6 +10,8 @@
 
 #if SNAPSHOT_PLATFORM == SNAPSHOT_PLATFORM_SWITCH
 
+#include "snapshot_address.h"
+
 #include <nn/os.h>
 
 // -------------------------------------
