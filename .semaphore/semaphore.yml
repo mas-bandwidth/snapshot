@@ -90,7 +90,7 @@ blocks:
           type: s1-windows
       jobs:
         - name: test
-           matrix:
+          matrix:
             - env_var: CONFIG
               values: [ "debug_portable", "release_portable" ]
           commands:
