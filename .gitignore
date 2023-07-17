@@ -36,3 +36,5 @@ debug
 release
 *.user
 *.filters
+prospero_debug
+prospero_release
