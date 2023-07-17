@@ -20,6 +20,10 @@ DONE
 
 TODO
 
+	Get env vars working in semaphore for matrix in windows
+
+	-------------
+
 	Incorporate reliable.io source code
 
 	Update license to include reliable.io source code
@@ -33,6 +37,10 @@ TODO
 	Update to latest XBox Series X and GDK tooling
 
 	Update to latest Nintendo Switch tooling
+
+	-------------
+
+	Setup additional PCs as build farm for sem
 
 	-------------
 
