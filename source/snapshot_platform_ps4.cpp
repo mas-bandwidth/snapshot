@@ -7,6 +7,9 @@
 
 #if SNAPSHOT_PLATFORM == SNAPSHOT_PLATFORM_PS4
 
+#include "snapshot_platform.h"
+#include "snapshot_address.h"
+
 #include <kernel.h>
 #include <net.h>
 #include <libnetctl.h>

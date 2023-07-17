@@ -16,6 +16,7 @@ struct snapshot_address_t;
 #include "snapshot_platform_mac.h"
 #include "snapshot_platform_linux.h"
 #include "snapshot_platform_windows.h"
+#include "snapshot_platform_ps4.h"
 
 typedef void (*snapshot_platform_thread_func_t)(void*);
 

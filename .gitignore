@@ -36,3 +36,5 @@ debug
 release
 *.vcproj.filters
 *.vcproj.user
+*.user
+*.filters
