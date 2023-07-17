@@ -95,7 +95,7 @@ blocks:
               values: [ "debug_portable", "release_portable" ]
           commands:
             - premake5 vs2019
-            - "& \"c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\IDE\\devenv.com\" visualstudio\\snapshot.sln /rebuild $env:CONFIG"
+            - "& \"c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\IDE\\devenv.com\" visualstudio\\snapshot.sln /rebuild $CONFIG"
             - "& .\\bin\\test.exe"
 
   - name: "PS4"
