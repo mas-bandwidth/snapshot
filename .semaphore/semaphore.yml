@@ -96,3 +96,18 @@ blocks:
             - "& .\\bin\\test.exe"
             - "& \"c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\IDE\\devenv.com\" visualstudio\\snapshot.sln /rebuild \"release|x64\""
             - "& .\\bin\\test.exe"
+
+  - name: "PS4"
+    dependencies: []
+    task:
+      prologue:
+        commands:
+          - checkout
+      agent:
+        machine:
+          type: s1-windows
+      jobs:
+        - name: test
+          commands:
+            - "& \"c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\IDE\\devenv.com\" testbed\\ps4\\ps4.sln /rebuild debug"
+            - "& \"c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\IDE\\devenv.com\" testbed\\ps4\\ps4.sln /rebuild release"
