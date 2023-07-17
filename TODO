@@ -2,15 +2,15 @@ DONE
 
 	Bring across xboxone testbed
 
-TODO
-
 	Bring across seriesx testbed (gdk)
 
-	-------------
+	Need to update to latest QFE on my PC to get everything working
+
+	a3c505d1f49a0a6ca0b6fe64e31f931638337fc62db6c1df00e0c68f675a7f056594254b86eea6c0
 
 	Setup custom semaphore agent on windows PC
 
-	-------------
+TODO
 
 	Setup windows tests to build and run on semaphore via custom agent
 

@@ -78,3 +78,17 @@ blocks:
             - premake5 gmake
             - make -j config=$CONFIG
             - ./bin/test
+
+  - name: "Test on Windows"
+    dependencies: []
+    task:
+      prologue:
+        commands:
+          - checkout
+      agent:
+        machine:
+          type: s1-windows
+      jobs:
+        - name: test
+          commands:
+            - premake5 vs2022
