@@ -4,19 +4,52 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 15.0.28010.2046
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "testbed", "testbed.vcxproj", "{E153BC48-A071-4229-A75C-E7D8E724FA96}"
+	ProjectSection(ProjectDependencies) = postProject
+		{71057958-DF4F-463E-9F11-80390FCEECDD} = {71057958-DF4F-463E-9F11-80390FCEECDD}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sodium", "sodium\sodium.vcxproj", "{71057958-DF4F-463E-9F11-80390FCEECDD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Durango = Debug|Durango
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
 		Debug|XBoxOne = Debug|XBoxOne
+		Release|Durango = Release|Durango
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
 		Release|XBoxOne = Release|XBoxOne
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E153BC48-A071-4229-A75C-E7D8E724FA96}.Debug|Durango.ActiveCfg = Debug|Durango
+		{E153BC48-A071-4229-A75C-E7D8E724FA96}.Debug|Durango.Build.0 = Debug|Durango
+		{E153BC48-A071-4229-A75C-E7D8E724FA96}.Debug|Durango.Deploy.0 = Debug|Durango
+		{E153BC48-A071-4229-A75C-E7D8E724FA96}.Debug|x64.ActiveCfg = Debug|Durango
+		{E153BC48-A071-4229-A75C-E7D8E724FA96}.Debug|x86.ActiveCfg = Debug|Durango
 		{E153BC48-A071-4229-A75C-E7D8E724FA96}.Debug|XBoxOne.ActiveCfg = Debug|Durango
 		{E153BC48-A071-4229-A75C-E7D8E724FA96}.Debug|XBoxOne.Build.0 = Debug|Durango
 		{E153BC48-A071-4229-A75C-E7D8E724FA96}.Debug|XBoxOne.Deploy.0 = Debug|Durango
+		{E153BC48-A071-4229-A75C-E7D8E724FA96}.Release|Durango.ActiveCfg = Release|Durango
+		{E153BC48-A071-4229-A75C-E7D8E724FA96}.Release|Durango.Build.0 = Release|Durango
+		{E153BC48-A071-4229-A75C-E7D8E724FA96}.Release|Durango.Deploy.0 = Release|Durango
+		{E153BC48-A071-4229-A75C-E7D8E724FA96}.Release|x64.ActiveCfg = Release|Durango
+		{E153BC48-A071-4229-A75C-E7D8E724FA96}.Release|x86.ActiveCfg = Release|Durango
 		{E153BC48-A071-4229-A75C-E7D8E724FA96}.Release|XBoxOne.ActiveCfg = Release|Durango
 		{E153BC48-A071-4229-A75C-E7D8E724FA96}.Release|XBoxOne.Build.0 = Release|Durango
 		{E153BC48-A071-4229-A75C-E7D8E724FA96}.Release|XBoxOne.Deploy.0 = Release|Durango
+		{71057958-DF4F-463E-9F11-80390FCEECDD}.Debug|Durango.ActiveCfg = Debug|Durango
+		{71057958-DF4F-463E-9F11-80390FCEECDD}.Debug|Durango.Build.0 = Debug|Durango
+		{71057958-DF4F-463E-9F11-80390FCEECDD}.Debug|x64.ActiveCfg = Debug|Durango
+		{71057958-DF4F-463E-9F11-80390FCEECDD}.Debug|x86.ActiveCfg = Debug|Durango
+		{71057958-DF4F-463E-9F11-80390FCEECDD}.Debug|XBoxOne.ActiveCfg = Debug|Durango
+		{71057958-DF4F-463E-9F11-80390FCEECDD}.Debug|XBoxOne.Build.0 = Debug|Durango
+		{71057958-DF4F-463E-9F11-80390FCEECDD}.Release|Durango.ActiveCfg = Release|Durango
+		{71057958-DF4F-463E-9F11-80390FCEECDD}.Release|Durango.Build.0 = Release|Durango
+		{71057958-DF4F-463E-9F11-80390FCEECDD}.Release|x64.ActiveCfg = Release|Durango
+		{71057958-DF4F-463E-9F11-80390FCEECDD}.Release|x86.ActiveCfg = Release|Durango
+		{71057958-DF4F-463E-9F11-80390FCEECDD}.Release|XBoxOne.ActiveCfg = Release|Durango
+		{71057958-DF4F-463E-9F11-80390FCEECDD}.Release|XBoxOne.Build.0 = Release|Durango
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -19,6 +19,7 @@ struct snapshot_address_t;
 #include "snapshot_platform_ps4.h"
 #include "snapshot_platform_ps5.h"
 #include "snapshot_platform_switch.h"
+#include "snapshot_platform_xboxone.h"
 
 typedef void (*snapshot_platform_thread_func_t)(void*);
 
