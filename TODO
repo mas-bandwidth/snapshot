@@ -22,11 +22,9 @@ DONE
 
 	Bring across ps4 testbed.
 
-TODO
-
 	Bring across ps5 testbed.
 
-	------------
+TODO
 
 	Bring across win32 testbed.
 
@@ -46,11 +44,15 @@ TODO
 
 	-------------
 
-	Setup custom semaphore agents on windows PC
+	Setup custom semaphore agent on windows PC
 
-	Run windows tests on semaphore
+	-------------
 
-	Setup console tests to run on semaphore via custom agents
+	Setup windows tests to build and run on semaphore via custom agent
+
+	-------------
+
+	Setup console testbeds to build and link on semaphore via custom agent
 
 	-------------
 
