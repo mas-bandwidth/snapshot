@@ -20,17 +20,29 @@ DONE
 
 	Generalize tests so they are included in the lib and can be called from multiple programs
 
-TODO
-
 	Bring across ps4 testbed.
+
+TODO
 
 	Bring across ps5 testbed.
 
-	Get nintendo switch tests building.
+	------------
 
-	Get xboxone tests building.
+	Bring across win32 testbed.
 
-	Get seriesx tests building.
+	Bring across win64 testbed.
+
+	------------
+
+	Bring across switch testbed (32 bit)
+
+	Bring across switch testbed (64 bit)
+
+	------------
+
+	Bring across xboxone testbed
+
+	Bring across seriesx testbed
 
 	-------------
 
