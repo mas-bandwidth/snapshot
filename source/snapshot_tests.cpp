@@ -3810,11 +3810,11 @@ void test_acks()
         uint8_t dummy_packet[8];
         memset( dummy_packet, 0, sizeof( dummy_packet ) );
 
-        reliable_endpoint_send_packet( context.sender, dummy_packet, sizeof( dummy_packet ) );
-        reliable_endpoint_send_packet( context.receiver, dummy_packet, sizeof( dummy_packet ) );
+        snapshot_endpoint_send_packet( context.sender, dummy_packet, sizeof( dummy_packet ) );
+        snapshot_endpoint_send_packet( context.receiver, dummy_packet, sizeof( dummy_packet ) );
 
-        reliable_endpoint_update( context.sender, time );
-        reliable_endpoint_update( context.receiver, time );
+        snapshot_endpoint_update( context.sender, time );
+        snapshot_endpoint_update( context.receiver, time );
 
         time += delta_time;
     }
@@ -3822,7 +3822,7 @@ void test_acks()
     uint8_t sender_acked_packet[TEST_ACKS_NUM_ITERATIONS];
     memset( sender_acked_packet, 0, sizeof( sender_acked_packet ) );
     int sender_num_acks;
-    uint16_t * sender_acks = reliable_endpoint_get_acks( context.sender, &sender_num_acks );
+    uint16_t * sender_acks = snapshot_endpoint_get_acks( context.sender, &sender_num_acks );
     for ( i = 0; i < sender_num_acks; ++i )
     {
         if ( sender_acks[i] < TEST_ACKS_NUM_ITERATIONS )
@@ -3832,13 +3832,13 @@ void test_acks()
     }
     for ( i = 0; i < TEST_ACKS_NUM_ITERATIONS / 2; ++i )
     {
-        check( sender_acked_packet[i] == 1 );
+        snapshot_check( sender_acked_packet[i] == 1 );
     }
 
     uint8_t receiver_acked_packet[TEST_ACKS_NUM_ITERATIONS];
     memset( receiver_acked_packet, 0, sizeof( receiver_acked_packet ) );
     int receiver_num_acks;
-    uint16_t * receiver_acks = reliable_endpoint_get_acks( context.receiver, &receiver_num_acks );
+    uint16_t * receiver_acks = snapshot_endpoint_get_acks( context.receiver, &receiver_num_acks );
     for ( i = 0; i < receiver_num_acks; ++i )
     {
         if ( receiver_acks[i] < TEST_ACKS_NUM_ITERATIONS )
@@ -3846,13 +3846,14 @@ void test_acks()
     }
     for ( i = 0; i < TEST_ACKS_NUM_ITERATIONS / 2; ++i )
     {
-        check( receiver_acked_packet[i] == 1 );
+        snapshot_check( receiver_acked_packet[i] == 1 );
     }
 
-    reliable_endpoint_destroy( context.sender );
-    reliable_endpoint_destroy( context.receiver );
+    snapshot_endpoint_destroy( context.sender );
+    snapshot_endpoint_destroy( context.receiver );
 }
 
+/*
 void test_acks_packet_loss()
 {
     double time = 100.0;
@@ -3860,7 +3861,7 @@ void test_acks_packet_loss()
     struct test_context_t context;
     test_default_context( &context );
     
-    struct reliable_config_t sender_config;
+    struct snapshot_config_t sender_config;
     struct reliable_config_t receiver_config;
 
     reliable_default_config( &sender_config );

@@ -34,6 +34,8 @@ DONE
 
 TODO
 
+	Bring across more fragmentation stuff... move into snapshot_fragment.h
+
 	Get the remaining reliable tests compiling and passing.
 
 	Split snapshot_endpoint.h into .h and cpp
