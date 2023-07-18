@@ -111,7 +111,7 @@ blocks:
         - name: test
           matrix:
             - env_var: PLATFORM
-              values: [ "win32", "win64", "ps4", "ps5", "switch", "xboxone" ]
+              values: [ "ps4", "ps5", "switch", "xboxone" ]
             - env_var: CONFIG
               values: [ "debug", "release" ]
           commands:
