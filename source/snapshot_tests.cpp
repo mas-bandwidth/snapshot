@@ -20,6 +20,7 @@
 #include "snapshot_packets.h"
 #include "snapshot_encryption_manager.h"
 #include "snapshot_replay_protection.h"
+#include "snapshot_sequence_buffer.h"
 
 #include <math.h>
 #include <stdio.h>
