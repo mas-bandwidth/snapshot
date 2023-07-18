@@ -3716,13 +3716,12 @@ void test_packet_header()
     snapshot_check( read_ack_bits == write_ack_bits );
 }
 
-/*
 struct test_context_t
 {
     int drop;
     int allow_packets;
-    struct reliable_endpoint_t * sender;
-    struct reliable_endpoint_t * receiver;
+    struct snapshot_endpoint_t * sender;
+    struct snapshot_endpoint_t * receiver;
 };
 
 void test_default_context( struct test_context_t * context )
@@ -3754,15 +3753,15 @@ void test_transmit_packet_function( void * _context, int index, uint16_t sequenc
 
     if ( index == 0 )
     {
-        reliable_endpoint_receive_packet( context->receiver, packet_data, packet_bytes );
+        snapshot_endpoint_receive_packet( context->receiver, packet_data, packet_bytes );
     }
     else if ( index == 1 )
     {
-        reliable_endpoint_receive_packet( context->sender, packet_data, packet_bytes );
+        snapshot_endpoint_receive_packet( context->sender, packet_data, packet_bytes );
     }
 }
 
-static int test_process_packet_function( void * _context, int index, uint16_t sequence, uint8_t * packet_data, int packet_bytes )
+int test_process_packet_function( void * _context, int index, uint16_t sequence, uint8_t * packet_data, int packet_bytes )
 {
     struct test_context_t * context = (struct test_context_t*) _context;
 
@@ -3784,11 +3783,11 @@ void test_acks()
     struct test_context_t context;
     test_default_context( &context );
     
-    struct reliable_config_t sender_config;
-    struct reliable_config_t receiver_config;
+    struct snapshot_endpoint_config_t sender_config;
+    struct snapshot_endpoint_config_t receiver_config;
 
-    reliable_default_config( &sender_config );
-    reliable_default_config( &receiver_config );
+    snapshot_endpoint_default_config( &sender_config );
+    snapshot_endpoint_default_config( &receiver_config );
 
     sender_config.context = &context;
     sender_config.index = 0;
@@ -3800,8 +3799,8 @@ void test_acks()
     receiver_config.transmit_packet_function = &test_transmit_packet_function;
     receiver_config.process_packet_function = &test_process_packet_function;
 
-    context.sender = reliable_endpoint_create( &sender_config, time );
-    context.receiver = reliable_endpoint_create( &receiver_config, time );
+    context.sender = snapshot_endpoint_create( &sender_config, time );
+    context.receiver = snapshot_endpoint_create( &receiver_config, time );
 
     double delta_time = 0.01;
 
@@ -4437,8 +4436,9 @@ void snapshot_run_tests()
         RUN_TEST( test_generate_ack_bits );
         RUN_TEST( test_packet_header );
 
-        /*
         RUN_TEST( test_acks );
+
+        /*
         RUN_TEST( test_acks_packet_loss );
         RUN_TEST( test_packets );
         RUN_TEST( test_large_packets );
