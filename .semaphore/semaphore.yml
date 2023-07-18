@@ -115,4 +115,4 @@ blocks:
             - env_var: CONFIG
               values: [ "debug", "release" ]
           commands:
-            - "& \"c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\IDE\\devenv.com\" $PROJECT /rebuild $CONFIG"
+            - "& \"c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\IDE\\devenv.com\" $SOLUTION /rebuild $CONFIG"
