@@ -22,6 +22,7 @@
 #include "snapshot_replay_protection.h"
 #include "snapshot_sequence_buffer.h"
 #include "snapshot_packet_header.h"
+#include "snapshot_endpoint.h"
 
 #include <math.h>
 #include <stdio.h>
