@@ -6,6 +6,9 @@
 #ifndef SNAPSHOT_ENDPOINT_H
 #define SNAPSHOT_ENDPOINT_H
 
+#include "snapshot_packets.h"
+#include "snapshot_read_write.h"
+#include "snapshot_packet_header.h"
 #include "snapshot_sequence_buffer.h"
 
 #define SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_SENT                          0
@@ -138,19 +141,19 @@ struct snapshot_endpoint_t * snapshot_endpoint_create( struct snapshot_endpoint_
     return endpoint;
 }
 
-/*
-void snapshot_endpoint_destroy( struct reliable_endpoint_t * endpoint )
+void snapshot_endpoint_destroy( struct snapshot_endpoint_t * endpoint )
 {
-    reliable_assert( endpoint );
-    reliable_assert( endpoint->acks );
-    reliable_assert( endpoint->sent_packets );
-    reliable_assert( endpoint->received_packets );
+    snapshot_assert( endpoint );
+    snapshot_assert( endpoint->acks );
+    snapshot_assert( endpoint->sent_packets );
+    snapshot_assert( endpoint->received_packets );
 
+    // todo
+    /*
     int i;
     for ( i = 0; i < endpoint->config.fragment_reassembly_buffer_size; ++i )
     {
-        struct reliable_fragment_reassembly_data_t * reassembly_data = (struct reliable_fragment_reassembly_data_t*) 
-            reliable_sequence_buffer_at_index( endpoint->fragment_reassembly, i );
+        struct snapshot_fragment_reassembly_data_t * reassembly_data = (struct snapshot_fragment_reassembly_data_t*) snapshot_sequence_buffer_at_index( endpoint->fragment_reassembly, i );
 
         if ( reassembly_data && reassembly_data->packet_data )
         {
@@ -158,103 +161,34 @@ void snapshot_endpoint_destroy( struct reliable_endpoint_t * endpoint )
             reassembly_data->packet_data = NULL;
         }
     }
+    */
 
-    endpoint->free_function( endpoint->allocator_context, endpoint->acks );
+    snapshot_free( endpoint->context, endpoint->acks );
 
-    reliable_sequence_buffer_destroy( endpoint->sent_packets );
-    reliable_sequence_buffer_destroy( endpoint->received_packets );
-    reliable_sequence_buffer_destroy( endpoint->fragment_reassembly );
+    snapshot_sequence_buffer_destroy( endpoint->sent_packets );
+    snapshot_sequence_buffer_destroy( endpoint->received_packets );
+    snapshot_sequence_buffer_destroy( endpoint->fragment_reassembly );
 
-    endpoint->free_function( endpoint->allocator_context, endpoint );
+    snapshot_free( endpoint->context, endpoint );
 }
 
-uint16_t reliable_endpoint_next_packet_sequence( struct reliable_endpoint_t * endpoint )
+uint16_t snapshot_endpoint_next_packet_sequence( struct snapshot_endpoint_t * endpoint )
 {
-    reliable_assert( endpoint );
+    snapshot_assert( endpoint );
     return endpoint->sequence;
 }
 
-int reliable_write_packet_header( uint8_t * packet_data, uint16_t sequence, uint16_t ack, uint32_t ack_bits )
+// todo: we need to rework this to make it zero copy
+void snapshot_endpoint_send_packet( struct snapshot_endpoint_t * endpoint, uint8_t * packet_data, int packet_bytes )
 {
-    uint8_t * p = packet_data;
-
-    uint8_t prefix_byte = 0;
-
-    if ( ( ack_bits & 0x000000FF ) != 0x000000FF )
-    {
-        prefix_byte |= (1<<1);
-    }
-
-    if ( ( ack_bits & 0x0000FF00 ) != 0x0000FF00 )
-    {
-        prefix_byte |= (1<<2);
-    }
-
-    if ( ( ack_bits & 0x00FF0000 ) != 0x00FF0000 )
-    {
-        prefix_byte |= (1<<3);
-    }
-
-    if ( ( ack_bits & 0xFF000000 ) != 0xFF000000 )
-    {
-        prefix_byte |= (1<<4);
-    }
-
-    int sequence_difference = sequence - ack;
-    if ( sequence_difference < 0 )
-        sequence_difference += 65536;
-    if ( sequence_difference <= 255 )
-        prefix_byte |= (1<<5);
-
-    reliable_write_uint8( &p, prefix_byte );
-
-    reliable_write_uint16( &p, sequence );
-
-    if ( sequence_difference <= 255 )
-    {
-        reliable_write_uint8( &p, (uint8_t) sequence_difference );
-    }
-    else
-    {
-        reliable_write_uint16( &p, ack );
-    }
-
-    if ( ( ack_bits & 0x000000FF ) != 0x000000FF )
-    {
-        reliable_write_uint8( &p, (uint8_t) ( ack_bits & 0x000000FF ) );
-    }
-
-    if ( ( ack_bits & 0x0000FF00 ) != 0x0000FF00 )
-    {
-        reliable_write_uint8( &p, (uint8_t) ( ( ack_bits & 0x0000FF00 ) >> 8 ) );
-    }
-
-    if ( ( ack_bits & 0x00FF0000 ) != 0x00FF0000 )
-    {
-        reliable_write_uint8( &p, (uint8_t) ( ( ack_bits & 0x00FF0000 ) >> 16 ) );
-    }
-
-    if ( ( ack_bits & 0xFF000000 ) != 0xFF000000 )
-    {
-        reliable_write_uint8( &p, (uint8_t) ( ( ack_bits & 0xFF000000 ) >> 24 ) );
-    }
-
-    reliable_assert( p - packet_data <= RELIABLE_MAX_PACKET_HEADER_BYTES );
-
-    return (int) ( p - packet_data );
-}
-
-void reliable_endpoint_send_packet( struct reliable_endpoint_t * endpoint, uint8_t * packet_data, int packet_bytes )
-{
-    reliable_assert( endpoint );
-    reliable_assert( packet_data );
-    reliable_assert( packet_bytes > 0 );
+    snapshot_assert( endpoint );
+    snapshot_assert( packet_data );
+    snapshot_assert( packet_bytes > 0 );
 
     if ( packet_bytes > endpoint->config.max_packet_size )
     {
-        reliable_printf( RELIABLE_LOG_LEVEL_ERROR, "[%s] packet too large to send. packet is %d bytes, maximum is %d\n", 
-            endpoint->config.name, packet_bytes, endpoint->config.max_packet_size );
-        endpoint->counters[RELIABLE_ENDPOINT_COUNTER_NUM_PACKETS_TOO_LARGE_TO_SEND]++;
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "[%s] packet too large to send. packet is %d bytes, maximum is %d\n", endpoint->config.name, packet_bytes, endpoint->config.max_packet_size );
+        endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_TOO_LARGE_TO_SEND]++;
         return;
     }
 
@@ -262,13 +196,13 @@ void reliable_endpoint_send_packet( struct reliable_endpoint_t * endpoint, uint8
     uint16_t ack;
     uint32_t ack_bits;
 
-    reliable_sequence_buffer_generate_ack_bits( endpoint->received_packets, &ack, &ack_bits );
+    snapshot_sequence_buffer_generate_ack_bits( endpoint->received_packets, &ack, &ack_bits );
 
-    reliable_printf( RELIABLE_LOG_LEVEL_DEBUG, "[%s] sending packet %d\n", endpoint->config.name, sequence );
+    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] sending packet %d\n", endpoint->config.name, sequence );
 
-    struct reliable_sent_packet_data_t * sent_packet_data = (struct reliable_sent_packet_data_t*) reliable_sequence_buffer_insert( endpoint->sent_packets, sequence );
+    struct snapshot_endpoint_sent_packet_data_t * sent_packet_data = (struct snapshot_endpoint_sent_packet_data_t*) snapshot_sequence_buffer_insert( endpoint->sent_packets, sequence );
 
-    reliable_assert( sent_packet_data );
+    snapshot_assert( sent_packet_data );
 
     sent_packet_data->time = endpoint->time;
     sent_packet_data->packet_bytes = endpoint->config.packet_header_size + packet_bytes;
@@ -278,36 +212,38 @@ void reliable_endpoint_send_packet( struct reliable_endpoint_t * endpoint, uint8
     {
         // regular packet
 
-        reliable_printf( RELIABLE_LOG_LEVEL_DEBUG, "[%s] sending packet %d without fragmentation\n", endpoint->config.name, sequence );
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] sending packet %d without fragmentation\n", endpoint->config.name, sequence );
 
-        uint8_t * transmit_packet_data = (uint8_t*) endpoint->allocate_function( endpoint->allocator_context, packet_bytes + RELIABLE_MAX_PACKET_HEADER_BYTES );
+        uint8_t * transmit_packet_data = snapshot_create_packet( endpoint->context, packet_bytes + SNAPSHOT_MAX_PACKET_HEADER_BYTES );
 
-        int packet_header_bytes = reliable_write_packet_header( transmit_packet_data, sequence, ack, ack_bits );
+        int packet_header_bytes = snapshot_write_packet_header( transmit_packet_data, sequence, ack, ack_bits );
 
         memcpy( transmit_packet_data + packet_header_bytes, packet_data, packet_bytes );
 
         endpoint->config.transmit_packet_function( endpoint->config.context, endpoint->config.index, sequence, transmit_packet_data, packet_header_bytes + packet_bytes );
 
-        endpoint->free_function( endpoint->allocator_context, transmit_packet_data );
+        snapshot_destroy_packet( endpoint->context, transmit_packet_data );
     }
     else
     {
         // fragmented packet
 
-        uint8_t packet_header[RELIABLE_MAX_PACKET_HEADER_BYTES];
+        // todo
+        /*
+        uint8_t packet_header[SNAPSHOT_MAX_PACKET_HEADER_BYTES];
 
-        memset( packet_header, 0, RELIABLE_MAX_PACKET_HEADER_BYTES );
+        memset( packet_header, 0, SNAPSHOT_MAX_PACKET_HEADER_BYTES );
 
-        int packet_header_bytes = reliable_write_packet_header( packet_header, sequence, ack, ack_bits );        
+        int packet_header_bytes = snapshot_write_packet_header( packet_header, sequence, ack, ack_bits );        
 
         int num_fragments = ( packet_bytes / endpoint->config.fragment_size ) + ( ( packet_bytes % endpoint->config.fragment_size ) != 0 ? 1 : 0 );
 
-        reliable_printf( RELIABLE_LOG_LEVEL_DEBUG, "[%s] sending packet %d as %d fragments\n", endpoint->config.name, sequence, num_fragments );
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] sending packet %d as %d fragments\n", endpoint->config.name, sequence, num_fragments );
 
-        reliable_assert( num_fragments >= 1 );
-        reliable_assert( num_fragments <= endpoint->config.max_fragments );
+        snapshot_assert( num_fragments >= 1 );
+        snapshot_assert( num_fragments <= endpoint->config.max_fragments );
 
-        int fragment_buffer_size = RELIABLE_FRAGMENT_HEADER_BYTES + RELIABLE_MAX_PACKET_HEADER_BYTES + endpoint->config.fragment_size;
+        int fragment_buffer_size = SNAPSHOT_FRAGMENT_HEADER_BYTES + SNAPSHOT_MAX_PACKET_HEADER_BYTES + endpoint->config.fragment_size;
 
         uint8_t * fragment_packet_data = (uint8_t*) endpoint->allocate_function( endpoint->allocator_context, fragment_buffer_size );
 
@@ -320,10 +256,10 @@ void reliable_endpoint_send_packet( struct reliable_endpoint_t * endpoint, uint8
         {
             uint8_t * p = fragment_packet_data;
 
-            reliable_write_uint8( &p, 1 );
-            reliable_write_uint16( &p, sequence );
-            reliable_write_uint8( &p, (uint8_t) fragment_id );
-            reliable_write_uint8( &p, (uint8_t) ( num_fragments - 1 ) );
+            snapshot_write_uint8( &p, 1 );
+            snapshot_write_uint16( &p, sequence );
+            snapshot_write_uint8( &p, (uint8_t) fragment_id );
+            snapshot_write_uint8( &p, (uint8_t) ( num_fragments - 1 ) );
 
             if ( fragment_id == 0 )
             {
@@ -346,14 +282,14 @@ void reliable_endpoint_send_packet( struct reliable_endpoint_t * endpoint, uint8
 
             endpoint->config.transmit_packet_function( endpoint->config.context, endpoint->config.index, sequence, fragment_packet_data, fragment_packet_bytes );
 
-            endpoint->counters[RELIABLE_ENDPOINT_COUNTER_NUM_FRAGMENTS_SENT]++;
+            endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_FRAGMENTS_SENT]++;
         }
 
-        endpoint->free_function( endpoint->allocator_context, fragment_packet_data );
+        snapshot_destroy_packet( endpoint->context, fragment_packet_data );
+        */
     }
 
-    endpoint->counters[RELIABLE_ENDPOINT_COUNTER_NUM_PACKETS_SENT]++;
+    endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_SENT]++;
 }
-*/
 
 #endif // #ifndef SNAPSHOT_ENDPOINT_H
