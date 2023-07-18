@@ -24,9 +24,9 @@ DONE
 
 	Hack in sequence buffer.
 
-TODO
-
 	Split sequence buffer into .h/.cpp
+
+TODO
 
 	Bring across sequence buffer test
 

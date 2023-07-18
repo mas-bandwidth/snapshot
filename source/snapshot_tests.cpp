@@ -3531,6 +3531,66 @@ void test_disable_timeout()
     snapshot_network_simulator_destroy( network_simulator );
 }
 
+struct test_sequence_data_t
+{
+    uint16_t sequence;
+};
+
+#define TEST_SEQUENCE_BUFFER_SIZE 256
+
+void test_sequence_buffer()
+{
+    struct snapshot_sequence_buffer_t * sequence_buffer = snapshot_sequence_buffer_create( NULL, TEST_SEQUENCE_BUFFER_SIZE, sizeof( struct test_sequence_data_t ) );
+
+    snapshot_check( sequence_buffer );
+    snapshot_check( sequence_buffer->sequence == 0 );
+    snapshot_check( sequence_buffer->num_entries == TEST_SEQUENCE_BUFFER_SIZE );
+    snapshot_check( sequence_buffer->entry_stride == sizeof( struct test_sequence_data_t ) );
+
+    int i;
+    for ( i = 0; i < TEST_SEQUENCE_BUFFER_SIZE; ++i )
+    {
+        snapshot_check( snapshot_sequence_buffer_find( sequence_buffer, ((uint16_t)i) ) == NULL );
+    }                                                                      
+
+    for ( i = 0; i <= TEST_SEQUENCE_BUFFER_SIZE*4; ++i )
+    {
+        struct test_sequence_data_t * entry = (struct test_sequence_data_t*) snapshot_sequence_buffer_insert( sequence_buffer, ((uint16_t)i) );
+        snapshot_check( entry );
+        entry->sequence = (uint16_t) i;
+        snapshot_check( sequence_buffer->sequence == i + 1 );
+    }
+
+    for ( i = 0; i <= TEST_SEQUENCE_BUFFER_SIZE; ++i )
+    {
+        struct test_sequence_data_t * entry = (struct test_sequence_data_t*) snapshot_sequence_buffer_insert( sequence_buffer, ((uint16_t)i) );
+        snapshot_check( entry == NULL );
+    }    
+
+    int index = TEST_SEQUENCE_BUFFER_SIZE * 4;
+    for ( i = 0; i < TEST_SEQUENCE_BUFFER_SIZE; ++i )
+    {
+        struct test_sequence_data_t * entry = (struct test_sequence_data_t*) snapshot_sequence_buffer_find( sequence_buffer, (uint16_t) index );
+        snapshot_check( entry );
+        snapshot_check( entry->sequence == (uint32_t) index );
+        index--;
+    }
+
+    snapshot_sequence_buffer_reset( sequence_buffer );
+
+    snapshot_check( sequence_buffer );
+    snapshot_check( sequence_buffer->sequence == 0 );
+    snapshot_check( sequence_buffer->num_entries == TEST_SEQUENCE_BUFFER_SIZE );
+    snapshot_check( sequence_buffer->entry_stride == sizeof( struct test_sequence_data_t ) );
+
+    for ( i = 0; i < TEST_SEQUENCE_BUFFER_SIZE; ++i )
+    {
+        snapshot_check( snapshot_sequence_buffer_find( sequence_buffer, (uint16_t) i ) == NULL );
+    }
+
+    snapshot_sequence_buffer_destroy( sequence_buffer );
+}
+
 #define RUN_TEST( test_function )                                           \
     do                                                                      \
     {                                                                       \
@@ -3604,6 +3664,7 @@ void snapshot_run_tests()
         RUN_TEST( test_server_side_disconnect );
         RUN_TEST( test_client_reconnect );
         RUN_TEST( test_disable_timeout );
+        RUN_TEST( test_sequence_buffer );
     }
 
     printf( "\nAll tests pass.\n\n" );
