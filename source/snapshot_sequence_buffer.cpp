@@ -127,9 +127,7 @@ void snapshot_sequence_buffer_advance( struct snapshot_sequence_buffer_t * seque
     }
 }
 
-void * snapshot_sequence_buffer_insert_with_cleanup( struct snapshot_sequence_buffer_t * sequence_buffer, 
-                                                     uint16_t sequence, 
-                                                     void (*cleanup_function)(void*,void*) )
+void * snapshot_sequence_buffer_insert_with_cleanup( struct snapshot_sequence_buffer_t * sequence_buffer, uint16_t sequence, void (*cleanup_function)(void*,void*) )
 {
     snapshot_assert( sequence_buffer );
 
@@ -155,9 +153,7 @@ void * snapshot_sequence_buffer_insert_with_cleanup( struct snapshot_sequence_bu
     return sequence_buffer->entry_data + index * sequence_buffer->entry_stride;
 }
 
-void snapshot_sequence_buffer_advance_with_cleanup( struct snapshot_sequence_buffer_t * sequence_buffer,
-                                                    uint16_t sequence,
-                                                    void (*cleanup_function)(void*,void*) )
+void snapshot_sequence_buffer_advance_with_cleanup( struct snapshot_sequence_buffer_t * sequence_buffer, uint16_t sequence, void (*cleanup_function)(void*,void*) )
 {
     snapshot_assert( sequence_buffer );
     if ( snapshot_sequence_greater_than( sequence + 1, sequence_buffer->sequence ) )

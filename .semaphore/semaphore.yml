@@ -110,9 +110,9 @@ blocks:
       jobs:
         - name: test
           matrix:
-            - env_var: PROJECT
-              values: [ "win32", "win64", "ps4", "ps5", "switch", "xboxone" ]
+            - env_var: SOLUTION
+              values: [ "testbed\\ps4\\ps4.sln" ] # "ps4", "ps5", "switch", "xboxone" ]
             - env_var: CONFIG
               values: [ "debug", "release" ]
           commands:
-            - "& \"c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\IDE\\devenv.com\" testbed\\${PROJECT}\\${PROJECT}.sln /rebuild $CONFIG"
+            - "& \"c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\IDE\\devenv.com\" $PROJECT /rebuild $CONFIG"
