@@ -20,13 +20,19 @@ DONE
 
 	Setup semaphore with env vars
 
-TODO
-
-	Incorporate reliable.io source code
-
 	Update license to include reliable.io source code
 
-	Integrate reliable so we have packet fragmentation and re-assembly, and sequence numbers and acks.
+	Hack in sequence buffer.
+
+TODO
+
+	Split sequence buffer into .h/.cpp
+
+	Bring across sequence buffer test
+
+	-------------
+
+	What's the next thing to bring across?
 
 	-------------
 
