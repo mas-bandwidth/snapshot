@@ -28,8 +28,8 @@
 
 inline int snapshot_sequence_number_bytes_required( uint64_t sequence )
 {
-    int i;
     uint64_t mask = 0xFF00000000000000UL;
+    int i;
     for ( i = 0; i < 7; ++i )
     {
         if ( sequence & mask )
