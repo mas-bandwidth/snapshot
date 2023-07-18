@@ -11,6 +11,8 @@
 #include "snapshot_packet_header.h"
 #include "snapshot_sequence_buffer.h"
 
+#define SNAPSHOT_ENDPOINT_FRAGMENT_HEADER_BYTES                             5
+
 #define SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_SENT                          0
 #define SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_RECEIVED                      1
 #define SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_ACKED                         2
@@ -103,6 +105,29 @@ struct snapshot_endpoint_received_packet_data_t
     uint32_t packet_bytes;
 };
 
+struct snapshot_endpoint_fragment_reassembly_data_t
+{
+    uint16_t sequence;
+    uint16_t ack;
+    uint32_t ack_bits;
+    int num_fragments_received;
+    int num_fragments_total;
+    uint8_t * packet_data;
+    int packet_bytes;
+    int packet_header_bytes;
+    uint8_t fragment_received[256];        // todo: magic number here. no likey.
+};
+
+void snapshot_endpoint_fragment_reassembly_data_cleanup( void * context, void * data )
+{
+    struct snapshot_endpoint_fragment_reassembly_data_t * reassembly_data = (struct snapshot_endpoint_fragment_reassembly_data_t*) data;
+    if ( reassembly_data->packet_data )
+    {
+        snapshot_free( context, reassembly_data->packet_data );
+        reassembly_data->packet_data = NULL;
+    }
+}
+
 struct snapshot_endpoint_t * snapshot_endpoint_create( struct snapshot_endpoint_config_t * config, double time )
 {
     snapshot_assert( config );
@@ -148,20 +173,16 @@ void snapshot_endpoint_destroy( struct snapshot_endpoint_t * endpoint )
     snapshot_assert( endpoint->sent_packets );
     snapshot_assert( endpoint->received_packets );
 
-    // todo
-    /*
-    int i;
-    for ( i = 0; i < endpoint->config.fragment_reassembly_buffer_size; ++i )
+    for ( int i = 0; i < endpoint->config.fragment_reassembly_buffer_size; ++i )
     {
-        struct snapshot_fragment_reassembly_data_t * reassembly_data = (struct snapshot_fragment_reassembly_data_t*) snapshot_sequence_buffer_at_index( endpoint->fragment_reassembly, i );
+        struct snapshot_endpoint_fragment_reassembly_data_t * reassembly_data = (struct snapshot_endpoint_fragment_reassembly_data_t*) snapshot_sequence_buffer_at_index( endpoint->fragment_reassembly, i );
 
         if ( reassembly_data && reassembly_data->packet_data )
         {
-            endpoint->free_function( endpoint->allocator_context, reassembly_data->packet_data );
+            snapshot_free( endpoint->context, reassembly_data->packet_data );
             reassembly_data->packet_data = NULL;
         }
     }
-    */
 
     snapshot_free( endpoint->context, endpoint->acks );
 
@@ -228,8 +249,6 @@ void snapshot_endpoint_send_packet( struct snapshot_endpoint_t * endpoint, uint8
     {
         // fragmented packet
 
-        // todo
-        /*
         uint8_t packet_header[SNAPSHOT_MAX_PACKET_HEADER_BYTES];
 
         memset( packet_header, 0, SNAPSHOT_MAX_PACKET_HEADER_BYTES );
@@ -243,9 +262,9 @@ void snapshot_endpoint_send_packet( struct snapshot_endpoint_t * endpoint, uint8
         snapshot_assert( num_fragments >= 1 );
         snapshot_assert( num_fragments <= endpoint->config.max_fragments );
 
-        int fragment_buffer_size = SNAPSHOT_FRAGMENT_HEADER_BYTES + SNAPSHOT_MAX_PACKET_HEADER_BYTES + endpoint->config.fragment_size;
+        int fragment_buffer_size = SNAPSHOT_ENDPOINT_FRAGMENT_HEADER_BYTES + SNAPSHOT_MAX_PACKET_HEADER_BYTES + endpoint->config.fragment_size;
 
-        uint8_t * fragment_packet_data = (uint8_t*) endpoint->allocate_function( endpoint->allocator_context, fragment_buffer_size );
+        uint8_t * fragment_packet_data = snapshot_create_packet( endpoint->context, fragment_buffer_size );
 
         uint8_t * q = packet_data;
 
@@ -286,7 +305,6 @@ void snapshot_endpoint_send_packet( struct snapshot_endpoint_t * endpoint, uint8
         }
 
         snapshot_destroy_packet( endpoint->context, fragment_packet_data );
-        */
     }
 
     endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_SENT]++;

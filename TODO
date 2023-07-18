@@ -4,7 +4,7 @@ DONE
 
 	Bring across seriesx testbed (gdk)
 
-	Need to update to latest QFE on my PC to get everything working
+	(Need to update to latest QFE on my PC to get seriesX working... punting for now)
 
 	a3c505d1f49a0a6ca0b6fe64e31f931638337fc62db6c1df00e0c68f675a7f056594254b86eea6c0
 
@@ -26,13 +26,37 @@ DONE
 
 	Split sequence buffer into .h/.cpp
 
+	Bring across sequence buffer test
+
+	Bring across endpoint
+
+	Bring across fragmentation stuff
+
 TODO
 
-	Bring across sequence buffer test
+	Get the remaining reliable tests compiling and passing.
+
+	Split snapshot_endpoint.h into .h and cpp
 
 	-------------
 
-	What's the next thing to bring across?
+	Integrate endpoint with client.
+
+	Integrate endpoint with server.
+
+	Implement a test that verifies we get payload packets exchanged between client and server.
+
+	-------------
+
+	Update testbeds with new file so they pass again.
+
+	-------------
+
+	Download UE5.
+
+	Setup a snapshot UE5 plugin based on the network next UE4 plugin.
+
+	Verify client and server can connect and operate in testbed.
 
 	-------------
 
@@ -40,17 +64,13 @@ TODO
 
 	Update to latest XBox Series X and GDK tooling
 
+	Get series x testbed working
+
 	Update to latest Nintendo Switch tooling
 
 	-------------
 
 	Setup additional PCs as build farm for sem
-
-	-------------
-
-	Setup a snapshot UE4 plugin
-
-	Verify client and server can connect and operate in testbed.
 
 	-------------
 
