@@ -111,7 +111,7 @@ blocks:
         - name: test
           matrix:
             - env_var: SOLUTION
-              values: [ "testbed\\ps4\\ps4.sln" ] # "ps4", "ps5", "switch", "xboxone" ]
+              values: [ "testbed\\ps4\\ps4.sln", "testbed\\ps5\\ps5.sln", "testbed\\switch\\switch.sln", "testbed\\xboxone\\xboxone.sln" ]
             - env_var: CONFIG
               values: [ "debug", "release" ]
           commands:
