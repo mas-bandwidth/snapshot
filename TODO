@@ -18,11 +18,9 @@ DONE
 
 	Setup console testbeds to build and link on semaphore via custom agent
 
+	Setup semaphore with env vars
+
 TODO
-
-	Get env vars working in semaphore for matrix in windows
-
-	-------------
 
 	Incorporate reliable.io source code
 
