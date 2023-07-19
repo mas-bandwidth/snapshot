@@ -4084,7 +4084,7 @@ void test_endpoint_regular_packets()
     snapshot_endpoint_destroy( context.receiver );
 }
 
-void test_large_packets()
+void test_endpoint_fragmented_packets()
 {
     double time = 100.0;
 
@@ -4254,13 +4254,12 @@ void test_tracking_free_function( void * context, void * pointer )
     free( pointer );
 }
 
-/*
 void test_fragment_cleanup()
 {
     double time = 100.0;
 
     struct test_context_t context;
-    test_default_context( &context );
+    default_test_context( &context );
 
     struct test_tracking_allocate_context_t tracking_alloc_context;
     memset( &tracking_alloc_context, 0, sizeof( tracking_alloc_context ) );
@@ -4281,8 +4280,8 @@ void test_fragment_cleanup()
 #endif
     sender_config.context = &context;
     sender_config.index = 0;
-    sender_config.transmit_packet_function = &test_transmit_packet_function;
-    sender_config.process_packet_function = &test_process_packet_function;
+    sender_config.transmit_packet_function = &transmit_packet_function;
+    sender_config.process_packet_function = &process_packet_function;
 
 #if defined(_MSC_VER)
     strcpy_s( receiver_config.name, sizeof( receiver_config.name ), "receiver" );
@@ -4291,8 +4290,8 @@ void test_fragment_cleanup()
 #endif
     receiver_config.context = &context;
     receiver_config.index = 1;
-    receiver_config.transmit_packet_function = &test_transmit_packet_function;
-    receiver_config.process_packet_function = &test_process_packet_function;
+    receiver_config.transmit_packet_function = &transmit_packet_function;
+    receiver_config.process_packet_function = &process_packet_function;
 
     context.sender = snapshot_endpoint_create( &sender_config, time );
     context.receiver = snapshot_endpoint_create( &receiver_config, time );
@@ -4314,30 +4313,29 @@ void test_fragment_cleanup()
         context.allow_packets = 1;
         {
             uint8_t packet_data[TEST_MAX_PACKET_BYTES];
-            uint16_t sequence = reliable_endpoint_next_packet_sequence( context.sender );
+            uint16_t sequence = snapshot_endpoint_next_packet_sequence( context.sender );
             generate_packet_data_with_size( sequence, packet_data, packet_sizes[i] );
-            reliable_endpoint_send_packet( context.sender, packet_data, packet_sizes[i]);
+            snapshot_endpoint_send_packet( context.sender, packet_data, packet_sizes[i]);
         }
 
-        reliable_endpoint_update( context.sender, time );
-        reliable_endpoint_update( context.receiver, time );
+        snapshot_endpoint_update( context.sender, time );
+        snapshot_endpoint_update( context.receiver, time );
 
-        reliable_endpoint_clear_acks( context.sender );
-        reliable_endpoint_clear_acks( context.receiver );
+        snapshot_endpoint_clear_acks( context.sender );
+        snapshot_endpoint_clear_acks( context.receiver );
 
         time += delta_time;
     }
 
-    reliable_endpoint_destroy( context.sender );
-    reliable_endpoint_destroy( context.receiver );
+    snapshot_endpoint_destroy( context.sender );
+    snapshot_endpoint_destroy( context.receiver );
     
     int tracking_index;
     for ( tracking_index = 0; tracking_index < RELIABLE_ARRAY_SIZE(tracking_alloc_context.active_allocations); ++tracking_index )
     {
-        check( tracking_alloc_context.active_allocations[tracking_index] == NULL );
+        snapshot_check( tracking_alloc_context.active_allocations[tracking_index] == NULL );
     }
 }
-*/
 
 #define RUN_TEST( test_function )                                           \
     do                                                                      \
@@ -4418,12 +4416,9 @@ void snapshot_run_tests()
         RUN_TEST( test_acks );
         RUN_TEST( test_acks_packet_loss );
         RUN_TEST( test_endpoint_regular_packets );
-
-        /*
         RUN_TEST( test_endpoint_fragmented_packets );
         RUN_TEST( test_sequence_buffer_rollover );
         RUN_TEST( test_fragment_cleanup );
-        */
     }
 
     printf( "\nAll tests pass.\n\n" );
