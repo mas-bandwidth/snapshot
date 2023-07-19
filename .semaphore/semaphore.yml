@@ -148,20 +148,3 @@ blocks:
               values: [ "debug", "release" ]
           commands:
             - "& \"c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\IDE\\devenv.com\" testbed\\switch\\switch.sln /rebuild $CONFIG"
-
-  - name: "Xbox One"
-    dependencies: []
-    task:
-      prologue:
-        commands:
-          - checkout
-      agent:
-        machine:
-          type: s1-windows
-      jobs:
-        - name: test
-          matrix:
-            - env_var: CONFIG
-              values: [ "debug", "release" ]
-          commands:
-            - "& \"c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\IDE\\devenv.com\" testbed\\xboxone\\xboxone.sln /rebuild $CONFIG"
