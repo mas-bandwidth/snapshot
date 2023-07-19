@@ -207,6 +207,12 @@ struct snapshot_client_t * snapshot_client_create( const char * bind_address_str
 void snapshot_client_destroy( struct snapshot_client_t * client )
 {
     snapshot_assert( client );
+
+    if ( client->endpoint )
+    {
+        snapshot_endpoint_destroy( client->endpoint );
+    }
+    
     if ( !client->loopback )
     {
         snapshot_client_disconnect( client );
@@ -215,10 +221,12 @@ void snapshot_client_destroy( struct snapshot_client_t * client )
     {
         snapshot_client_disconnect_loopback( client );
     }
+    
     if ( client->socket )
     {
         snapshot_platform_socket_destroy( client->socket );
     }
+
     snapshot_free( client->config.context, client );
 }
 
@@ -480,6 +488,10 @@ bool snapshot_client_process_packet( struct snapshot_client_t * client, struct s
 void snapshot_client_receive_packets( struct snapshot_client_t * client )
 {
     snapshot_assert( client );
+
+    if ( client->loopback )
+        return;
+
     snapshot_assert( !client->loopback );
 
     if ( !client->config.network_simulator )
@@ -552,6 +564,10 @@ void snapshot_client_send_packet_to_server_internal( struct snapshot_client_t * 
 void snapshot_client_send_packets( struct snapshot_client_t * client )
 {
     snapshot_assert( client );
+
+    if ( client->loopback )
+        return;
+
     snapshot_assert( !client->loopback );
 
     switch ( client->state )
@@ -639,18 +655,10 @@ int snapshot_client_connect_to_next_server( struct snapshot_client_t * client )
     return 1;
 }
 
-void snapshot_client_update( struct snapshot_client_t * client, double time )
+void snapshot_client_update_state_machine( struct snapshot_client_t * client )
 {
-    snapshot_assert( client );
-
-    client->time = time;
-
     if ( client->loopback )
         return;
-
-    snapshot_client_receive_packets( client );
-
-    snapshot_client_send_packets( client );
 
     if ( client->state > SNAPSHOT_CLIENT_STATE_DISCONNECTED && client->state < SNAPSHOT_CLIENT_STATE_CONNECTED )
     {
@@ -678,7 +686,7 @@ void snapshot_client_update( struct snapshot_client_t * client, double time )
     {
         case SNAPSHOT_CLIENT_STATE_SENDING_CONNECTION_REQUEST:
         {
-            if ( client->connect_token.timeout_seconds > 0 && client->last_packet_receive_time + client->connect_token.timeout_seconds < time )
+            if ( client->connect_token.timeout_seconds > 0 && client->last_packet_receive_time + client->connect_token.timeout_seconds < client->time )
             {
                 char server_address_string[SNAPSHOT_MAX_ADDRESS_STRING_LENGTH];
                 snapshot_address_to_string( &client->server_address, server_address_string );
@@ -693,7 +701,7 @@ void snapshot_client_update( struct snapshot_client_t * client, double time )
 
         case SNAPSHOT_CLIENT_STATE_SENDING_CONNECTION_RESPONSE:
         {
-            if ( client->connect_token.timeout_seconds > 0 && client->last_packet_receive_time + client->connect_token.timeout_seconds < time )
+            if ( client->connect_token.timeout_seconds > 0 && client->last_packet_receive_time + client->connect_token.timeout_seconds < client->time )
             {
                 snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connect failed. connection response timed out" );
                 if ( snapshot_client_connect_to_next_server( client ) )
@@ -706,7 +714,7 @@ void snapshot_client_update( struct snapshot_client_t * client, double time )
 
         case SNAPSHOT_CLIENT_STATE_CONNECTED:
         {
-            if ( client->connect_token.timeout_seconds > 0 && client->last_packet_receive_time + client->connect_token.timeout_seconds < time )
+            if ( client->connect_token.timeout_seconds > 0 && client->last_packet_receive_time + client->connect_token.timeout_seconds < client->time )
             {
                 char server_address_string[SNAPSHOT_MAX_ADDRESS_STRING_LENGTH];
                 snapshot_address_to_string( &client->server_address, server_address_string );
@@ -720,6 +728,27 @@ void snapshot_client_update( struct snapshot_client_t * client, double time )
         default:
             break;
     }
+}
+
+void snapshot_client_send_payload( struct snapshot_client_t * client )
+{
+    // todo: construct and send payload packet
+    (void) client;
+}
+
+void snapshot_client_update( struct snapshot_client_t * client, double time )
+{
+    snapshot_assert( client );
+
+    client->time = time;
+
+    snapshot_client_receive_packets( client );
+
+    snapshot_client_send_payload( client );
+
+    snapshot_client_send_packets( client );
+
+    snapshot_client_update_state_machine( client );
 }
 
 void snapshot_client_disconnect( struct snapshot_client_t * client )
