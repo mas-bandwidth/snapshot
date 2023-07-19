@@ -11,6 +11,7 @@
 #include "snapshot_replay_protection.h"
 #include "snapshot_packets.h"
 #include "snapshot_network_simulator.h"
+#include "snapshot_endpoint.h"
 #include <time.h>
 
 #define SNAPSHOT_CLIENT_MAX_SIM_RECEIVE_PACKETS 256
@@ -63,6 +64,7 @@ struct snapshot_client_t
     struct snapshot_address_t server_address;
     struct snapshot_connect_token_t connect_token;
     struct snapshot_platform_socket_t * socket;
+    struct snapshot_endpoint_t * endpoint;
     struct snapshot_replay_protection_t replay_protection;
     uint64_t challenge_token_sequence;
     uint8_t challenge_token_data[SNAPSHOT_CHALLENGE_TOKEN_BYTES];
@@ -74,6 +76,8 @@ struct snapshot_client_t
     struct snapshot_address_t sim_receive_from[SNAPSHOT_CLIENT_MAX_SIM_RECEIVE_PACKETS];
     int loopback;
 };
+
+void snapshot_client_destroy( struct snapshot_client_t * client );
 
 struct snapshot_client_t * snapshot_client_create( const char * bind_address_string,
                                                    const struct snapshot_client_config_t * config,
@@ -160,6 +164,20 @@ struct snapshot_client_t * snapshot_client_create( const char * bind_address_str
     client->allowed_packets[SNAPSHOT_PAYLOAD_PACKET] = 1;
     client->allowed_packets[SNAPSHOT_PASSTHROUGH_PACKET] = 1;
     client->allowed_packets[SNAPSHOT_DISCONNECT_PACKET] = 1;
+
+    snapshot_endpoint_config_t endpoint_config;
+    snapshot_endpoint_default_config( &endpoint_config );
+    endpoint_config.context = config->context;
+    // todo: setup endpoint to match packet sizes etc...
+    // todo: setup transmit packet function
+    // todo: setup process packet function
+    client->endpoint = snapshot_endpoint_create( &endpoint_config, time );
+    if ( !client->endpoint )
+    {
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to create client endpoint" );
+        snapshot_client_destroy( client );
+        return NULL;
+    }
 
     return client;
 }
