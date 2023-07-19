@@ -4059,14 +4059,14 @@ void test_endpoint_regular_packets()
     {
         {
             uint8_t packet_data[TEST_MAX_PACKET_BYTES];
-            uint16_t sequence = snapshot_endpoint_next_packet_sequence( context.sender );
+            uint16_t sequence = snapshot_endpoint_sequence( context.sender );
             int packet_bytes = generate_packet_data( sequence, packet_data );
             snapshot_endpoint_send_packet( context.sender, packet_data, packet_bytes );
         }
 
         {
             uint8_t packet_data[TEST_MAX_PACKET_BYTES];
-            uint16_t sequence = snapshot_endpoint_next_packet_sequence( context.sender );
+            uint16_t sequence = snapshot_endpoint_sequence( context.sender );
             int packet_bytes = generate_packet_data( sequence, packet_data );
             snapshot_endpoint_send_packet( context.sender, packet_data, packet_bytes );
         }
@@ -4191,7 +4191,7 @@ void test_sequence_buffer_rollover()
     {
         uint8_t packet_data[16];
         int packet_bytes = sizeof( packet_data ) / sizeof( uint8_t );
-        snapshot_endpoint_next_packet_sequence( context.sender );
+        snapshot_endpoint_sequence( context.sender );
         snapshot_endpoint_send_packet( context.sender, packet_data, packet_bytes );
 
         ++num_packets_sent;
@@ -4199,7 +4199,7 @@ void test_sequence_buffer_rollover()
 
     uint8_t packet_data[TEST_MAX_PACKET_BYTES];
     int packet_bytes = sizeof( packet_data ) / sizeof( uint8_t );
-    snapshot_endpoint_next_packet_sequence( context.sender );
+    snapshot_endpoint_sequence( context.sender );
     snapshot_endpoint_send_packet( context.sender, packet_data, packet_bytes );
     ++num_packets_sent;
 
@@ -4313,7 +4313,7 @@ void test_fragment_cleanup()
         context.allow_packets = 1;
         {
             uint8_t packet_data[TEST_MAX_PACKET_BYTES];
-            uint16_t sequence = snapshot_endpoint_next_packet_sequence( context.sender );
+            uint16_t sequence = snapshot_endpoint_sequence( context.sender );
             generate_packet_data_with_size( sequence, packet_data, packet_sizes[i] );
             snapshot_endpoint_send_packet( context.sender, packet_data, packet_sizes[i]);
         }
