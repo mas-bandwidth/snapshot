@@ -40,19 +40,56 @@ DONE
 
 	Work out the last // todo around the 256 sized array
 
-TODO
-
 	Update testbeds with new files so they pass again.
 
-	-------------
+TODO
 
 	Integrate endpoint with client.
 
+	Setup client to start sending payload packets regularly.
+
+	Work out how to get endpoint zero copy on write.
+
+	------------
+
 	Integrate endpoint with server.
+
+	Setup server to process payload packets from client.
+
+	-------------
 
 	Implement a test that verifies we get payload packets exchanged between client and server.
 
 	-------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	=========================
 
 	Download UE5.
 

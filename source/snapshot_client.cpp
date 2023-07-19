@@ -165,6 +165,8 @@ struct snapshot_client_t * snapshot_client_create( const char * bind_address_str
     client->allowed_packets[SNAPSHOT_PASSTHROUGH_PACKET] = 1;
     client->allowed_packets[SNAPSHOT_DISCONNECT_PACKET] = 1;
 
+    // todo
+    /*
     snapshot_endpoint_config_t endpoint_config;
     snapshot_endpoint_default_config( &endpoint_config );
     endpoint_config.context = config->context;
@@ -178,6 +180,7 @@ struct snapshot_client_t * snapshot_client_create( const char * bind_address_str
         snapshot_client_destroy( client );
         return NULL;
     }
+    */
 
     return client;
 }
