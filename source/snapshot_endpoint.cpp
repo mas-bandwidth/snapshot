@@ -47,6 +47,7 @@ struct snapshot_endpoint_t * snapshot_endpoint_create( struct snapshot_endpoint_
     snapshot_assert( config->fragment_above > 0 );
     snapshot_assert( config->max_fragments > 0 );
     snapshot_assert( config->max_fragments <= 256 );
+    snapshot_assert( config->max_fragments <= SNAPSHOT_MAX_FRAGMENTS );
     snapshot_assert( config->fragment_size > 0 );
     snapshot_assert( config->ack_buffer_size > 0 );
     snapshot_assert( config->sent_packets_buffer_size > 0 );
