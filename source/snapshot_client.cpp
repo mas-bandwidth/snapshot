@@ -77,6 +77,27 @@ struct snapshot_client_t
     int loopback;
 };
 
+static void temp_transmit_packet_function( void * context, int index, uint16_t sequence, uint8_t * packet_data, int packet_bytes )
+{
+    // todo
+    (void) context;
+    (void) index;
+    (void) sequence;
+    (void) packet_data;
+    (void) packet_bytes;
+}
+
+static int temp_process_packet_function( void * context, int index, uint16_t sequence, uint8_t * packet_data, int packet_bytes )
+{
+    // todo
+    (void) context;
+    (void) index;
+    (void) sequence;
+    (void) packet_data;
+    (void) packet_bytes;
+    return SNAPSHOT_OK;
+}
+
 void snapshot_client_destroy( struct snapshot_client_t * client );
 
 struct snapshot_client_t * snapshot_client_create( const char * bind_address_string,
@@ -165,22 +186,20 @@ struct snapshot_client_t * snapshot_client_create( const char * bind_address_str
     client->allowed_packets[SNAPSHOT_PASSTHROUGH_PACKET] = 1;
     client->allowed_packets[SNAPSHOT_DISCONNECT_PACKET] = 1;
 
-    // todo
-    /*
     snapshot_endpoint_config_t endpoint_config;
     snapshot_endpoint_default_config( &endpoint_config );
     endpoint_config.context = config->context;
-    // todo: setup endpoint to match packet sizes etc...
-    // todo: setup transmit packet function
-    // todo: setup process packet function
+    endpoint_config.transmit_packet_function = temp_transmit_packet_function;
+    endpoint_config.process_packet_function = temp_process_packet_function;
+
     client->endpoint = snapshot_endpoint_create( &endpoint_config, time );
+
     if ( !client->endpoint )
     {
         snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to create client endpoint" );
         snapshot_client_destroy( client );
         return NULL;
     }
-    */
 
     return client;
 }
