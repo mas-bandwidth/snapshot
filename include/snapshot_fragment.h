@@ -11,6 +11,7 @@
 #include "snapshot_read_write.h"
 
 #define SNAPSHOT_FRAGMENT_HEADER_BYTES           5
+#define SNAPSHOT_MAX_FRAGMENTS                 256
 
 struct snapshot_fragment_reassembly_data_t
 {
@@ -22,7 +23,7 @@ struct snapshot_fragment_reassembly_data_t
     uint8_t * packet_data;
     int packet_bytes;
     int packet_header_bytes;
-    uint8_t fragment_received[256];        // todo: magic number here. no likey.
+    uint8_t fragment_received[SNAPSHOT_MAX_FRAGMENTS];
 };
 
 void snapshot_fragment_reassembly_data_cleanup( void * context, void * data )
