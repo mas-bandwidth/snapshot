@@ -32,9 +32,9 @@ DONE
 
 	Bring across fragmentation stuff
 
-TODO
-
 	Bring across more fragmentation stuff... move into snapshot_fragment.h
+
+TODO
 
 	Get the remaining reliable tests compiling and passing.
 

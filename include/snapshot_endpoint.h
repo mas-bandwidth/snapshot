@@ -157,7 +157,7 @@ void snapshot_endpoint_destroy( struct snapshot_endpoint_t * endpoint )
 
         if ( reassembly_data && reassembly_data->packet_data )
         {
-            snapshot_free( endpoint->context, reassembly_data->packet_data );
+            snapshot_destroy_packet( endpoint->context, reassembly_data->packet_data );
             reassembly_data->packet_data = NULL;
         }
     }
@@ -177,7 +177,6 @@ uint16_t snapshot_endpoint_next_packet_sequence( struct snapshot_endpoint_t * en
     return endpoint->sequence;
 }
 
-// todo: we need to rework this a bit to make it zero copy
 void snapshot_endpoint_send_packet( struct snapshot_endpoint_t * endpoint, uint8_t * packet_data, int packet_bytes )
 {
     snapshot_assert( endpoint );
@@ -526,7 +525,7 @@ void snapshot_endpoint_reset( struct snapshot_endpoint_t * endpoint )
 
         if ( reassembly_data && reassembly_data->packet_data )
         {
-            snapshot_free( endpoint->context, reassembly_data->packet_data );
+            snapshot_destroy_packet( endpoint->context, reassembly_data->packet_data );
             reassembly_data->packet_data = NULL;
         }
     }

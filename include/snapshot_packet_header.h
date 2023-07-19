@@ -81,7 +81,7 @@ inline int snapshot_write_packet_header( uint8_t * packet_data, uint16_t sequenc
     return (int) ( p - packet_data );
 }
 
-int snapshot_read_packet_header( const char * name, uint8_t * packet_data, int packet_bytes, uint16_t * sequence, uint16_t * ack, uint32_t * ack_bits )
+int snapshot_read_packet_header( const char * name, const uint8_t * packet_data, int packet_bytes, uint16_t * sequence, uint16_t * ack, uint32_t * ack_bits )
 {
     if ( packet_bytes < 3 )
     {
