@@ -34,11 +34,15 @@ DONE
 
 	Bring across more fragmentation stuff... move into snapshot_fragment.h
 
-TODO
-
 	Get the remaining reliable tests compiling and passing.
 
+TODO
+
 	Split snapshot_endpoint.h into .h and cpp
+
+	Work out the last // todo around the 256 sized array
+
+	Update testbeds with new files so they pass again.
 
 	-------------
 
@@ -47,10 +51,6 @@ TODO
 	Integrate endpoint with server.
 
 	Implement a test that verifies we get payload packets exchanged between client and server.
-
-	-------------
-
-	Update testbeds with new file so they pass again.
 
 	-------------
 
