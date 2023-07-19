@@ -1,54 +1,14 @@
 DONE
 
-	Bring across xboxone testbed
-
-	Bring across seriesx testbed (gdk)
-
-	(Need to update to latest QFE on my PC to get seriesX working... punting for now)
-
-	a3c505d1f49a0a6ca0b6fe64e31f931638337fc62db6c1df00e0c68f675a7f056594254b86eea6c0
-
-	Setup custom semaphore agent on windows PC
-
-	Setup windows tests to build and run on semaphore via custom agent
-
-	Debugging git on windows custom agent...
-
-	Debugging stupid fucking powershell...
-
-	Setup console testbeds to build and link on semaphore via custom agent
-
-	Setup semaphore with env vars
-
-	Update license to include reliable.io source code
-
-	Hack in sequence buffer.
-
-	Split sequence buffer into .h/.cpp
-
-	Bring across sequence buffer test
-
-	Bring across endpoint
-
-	Bring across fragmentation stuff
-
-	Bring across more fragmentation stuff... move into snapshot_fragment.h
-
-	Get the remaining reliable tests compiling and passing.
-
-	Split snapshot_endpoint.h into .h and cpp
-
-	Work out the last // todo around the 256 sized array
-
-	Update testbeds with new files so they pass again.
+	Integrate endpoint with client.
 
 TODO
-
-	Integrate endpoint with client.
 
 	Setup client to start sending payload packets regularly.
 
 	Work out how to get endpoint zero copy on write.
+
+	Rework endpoint so it doesn't operate via callbacks... gross.
 
 	------------
 
@@ -139,4 +99,21 @@ TODO
 
 	Send delta compressed snapshots down.
 
+	String table.
+
 	---------------------------
+
+	Slothy input:
+
+		1. Uncompressed snapshots probably won't work, players are remote working not LAN
+
+		2. Concerns around disruptive integration, how exactly does it integrate? Dislike various snapnet embedding things.
+
+		3. How do we tell when object properties have changed? <----- call function when changed?
+
+		4. Separation of client/server instances of engine objects seems like a heavy lift
+
+		5. How do UE5 objects work?
+
+	---------------------------
+

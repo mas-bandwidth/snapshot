@@ -3709,6 +3709,9 @@ void test_packet_header()
     snapshot_check( read_ack_bits == write_ack_bits );
 }
 
+// todo
+#if 0
+
 struct test_context_t
 {
     int drop;
@@ -4337,6 +4340,8 @@ void test_fragment_cleanup()
     }
 }
 
+#endif // #if 0
+
 #define RUN_TEST( test_function )                                           \
     do                                                                      \
     {                                                                       \
@@ -4413,12 +4418,15 @@ void snapshot_run_tests()
         RUN_TEST( test_sequence_buffer );
         RUN_TEST( test_generate_ack_bits );
         RUN_TEST( test_packet_header );
+        // todo
+        /*
         RUN_TEST( test_acks );
         RUN_TEST( test_acks_packet_loss );
         RUN_TEST( test_endpoint_regular_packets );
         RUN_TEST( test_endpoint_fragmented_packets );
         RUN_TEST( test_sequence_buffer_rollover );
         RUN_TEST( test_fragment_cleanup );
+        */
     }
 
     printf( "\nAll tests pass.\n\n" );

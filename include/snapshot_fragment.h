@@ -26,7 +26,7 @@ struct snapshot_fragment_reassembly_data_t
     uint8_t fragment_received[SNAPSHOT_MAX_FRAGMENTS];
 };
 
-void snapshot_fragment_reassembly_data_cleanup( void * context, void * data )
+inline void snapshot_fragment_reassembly_data_cleanup( void * context, void * data )
 {
     struct snapshot_fragment_reassembly_data_t * reassembly_data = (struct snapshot_fragment_reassembly_data_t*) data;
     if ( reassembly_data->packet_data )
@@ -36,17 +36,17 @@ void snapshot_fragment_reassembly_data_cleanup( void * context, void * data )
     }
 }
 
-int snapshot_read_fragment_header( char * name, 
-                                   const uint8_t * packet_data, 
-                                   int packet_bytes, 
-                                   int max_fragments, 
-                                   int fragment_size, 
-                                   int * fragment_id, 
-                                   int * num_fragments, 
-                                   int * fragment_bytes, 
-                                   uint16_t * sequence, 
-                                   uint16_t * ack, 
-                                   uint32_t * ack_bits )
+inline int snapshot_read_fragment_header( char * name, 
+                                          const uint8_t * packet_data, 
+                                          int packet_bytes, 
+                                          int max_fragments, 
+                                          int fragment_size, 
+                                          int * fragment_id, 
+                                          int * num_fragments, 
+                                          int * fragment_bytes, 
+                                          uint16_t * sequence, 
+                                          uint16_t * ack, 
+                                          uint32_t * ack_bits )
 {
     if ( packet_bytes < SNAPSHOT_FRAGMENT_HEADER_BYTES )
     {
@@ -127,14 +127,14 @@ int snapshot_read_fragment_header( char * name,
     return (int) ( p - packet_data );
 }
 
-void snapshot_store_fragment_data( struct snapshot_fragment_reassembly_data_t * reassembly_data, 
-                                   uint16_t sequence, 
-                                   uint16_t ack, 
-                                   uint32_t ack_bits, 
-                                   int fragment_id, 
-                                   int fragment_size, 
-                                   uint8_t * fragment_data, 
-                                   int fragment_bytes )
+inline void snapshot_store_fragment_data( struct snapshot_fragment_reassembly_data_t * reassembly_data, 
+                                          uint16_t sequence, 
+                                          uint16_t ack, 
+                                          uint32_t ack_bits, 
+                                          int fragment_id, 
+                                          int fragment_size, 
+                                          uint8_t * fragment_data, 
+                                          int fragment_bytes )
 {
     if ( fragment_id == 0 )
     {

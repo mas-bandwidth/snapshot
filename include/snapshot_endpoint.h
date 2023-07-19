@@ -8,6 +8,10 @@
 
 #include "snapshot_packet_header.h"
 
+#define SNAPSHOT_ENDPOINT_MAX_WRITE_PACKETS                               256
+
+#define SNAPSHOT_ENDPOINT_NAME_BYTES                                      256
+
 #define SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_SENT                          0
 #define SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_RECEIVED                      1
 #define SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_ACKED                         2
@@ -18,12 +22,12 @@
 #define SNAPSHOT_ENDPOINT_COUNTER_NUM_FRAGMENTS_SENT                        7
 #define SNAPSHOT_ENDPOINT_COUNTER_NUM_FRAGMENTS_RECEIVED                    8
 #define SNAPSHOT_ENDPOINT_COUNTER_NUM_FRAGMENTS_INVALID                     9
-#define SNAPSHOT_ENDPOINT_NUM_COUNTERS                                      10
+#define SNAPSHOT_ENDPOINT_NUM_COUNTERS                                     10
 
 struct snapshot_endpoint_config_t
 {
     void * context;
-    char name[256];
+    char name[SNAPSHOT_ENDPOINT_NAME_BYTES];
     int index;
     int max_packet_size;
     int fragment_above;
@@ -37,8 +41,6 @@ struct snapshot_endpoint_config_t
     float packet_loss_smoothing_factor;
     float bandwidth_smoothing_factor;
     int packet_header_size;
-    void (*transmit_packet_function)(void*,int,uint16_t,uint8_t*,int);
-    int (*process_packet_function)(void*,int,uint16_t,uint8_t*,int);
 };
 
 void snapshot_endpoint_default_config( struct snapshot_endpoint_config_t * config );
@@ -81,8 +83,9 @@ void snapshot_endpoint_destroy( struct snapshot_endpoint_t * endpoint );
 
 uint16_t snapshot_endpoint_sequence( struct snapshot_endpoint_t * endpoint );
 
-void snapshot_endpoint_send_packet( struct snapshot_endpoint_t * endpoint, uint8_t * packet_data, int packet_bytes );
+void snapshot_endpoint_write_packets( struct snapshot_endpoint_t * endpoint, uint8_t * payload_data, int payload_bytes, int * num_packets, uint8_t ** packet_data, int * packet_bytes );
 
+// todo: rework this
 void snapshot_endpoint_receive_packet( struct snapshot_endpoint_t * endpoint, uint8_t * packet_data, int packet_bytes );
 
 uint16_t * snapshot_endpoint_get_acks( struct snapshot_endpoint_t * endpoint, int * num_acks );

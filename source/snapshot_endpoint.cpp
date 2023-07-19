@@ -52,8 +52,6 @@ struct snapshot_endpoint_t * snapshot_endpoint_create( struct snapshot_endpoint_
     snapshot_assert( config->ack_buffer_size > 0 );
     snapshot_assert( config->sent_packets_buffer_size > 0 );
     snapshot_assert( config->received_packets_buffer_size > 0 );
-    snapshot_assert( config->transmit_packet_function != NULL );
-    snapshot_assert( config->process_packet_function != NULL );
 
     struct snapshot_endpoint_t * endpoint = (struct snapshot_endpoint_t*) snapshot_malloc( config->context, sizeof( struct snapshot_endpoint_t ) );
 
@@ -111,6 +109,28 @@ uint16_t snapshot_endpoint_sequence( struct snapshot_endpoint_t * endpoint )
     return endpoint->sequence;
 }
 
+void snapshot_endpoint_write_packets( struct snapshot_endpoint_t * endpoint, uint8_t * payload_data, int payload_bytes, int * num_packets, uint8_t ** packet_data, int * packet_bytes )
+{
+    snapshot_assert( endpoint );
+    snapshot_assert( payload_data );
+    snapshot_assert( payload_bytes > 0 );
+    snapshot_assert( payload_bytes <= SNAPSHOT_MAX_PAYLOAD_BYTES );
+    snapshot_assert( num_packets );
+    snapshot_assert( packet_data );
+    snapshot_assert( packet_bytes );
+
+    // todo
+
+    (void) endpoint;
+    (void) payload_data;
+    (void) payload_bytes;
+    (void) num_packets;
+    (void) packet_data;
+    (void) packet_bytes;
+}
+
+
+// todo: remove
 void snapshot_endpoint_send_packet( struct snapshot_endpoint_t * endpoint, uint8_t * packet_data, int packet_bytes )
 {
     snapshot_assert( endpoint );
@@ -152,7 +172,10 @@ void snapshot_endpoint_send_packet( struct snapshot_endpoint_t * endpoint, uint8
 
         memcpy( transmit_packet_data + packet_header_bytes, packet_data, packet_bytes );
 
+        // todo: no callbacks
+        /*
         endpoint->config.transmit_packet_function( endpoint->config.context, endpoint->config.index, sequence, transmit_packet_data, packet_header_bytes + packet_bytes );
+        */
 
         snapshot_destroy_packet( endpoint->context, transmit_packet_data );
     }
@@ -210,7 +233,11 @@ void snapshot_endpoint_send_packet( struct snapshot_endpoint_t * endpoint, uint8
 
             int fragment_packet_bytes = (int) ( p - fragment_packet_data );
 
+            // todo: no callbacks
+            (void) fragment_packet_bytes;
+            /*
             endpoint->config.transmit_packet_function( endpoint->config.context, endpoint->config.index, sequence, fragment_packet_data, fragment_packet_bytes );
+            */
 
             endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_FRAGMENTS_SENT]++;
         }
@@ -274,6 +301,8 @@ void snapshot_endpoint_receive_packet( struct snapshot_endpoint_t * endpoint, ui
 
         snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] processing packet %d\n", endpoint->config.name, sequence );
 
+        // todo: no callbacks
+        /*
         if ( endpoint->config.process_packet_function( endpoint->config.context, 
                                                        endpoint->config.index, 
                                                        sequence, 
@@ -291,8 +320,7 @@ void snapshot_endpoint_receive_packet( struct snapshot_endpoint_t * endpoint, ui
             received_packet_data->time = endpoint->time;
             received_packet_data->packet_bytes = endpoint->config.packet_header_size + packet_bytes;
 
-            int i;
-            for ( i = 0; i < 32; ++i )
+            for ( int i = 0; i < 32; ++i )
             {
                 if ( ack_bits & 1 )
                 {                    
@@ -326,6 +354,7 @@ void snapshot_endpoint_receive_packet( struct snapshot_endpoint_t * endpoint, ui
         {
             snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "[%s] process packet failed\n", endpoint->config.name );
         }
+        */
     }
     else
     {
@@ -451,8 +480,7 @@ void snapshot_endpoint_reset( struct snapshot_endpoint_t * endpoint )
     memset( endpoint->acks, 0, endpoint->config.ack_buffer_size * sizeof( uint16_t ) );
     memset( endpoint->counters, 0, SNAPSHOT_ENDPOINT_NUM_COUNTERS * sizeof( uint64_t ) );
 
-    int i;
-    for ( i = 0; i < endpoint->config.fragment_reassembly_buffer_size; ++i )
+    for ( int i = 0; i < endpoint->config.fragment_reassembly_buffer_size; ++i )
     {
         struct snapshot_fragment_reassembly_data_t * reassembly_data = (struct snapshot_fragment_reassembly_data_t*) snapshot_sequence_buffer_at_index( endpoint->fragment_reassembly, i );
 
@@ -477,10 +505,9 @@ void snapshot_endpoint_update( struct snapshot_endpoint_t * endpoint, double tim
     // calculate packet loss
     {
         uint32_t base_sequence = ( endpoint->sent_packets->sequence - endpoint->config.sent_packets_buffer_size + 1 ) + 0xFFFF;
-        int i;
         int num_dropped = 0;
         int num_samples = endpoint->config.sent_packets_buffer_size / 2;
-        for ( i = 0; i < num_samples; ++i )
+        for ( int i = 0; i < num_samples; ++i )
         {
             uint16_t sequence = (uint16_t) ( base_sequence + i );
             struct snapshot_endpoint_sent_packet_data_t * sent_packet_data = (struct snapshot_endpoint_sent_packet_data_t*) snapshot_sequence_buffer_find( endpoint->sent_packets, sequence );
@@ -503,12 +530,11 @@ void snapshot_endpoint_update( struct snapshot_endpoint_t * endpoint, double tim
     // calculate sent bandwidth
     {
         uint32_t base_sequence = ( endpoint->sent_packets->sequence - endpoint->config.sent_packets_buffer_size + 1 ) + 0xFFFF;
-        int i;
         int bytes_sent = 0;
         double start_time = FLT_MAX;
         double finish_time = 0.0;
         int num_samples = endpoint->config.sent_packets_buffer_size / 2;
-        for ( i = 0; i < num_samples; ++i )
+        for ( int i = 0; i < num_samples; ++i )
         {
             uint16_t sequence = (uint16_t) ( base_sequence + i );
             struct snapshot_endpoint_sent_packet_data_t * sent_packet_data = (struct snapshot_endpoint_sent_packet_data_t*) snapshot_sequence_buffer_find( endpoint->sent_packets, sequence );
@@ -543,12 +569,11 @@ void snapshot_endpoint_update( struct snapshot_endpoint_t * endpoint, double tim
     // calculate received bandwidth
     {
         uint32_t base_sequence = ( endpoint->received_packets->sequence - endpoint->config.received_packets_buffer_size + 1 ) + 0xFFFF;
-        int i;
         int bytes_sent = 0;
         double start_time = FLT_MAX;
         double finish_time = 0.0;
         int num_samples = endpoint->config.received_packets_buffer_size / 2;
-        for ( i = 0; i < num_samples; ++i )
+        for ( int i = 0; i < num_samples; ++i )
         {
             uint16_t sequence = (uint16_t) ( base_sequence + i );
             struct snapshot_endpoint_received_packet_data_t * received_packet_data = (struct snapshot_endpoint_received_packet_data_t*) snapshot_sequence_buffer_find( endpoint->received_packets, sequence );
@@ -583,12 +608,11 @@ void snapshot_endpoint_update( struct snapshot_endpoint_t * endpoint, double tim
     // calculate acked bandwidth
     {
         uint32_t base_sequence = ( endpoint->sent_packets->sequence - endpoint->config.sent_packets_buffer_size + 1 ) + 0xFFFF;
-        int i;
         int bytes_sent = 0;
         double start_time = FLT_MAX;
         double finish_time = 0.0;
         int num_samples = endpoint->config.sent_packets_buffer_size / 2;
-        for ( i = 0; i < num_samples; ++i )
+        for ( int i = 0; i < num_samples; ++i )
         {
             uint16_t sequence = (uint16_t) ( base_sequence + i );
             struct snapshot_endpoint_sent_packet_data_t * sent_packet_data = (struct snapshot_endpoint_sent_packet_data_t*) snapshot_sequence_buffer_find( endpoint->sent_packets, sequence );

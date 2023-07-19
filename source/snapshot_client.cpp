@@ -12,6 +12,7 @@
 #include "snapshot_packets.h"
 #include "snapshot_network_simulator.h"
 #include "snapshot_endpoint.h"
+#include "snapshot_fragment.h"
 #include <time.h>
 
 #define SNAPSHOT_CLIENT_MAX_SIM_RECEIVE_PACKETS 256
@@ -76,27 +77,6 @@ struct snapshot_client_t
     struct snapshot_address_t sim_receive_from[SNAPSHOT_CLIENT_MAX_SIM_RECEIVE_PACKETS];
     int loopback;
 };
-
-static void temp_transmit_packet_function( void * context, int index, uint16_t sequence, uint8_t * packet_data, int packet_bytes )
-{
-    // todo
-    (void) context;
-    (void) index;
-    (void) sequence;
-    (void) packet_data;
-    (void) packet_bytes;
-}
-
-static int temp_process_packet_function( void * context, int index, uint16_t sequence, uint8_t * packet_data, int packet_bytes )
-{
-    // todo
-    (void) context;
-    (void) index;
-    (void) sequence;
-    (void) packet_data;
-    (void) packet_bytes;
-    return SNAPSHOT_OK;
-}
 
 void snapshot_client_destroy( struct snapshot_client_t * client );
 
@@ -188,10 +168,9 @@ struct snapshot_client_t * snapshot_client_create( const char * bind_address_str
 
     snapshot_endpoint_config_t endpoint_config;
     snapshot_endpoint_default_config( &endpoint_config );
+    strncpy( endpoint_config.name, "client", sizeof(endpoint_config.name) );
     endpoint_config.context = config->context;
-    endpoint_config.transmit_packet_function = temp_transmit_packet_function;
-    endpoint_config.process_packet_function = temp_process_packet_function;
-
+    
     client->endpoint = snapshot_endpoint_create( &endpoint_config, time );
 
     if ( !client->endpoint )
@@ -208,11 +187,6 @@ void snapshot_client_destroy( struct snapshot_client_t * client )
 {
     snapshot_assert( client );
 
-    if ( client->endpoint )
-    {
-        snapshot_endpoint_destroy( client->endpoint );
-    }
-    
     if ( !client->loopback )
     {
         snapshot_client_disconnect( client );
@@ -220,6 +194,11 @@ void snapshot_client_destroy( struct snapshot_client_t * client )
     else
     {
         snapshot_client_disconnect_loopback( client );
+    }
+    
+    if ( client->endpoint )
+    {
+        snapshot_endpoint_destroy( client->endpoint );
     }
     
     if ( client->socket )
@@ -254,6 +233,8 @@ void snapshot_client_reset_before_next_connect( struct snapshot_client_t * clien
     memset( client->challenge_token_data, 0, SNAPSHOT_CHALLENGE_TOKEN_BYTES );
 
     snapshot_replay_protection_reset( &client->replay_protection );
+
+    snapshot_endpoint_reset( client->endpoint );
 }
 
 void snapshot_client_reset_connection_data( struct snapshot_client_t * client, int client_state )
@@ -732,8 +713,49 @@ void snapshot_client_update_state_machine( struct snapshot_client_t * client )
 
 void snapshot_client_send_payload( struct snapshot_client_t * client )
 {
-    // todo: construct and send payload packet
-    (void) client;
+    snapshot_assert( client );
+
+    int payload_bytes = SNAPSHOT_MAX_PAYLOAD_BYTES;
+
+    uint8_t * payload_data = snapshot_create_packet( client->config.context, SNAPSHOT_MAX_PAYLOAD_BYTES );
+
+    // todo: build payload
+
+    int num_packets = 0;
+    uint8_t * packet_data[SNAPSHOT_ENDPOINT_MAX_WRITE_PACKETS];
+    int packet_bytes[SNAPSHOT_ENDPOINT_MAX_WRITE_PACKETS];
+
+    snapshot_endpoint_write_packets( client->endpoint, payload_data, payload_bytes, &num_packets, &packet_data[0], &packet_bytes[0] );
+
+    if ( num_packets == 0 )
+    {
+        snapshot_destroy_packet( client->config.context, payload_data );
+        return;
+    }
+
+    if ( num_packets > 1 )
+    {
+        // send fragments
+
+        for ( int i = 0; i < num_packets; i++ )
+        {
+            snapshot_payload_packet_t * packet = snapshot_wrap_payload_packet( packet_data[i], packet_bytes[i] );
+
+            snapshot_client_send_packet_to_server_internal( client, packet );
+
+            snapshot_destroy_packet( client->config.context, packet_data[i] );
+        }
+    }
+    else
+    {
+        // send whole packet
+
+        snapshot_payload_packet_t * packet = snapshot_wrap_payload_packet( packet_data[0], packet_bytes[0] );
+
+        snapshot_client_send_packet_to_server_internal( client, packet );
+    }
+
+    snapshot_destroy_packet( client->config.context, payload_data );
 }
 
 void snapshot_client_update( struct snapshot_client_t * client, double time )
