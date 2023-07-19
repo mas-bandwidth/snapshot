@@ -98,7 +98,7 @@ blocks:
             - "& \"c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\IDE\\devenv.com\" visualstudio\\snapshot.sln /rebuild $CONFIG"
             - "& .\\bin\\test.exe"
 
-  - name: "Testbed"
+  - name: "PS4"
     dependencies: []
     task:
       prologue:
@@ -110,9 +110,7 @@ blocks:
       jobs:
         - name: test
           matrix:
-            - env_var: SOLUTION
-              values: [ "testbed\\win32\\win32.sln", "testbed\\win64\\win64.sln", "testbed\\ps4\\ps4.sln", "testbed\\ps5\\ps5.sln", "testbed\\switch\\switch.sln", "testbed\\xboxone\\xboxone.sln" ]
             - env_var: CONFIG
               values: [ "debug", "release" ]
           commands:
-            - "& \"c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\IDE\\devenv.com\" $SOLUTION /rebuild $CONFIG"
+            - "& \"c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\IDE\\devenv.com\" testbed\\ps4\\ps4.sln /rebuild $CONFIG"
