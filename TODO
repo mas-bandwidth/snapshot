@@ -22,9 +22,13 @@ DONE
 
 	The code I'm working with however was running the fragmentation across all packet types, will need to make adjustments here.
 
+	Setup server to process payload packets from client.
+
+	Why aren't fragments getting through on server? Fixed. Bad logic in endpoint fragmented send.
+
 TODO
 
-	Setup server to process payload packets from client.
+	Implement method for endpoint to process packets, and return (out of band) whole packets for the client to process (post fragment...)
 
 	-------------
 

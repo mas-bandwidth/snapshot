@@ -175,14 +175,14 @@ void snapshot_endpoint_write_packets( struct snapshot_endpoint_t * endpoint, uin
 
         int fragment_buffer_size = SNAPSHOT_FRAGMENT_HEADER_BYTES + SNAPSHOT_MAX_PACKET_HEADER_BYTES + endpoint->config.fragment_size;
 
-        uint8_t * fragment_packet_data = snapshot_create_packet( endpoint->context, fragment_buffer_size );
-
         uint8_t * q = payload_data;
 
         uint8_t * end = q + payload_bytes;
 
         for ( int fragment_id = 0; fragment_id < num_fragments; ++fragment_id )
         {
+            uint8_t * fragment_packet_data = snapshot_create_packet( endpoint->context, fragment_buffer_size );
+
             uint8_t * p = fragment_packet_data;
 
             snapshot_write_uint8( &p, 1 );
@@ -215,7 +215,7 @@ void snapshot_endpoint_write_packets( struct snapshot_endpoint_t * endpoint, uin
             endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_FRAGMENTS_SENT]++;
         }
 
-        snapshot_destroy_packet( endpoint->context, fragment_packet_data );
+        *num_packets = num_fragments;
     }
 
     endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_SENT]++;
@@ -224,6 +224,8 @@ void snapshot_endpoint_write_packets( struct snapshot_endpoint_t * endpoint, uin
 void snapshot_endpoint_process_packet( struct snapshot_endpoint_t * endpoint, uint8_t * packet_data, int packet_bytes )
 {
     // todo
+
+    printf( "snapshot_endpoint_process_packet (%d bytes)\n", packet_bytes );
 
     (void) endpoint;
     (void) packet_data;

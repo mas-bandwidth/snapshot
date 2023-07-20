@@ -726,7 +726,7 @@ void snapshot_client_send_payload( struct snapshot_client_t * client )
     if ( client->state != SNAPSHOT_CLIENT_STATE_CONNECTED )
         return;
 
-    int payload_bytes = 1024; // SNAPSHOT_MAX_PAYLOAD_BYTES - SNAPSHOT_MAX_PACKET_HEADER_BYTES;  // IMPORTANT: MAX PAYLOAD so we trigger fragmentation and reassembly! :D
+    int payload_bytes = SNAPSHOT_MAX_PAYLOAD_BYTES - SNAPSHOT_MAX_PACKET_HEADER_BYTES;  // IMPORTANT: MAX PAYLOAD so we trigger fragmentation and reassembly! :D
 
     uint8_t * payload_data = snapshot_create_packet( client->config.context, payload_bytes );
 
@@ -752,6 +752,8 @@ void snapshot_client_send_payload( struct snapshot_client_t * client )
 
         for ( int i = 0; i < num_packets; i++ )
         {
+            printf( "client send fragment %d to server\n", i );
+
             snapshot_payload_packet_t * packet = snapshot_wrap_payload_packet( packet_data[i], packet_bytes[i] );
 
             snapshot_client_send_packet_to_server( client, packet );
