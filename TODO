@@ -2,19 +2,27 @@ DONE
 
 	Integrate endpoint with client.
 
-TODO
-
 	Setup client to start sending payload packets regularly.
 
 	Work out how to get endpoint zero copy on write.
 
 	Rework endpoint so it doesn't operate via callbacks... gross.
 
+	Debug what's going wrong with payload packet send, breaking connect.
+
+	It was just a logic error last time ackets sent. Fixed by only using that last time packet sent var for internal packets.
+
+TODO
+
+	Extend endpoint so it performs fragmentation
+
 	------------
 
 	Integrate endpoint with server.
 
 	Setup server to process payload packets from client.
+
+	Setup server so it sends payload packets down to each client.
 
 	-------------
 
@@ -85,21 +93,15 @@ TODO
 
 	Choke.
 
-	Server loop w. tick rate.
-
-	Server sim objects step forward together.
-
-	Player owned objects advanced forward with player command dt as they arrive.
-
 	Schema
 
 	What sort of properties are needed?
 
-	Send uncompressed snapshots down.
-
 	Send delta compressed snapshots down.
 
-	String table.
+	Decompress snapshot deltas on client.
+
+	Drive object creates and deletes.
 
 	---------------------------
 
@@ -116,4 +118,3 @@ TODO
 		5. How do UE5 objects work?
 
 	---------------------------
-

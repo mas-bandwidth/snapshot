@@ -119,7 +119,7 @@ void snapshot_endpoint_write_packets( struct snapshot_endpoint_t * endpoint, uin
 
     if ( payload_bytes > SNAPSHOT_MAX_PAYLOAD_BYTES )
     {
-        snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "[%s] packet too large to send. payload is %d bytes, maximum is %d\n", endpoint->config.name, payload_bytes, SNAPSHOT_MAX_PAYLOAD_BYTES );
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "[%s] packet too large to send. payload is %d bytes, maximum is %d", endpoint->config.name, payload_bytes, SNAPSHOT_MAX_PAYLOAD_BYTES );
         endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_TOO_LARGE_TO_SEND]++;
         return;
     }
@@ -129,8 +129,6 @@ void snapshot_endpoint_write_packets( struct snapshot_endpoint_t * endpoint, uin
     uint32_t ack_bits;
 
     snapshot_sequence_buffer_generate_ack_bits( endpoint->received_packets, &ack, &ack_bits );
-
-    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] sending payload %d\n", endpoint->config.name, sequence );
 
     struct snapshot_endpoint_sent_packet_data_t * sent_packet_data = (struct snapshot_endpoint_sent_packet_data_t*) snapshot_sequence_buffer_insert( endpoint->sent_packets, sequence );
 
@@ -144,7 +142,7 @@ void snapshot_endpoint_write_packets( struct snapshot_endpoint_t * endpoint, uin
     {
         // regular packet
 
-        snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] sending payload %d without fragmentation\n", endpoint->config.name, sequence );
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] sending payload %d without fragmentation", endpoint->config.name, sequence );
 
         uint8_t header[SNAPSHOT_MAX_PACKET_HEADER_BYTES];
 
@@ -169,7 +167,7 @@ void snapshot_endpoint_write_packets( struct snapshot_endpoint_t * endpoint, uin
 
         int num_fragments = ( packet_bytes / endpoint->config.fragment_size ) + ( ( packet_bytes % endpoint->config.fragment_size ) != 0 ? 1 : 0 );
 
-        snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] sending packet %d as %d fragments\n", endpoint->config.name, sequence, num_fragments );
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] sending packet %d as %d fragments", endpoint->config.name, sequence, num_fragments );
 
         snapshot_assert( num_fragments >= 1 );
         snapshot_assert( num_fragments <= endpoint->config.max_fragments );
@@ -232,7 +230,7 @@ void snapshot_endpoint_receive_packet( struct snapshot_endpoint_t * endpoint, ui
 
     if ( packet_bytes > endpoint->config.max_packet_size + SNAPSHOT_MAX_PACKET_HEADER_BYTES + SNAPSHOT_FRAGMENT_HEADER_BYTES )
     {
-        snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] packet too large to receive. packet is at least %d bytes, maximum is %d\n", endpoint->config.name, packet_bytes - ( SNAPSHOT_MAX_PACKET_HEADER_BYTES + SNAPSHOT_FRAGMENT_HEADER_BYTES ), endpoint->config.max_packet_size );
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] packet too large to receive. packet is at least %d bytes, maximum is %d", endpoint->config.name, packet_bytes - ( SNAPSHOT_MAX_PACKET_HEADER_BYTES + SNAPSHOT_FRAGMENT_HEADER_BYTES ), endpoint->config.max_packet_size );
         endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_TOO_LARGE_TO_RECEIVE]++;
         return;
     }
@@ -252,7 +250,7 @@ void snapshot_endpoint_receive_packet( struct snapshot_endpoint_t * endpoint, ui
         int packet_header_bytes = snapshot_read_packet_header( endpoint->config.name, packet_data, packet_bytes, &sequence, &ack, &ack_bits );
         if ( packet_header_bytes < 0 )
         {
-            snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] ignoring invalid packet. could not read packet header\n", endpoint->config.name );
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] ignoring invalid packet. could not read packet header", endpoint->config.name );
             endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_INVALID]++;
             return;
         }
@@ -263,19 +261,19 @@ void snapshot_endpoint_receive_packet( struct snapshot_endpoint_t * endpoint, ui
 
         if ( packet_payload_bytes > endpoint->config.max_packet_size )
         {
-            snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "[%s] packet too large to receive. packet is at %d bytes, maximum is %d\n", endpoint->config.name, packet_payload_bytes, endpoint->config.max_packet_size );
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "[%s] packet too large to receive. packet is at %d bytes, maximum is %d", endpoint->config.name, packet_payload_bytes, endpoint->config.max_packet_size );
             endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_TOO_LARGE_TO_RECEIVE]++;
             return;
         }
 
         if ( !snapshot_sequence_buffer_test_insert( endpoint->received_packets, sequence ) )
         {
-            snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] ignoring stale packet %d\n", endpoint->config.name, sequence );
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] ignoring stale packet %d", endpoint->config.name, sequence );
             endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_STALE]++;
             return;
         }
 
-        snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] processing packet %d\n", endpoint->config.name, sequence );
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] processing packet %d", endpoint->config.name, sequence );
 
         // todo: no callbacks
         /*
@@ -285,7 +283,7 @@ void snapshot_endpoint_receive_packet( struct snapshot_endpoint_t * endpoint, ui
                                                        packet_data + packet_header_bytes, 
                                                        packet_bytes - packet_header_bytes ) )
         {
-            snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] process packet %d successful\n", endpoint->config.name, sequence );
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] process packet %d successful", endpoint->config.name, sequence );
 
             struct snapshot_endpoint_received_packet_data_t * received_packet_data = (struct snapshot_endpoint_received_packet_data_t*) snapshot_sequence_buffer_insert( endpoint->received_packets, sequence );
 
@@ -306,7 +304,7 @@ void snapshot_endpoint_receive_packet( struct snapshot_endpoint_t * endpoint, ui
 
                     if ( sent_packet_data && !sent_packet_data->acked && endpoint->num_acks < endpoint->config.ack_buffer_size )
                     {
-                        snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] acked packet %d\n", endpoint->config.name, ack_sequence );
+                        snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] acked packet %d", endpoint->config.name, ack_sequence );
                         endpoint->acks[endpoint->num_acks++] = ack_sequence;
                         endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_ACKED]++;
                         sent_packet_data->acked = 1;
@@ -328,7 +326,7 @@ void snapshot_endpoint_receive_packet( struct snapshot_endpoint_t * endpoint, ui
         }
         else
         {
-            snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "[%s] process packet failed\n", endpoint->config.name );
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "[%s] process packet failed", endpoint->config.name );
         }
         */
     }
@@ -358,7 +356,7 @@ void snapshot_endpoint_receive_packet( struct snapshot_endpoint_t * endpoint, ui
 
         if ( fragment_header_bytes < 0 )
         {
-            snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] ignoring invalid fragment. could not read fragment header\n", endpoint->config.name );
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] ignoring invalid fragment. could not read fragment header", endpoint->config.name );
             endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_FRAGMENTS_INVALID]++;
             return;
         }
@@ -371,7 +369,7 @@ void snapshot_endpoint_receive_packet( struct snapshot_endpoint_t * endpoint, ui
 
             if ( !reassembly_data )
             {
-                snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "[%s] ignoring invalid fragment. could not insert in reassembly buffer (stale)\n", endpoint->config.name );
+                snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "[%s] ignoring invalid fragment. could not insert in reassembly buffer (stale)", endpoint->config.name );
                 endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_FRAGMENTS_INVALID]++;
                 return;
             }
@@ -392,18 +390,18 @@ void snapshot_endpoint_receive_packet( struct snapshot_endpoint_t * endpoint, ui
 
         if ( num_fragments != (int) reassembly_data->num_fragments_total )
         {
-            snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "[%s] ignoring invalid fragment. fragment count mismatch. expected %d, got %d\n", endpoint->config.name, (int) reassembly_data->num_fragments_total, num_fragments );
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "[%s] ignoring invalid fragment. fragment count mismatch. expected %d, got %d", endpoint->config.name, (int) reassembly_data->num_fragments_total, num_fragments );
             endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_FRAGMENTS_INVALID]++;
             return;
         }
 
         if ( reassembly_data->fragment_received[fragment_id] )
         {
-            snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "[%s] ignoring fragment %d of packet %d. fragment already received\n", endpoint->config.name, fragment_id, sequence );
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "[%s] ignoring fragment %d of packet %d. fragment already received", endpoint->config.name, fragment_id, sequence );
             return;
         }
 
-        snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] received fragment %d of packet %d (%d/%d)\n", endpoint->config.name, fragment_id, sequence, reassembly_data->num_fragments_received+1, num_fragments );
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] received fragment %d of packet %d (%d/%d)", endpoint->config.name, fragment_id, sequence, reassembly_data->num_fragments_received+1, num_fragments );
 
         reassembly_data->num_fragments_received++;
         reassembly_data->fragment_received[fragment_id] = 1;
@@ -419,7 +417,7 @@ void snapshot_endpoint_receive_packet( struct snapshot_endpoint_t * endpoint, ui
 
         if ( reassembly_data->num_fragments_received == reassembly_data->num_fragments_total )
         {
-            snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] completed reassembly of packet %d\n", endpoint->config.name, sequence );
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] completed reassembly of packet %d", endpoint->config.name, sequence );
 
             snapshot_endpoint_receive_packet( endpoint, 
                                               reassembly_data->packet_data + SNAPSHOT_MAX_PACKET_HEADER_BYTES - reassembly_data->packet_header_bytes, 

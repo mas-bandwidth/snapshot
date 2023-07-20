@@ -43,7 +43,7 @@ void snapshot_default_client_config( struct snapshot_client_config_t * config )
     config->context = NULL;
     config->network_simulator = NULL;
     config->state_change_callback = NULL;
-    config->send_loopback_packet_callback = NULL;
+    config->send_loopback_packet_callback = NULL;           // todo: this needs to be used for both payload, and passthrough packets in loopback mode
     config->process_passthrough_callback = NULL;
 };
 
@@ -53,14 +53,14 @@ struct snapshot_client_t
     int state;
     double time;
     double connect_start_time;
-    double last_packet_send_time;
+    double last_internal_packet_send_time;
     double last_packet_receive_time;
     int should_disconnect;
     int should_disconnect_state;
     uint64_t sequence;
     int client_index;
     int max_clients;
-    int server_connect_index;
+    int connect_server_index;
     struct snapshot_address_t bind_address;
     struct snapshot_address_t server_address;
     struct snapshot_connect_token_t connect_token;
@@ -88,9 +88,9 @@ struct snapshot_client_t * snapshot_client_create( const char * bind_address_str
 
     struct snapshot_address_t bind_address;
     memset( &bind_address, 0, sizeof( bind_address ) );
-    if ( snapshot_address_parse( &bind_address, bind_address_string ) != SNAPSHOT_OK )
+    if ( snapshot_address_parse( &bind_address, bind_address_string ) != SNAPSHOT_OK || bind_address.type == SNAPSHOT_ADDRESS_NONE )
     {
-        snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to parse client bind address" );
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to parse client bind address: '%s'", bind_address_string );
         return NULL;
     }
 
@@ -143,14 +143,14 @@ struct snapshot_client_t * snapshot_client_create( const char * bind_address_str
     client->state = SNAPSHOT_CLIENT_STATE_DISCONNECTED;
     client->time = time;
     client->connect_start_time = 0.0;
-    client->last_packet_send_time = -1000.0;
+    client->last_internal_packet_send_time = -1000.0;
     client->last_packet_receive_time = -1000.0;
     client->should_disconnect = 0;
     client->should_disconnect_state = SNAPSHOT_CLIENT_STATE_DISCONNECTED;
     client->sequence = 0;
     client->client_index = 0;
     client->max_clients = 0;
-    client->server_connect_index = 0;
+    client->connect_server_index = 0;
     client->challenge_token_sequence = 0;
     client->loopback = 0;
     memset( &client->server_address, 0, sizeof( struct snapshot_address_t ) );
@@ -224,7 +224,7 @@ void snapshot_client_set_state( struct snapshot_client_t * client, int client_st
 void snapshot_client_reset_before_next_connect( struct snapshot_client_t * client )
 {
     client->connect_start_time = client->time;
-    client->last_packet_send_time = client->time - 1.0f;
+    client->last_internal_packet_send_time = client->time - 1.0f;
     client->last_packet_receive_time = client->time;
     client->should_disconnect = 0;
     client->should_disconnect_state = SNAPSHOT_CLIENT_STATE_DISCONNECTED;
@@ -246,7 +246,7 @@ void snapshot_client_reset_connection_data( struct snapshot_client_t * client, i
     client->client_index = 0;
     client->max_clients = 0;
     client->connect_start_time = 0.0;
-    client->server_connect_index = 0;
+    client->connect_server_index = 0;
     memset( &client->server_address, 0, sizeof( struct snapshot_address_t ) );
     memset( &client->connect_token, 0, sizeof( struct snapshot_connect_token_t ) );
 
@@ -270,12 +270,12 @@ void snapshot_client_connect( struct snapshot_client_t * client, uint8_t * conne
         return;
     }
 
-    client->server_connect_index = 0;
+    client->connect_server_index = 0;
     client->server_address = client->connect_token.server_addresses[0];
 
     char server_address_string[SNAPSHOT_MAX_ADDRESS_STRING_LENGTH];
 
-    snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connecting to server %s [%d/%d]", snapshot_address_to_string( &client->server_address, server_address_string ), client->server_connect_index + 1, client->connect_token.num_server_addresses );
+    snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connecting to server %s [%d/%d]", snapshot_address_to_string( &client->server_address, server_address_string ), client->connect_server_index + 1, client->connect_token.num_server_addresses );
 
     memcpy( client->read_packet_key, client->connect_token.server_to_client_key, SNAPSHOT_KEY_BYTES );
     memcpy( client->write_packet_key, client->connect_token.client_to_server_key, SNAPSHOT_KEY_BYTES );
@@ -511,10 +511,9 @@ void snapshot_client_receive_packets( struct snapshot_client_t * client )
     }
 }
 
-void snapshot_client_send_packet_to_server_internal( struct snapshot_client_t * client, void * packet )
+void snapshot_client_send_packet_to_server( struct snapshot_client_t * client, void * packet )
 {
     snapshot_assert( client );
-    snapshot_assert( !client->loopback );
 
     uint8_t buffer[SNAPSHOT_MAX_PACKET_BYTES];
 
@@ -530,19 +529,24 @@ void snapshot_client_send_packet_to_server_internal( struct snapshot_client_t * 
 
     snapshot_assert( packet_bytes <= SNAPSHOT_MAX_PACKET_BYTES );
 
-    if ( client->config.network_simulator )
+    if ( !client->loopback )
     {
-        snapshot_network_simulator_send_packet( client->config.network_simulator, &client->bind_address, &client->server_address, packet_data, packet_bytes );
+        if ( client->config.network_simulator )
+        {
+            snapshot_network_simulator_send_packet( client->config.network_simulator, &client->bind_address, &client->server_address, packet_data, packet_bytes );
+        }
+        else
+        {
+            snapshot_platform_socket_send_packet( client->socket, &client->server_address, packet_data, packet_bytes );
+        }
     }
     else
     {
-        snapshot_platform_socket_send_packet( client->socket, &client->server_address, packet_data, packet_bytes );
+        client->config.send_loopback_packet_callback( client->config.context, &client->bind_address, packet_data, packet_bytes );
     }
-
-    client->last_packet_send_time = client->time;
 }
 
-void snapshot_client_send_packets( struct snapshot_client_t * client )
+void snapshot_client_send_internal_packets( struct snapshot_client_t * client )
 {
     snapshot_assert( client );
 
@@ -555,7 +559,7 @@ void snapshot_client_send_packets( struct snapshot_client_t * client )
     {
         case SNAPSHOT_CLIENT_STATE_SENDING_CONNECTION_REQUEST:
         {
-            if ( client->last_packet_send_time + 0.1 >= client->time )
+            if ( client->last_internal_packet_send_time + 0.1 >= client->time )
                 return;
 
             snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client sent connection request packet to server" );
@@ -568,13 +572,15 @@ void snapshot_client_send_packets( struct snapshot_client_t * client )
             memcpy( packet.connect_token_nonce, client->connect_token.nonce, SNAPSHOT_CONNECT_TOKEN_NONCE_BYTES );
             memcpy( packet.connect_token_data, client->connect_token.private_data, SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES );
 
-            snapshot_client_send_packet_to_server_internal( client, &packet );
+            snapshot_client_send_packet_to_server( client, &packet );
+
+            client->last_internal_packet_send_time = client->time;
         }
         break;
 
         case SNAPSHOT_CLIENT_STATE_SENDING_CONNECTION_RESPONSE:
         {
-            if ( client->last_packet_send_time + 0.1 >= client->time )
+            if ( client->last_internal_packet_send_time + 0.1 >= client->time )
                 return;
 
             snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client sent connection response packet to server" );
@@ -584,13 +590,15 @@ void snapshot_client_send_packets( struct snapshot_client_t * client )
             packet.challenge_token_sequence = client->challenge_token_sequence;
             memcpy( packet.challenge_token_data, client->challenge_token_data, SNAPSHOT_CHALLENGE_TOKEN_BYTES );
 
-            snapshot_client_send_packet_to_server_internal( client, &packet );
+            snapshot_client_send_packet_to_server( client, &packet );
+
+            client->last_internal_packet_send_time = client->time;
         }
         break;
 
         case SNAPSHOT_CLIENT_STATE_CONNECTED:
         {
-            if ( client->last_packet_send_time + 0.1 >= client->time )
+            if ( client->last_internal_packet_send_time + 0.1 >= client->time )
                 return;
 
             snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client sent connection keep-alive packet to server" );
@@ -600,7 +608,9 @@ void snapshot_client_send_packets( struct snapshot_client_t * client )
             packet.client_index = 0;
             packet.max_clients = 0;
 
-            snapshot_client_send_packet_to_server_internal( client, &packet );
+            snapshot_client_send_packet_to_server( client, &packet );
+
+            client->last_internal_packet_send_time = client->time;
         }
         break;
         
@@ -613,14 +623,14 @@ int snapshot_client_connect_to_next_server( struct snapshot_client_t * client )
 {
     snapshot_assert( client );
 
-    if ( client->server_connect_index + 1 >= client->connect_token.num_server_addresses )
+    if ( client->connect_server_index + 1 >= client->connect_token.num_server_addresses )
     {
         snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client has no more servers to connect to" );
         return 0;
     }
 
-    client->server_connect_index++;
-    client->server_address = client->connect_token.server_addresses[client->server_connect_index];
+    client->connect_server_index++;
+    client->server_address = client->connect_token.server_addresses[client->connect_server_index];
 
     snapshot_client_reset_before_next_connect( client );
 
@@ -628,7 +638,7 @@ int snapshot_client_connect_to_next_server( struct snapshot_client_t * client )
 
     snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connecting to next server %s [%d/%d]", 
         snapshot_address_to_string( &client->server_address, server_address_string ), 
-        client->server_connect_index + 1, 
+        client->connect_server_index + 1, 
         client->connect_token.num_server_addresses );
 
     snapshot_client_set_state( client, SNAPSHOT_CLIENT_STATE_SENDING_CONNECTION_REQUEST );
@@ -715,7 +725,11 @@ void snapshot_client_send_payload( struct snapshot_client_t * client )
 {
     snapshot_assert( client );
 
-    int payload_bytes = SNAPSHOT_MAX_PAYLOAD_BYTES - SNAPSHOT_MAX_PACKET_HEADER_BYTES;
+    if ( client->state != SNAPSHOT_CLIENT_STATE_CONNECTED )
+        return;
+
+    // todo
+    int payload_bytes = 1024; // SNAPSHOT_MAX_PAYLOAD_BYTES - SNAPSHOT_MAX_PACKET_HEADER_BYTES;
 
     uint8_t * payload_data = snapshot_create_packet( client->config.context, payload_bytes );
 
@@ -733,7 +747,7 @@ void snapshot_client_send_payload( struct snapshot_client_t * client )
 
         snapshot_payload_packet_t * packet = snapshot_wrap_payload_packet( packet_data[0], packet_bytes[0] );
 
-        snapshot_client_send_packet_to_server_internal( client, packet );
+        snapshot_client_send_packet_to_server( client, packet );
     }
     else
     {
@@ -743,7 +757,7 @@ void snapshot_client_send_payload( struct snapshot_client_t * client )
         {
             snapshot_payload_packet_t * packet = snapshot_wrap_payload_packet( packet_data[i], packet_bytes[i] );
 
-            snapshot_client_send_packet_to_server_internal( client, packet );
+            snapshot_client_send_packet_to_server( client, packet );
 
             snapshot_destroy_packet( client->config.context, packet_data[i] );
         }
@@ -762,7 +776,7 @@ void snapshot_client_update( struct snapshot_client_t * client, double time )
 
     snapshot_client_send_payload( client );
 
-    snapshot_client_send_packets( client );
+    snapshot_client_send_internal_packets( client );
 
     snapshot_client_update_state_machine( client );
 }
@@ -801,7 +815,9 @@ void snapshot_client_disconnect_internal( struct snapshot_client_t * client, int
             struct snapshot_disconnect_packet_t packet;
             packet.packet_type = SNAPSHOT_DISCONNECT_PACKET;
 
-            snapshot_client_send_packet_to_server_internal( client, &packet );
+            snapshot_client_send_packet_to_server( client, &packet );
+
+            client->last_internal_packet_send_time = client->time;
         }
     }
 
@@ -872,7 +888,7 @@ void snapshot_client_send_passthrough_packet( struct snapshot_client_t * client,
     packet->passthrough_bytes = passthrough_bytes;
     memcpy( packet->passthrough_data, passthrough_data, passthrough_bytes );
 
-    snapshot_client_send_packet_to_server_internal( client, packet );
+    snapshot_client_send_packet_to_server( client, packet );
 }
 
 const struct snapshot_address_t * snapshot_client_server_address( struct snapshot_client_t * client )

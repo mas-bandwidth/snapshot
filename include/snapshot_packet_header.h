@@ -8,7 +8,7 @@
 
 #include "snapshot.h"
 
-#define SNAPSHOT_MAX_PACKET_HEADER_BYTES        9
+#define SNAPSHOT_MAX_PACKET_HEADER_BYTES 9
 
 int snapshot_write_packet_header( uint8_t * packet_data, uint16_t sequence, uint16_t ack, uint32_t ack_bits );
 
