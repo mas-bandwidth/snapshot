@@ -879,6 +879,10 @@ void snapshot_client_send_passthrough_packet( struct snapshot_client_t * client,
     snapshot_assert( client );
     snapshot_assert( passthrough_data );
     snapshot_assert( passthrough_bytes > 0 );
+    snapshot_assert( client->state == SNAPSHOT_CLIENT_STATE_CONNECTED );
+
+    if ( client->state != SNAPSHOT_CLIENT_STATE_CONNECTED )
+        return;
 
     uint8_t buffer[SNAPSHOT_PACKET_PREFIX_BYTES + sizeof(snapshot_passthrough_packet_t) + SNAPSHOT_MAX_PASSTHROUGH_BYTES + SNAPSHOT_PACKET_POSTFIX_BYTES];
 
