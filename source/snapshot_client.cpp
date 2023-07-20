@@ -43,7 +43,7 @@ void snapshot_default_client_config( struct snapshot_client_config_t * config )
     config->context = NULL;
     config->network_simulator = NULL;
     config->state_change_callback = NULL;
-    config->send_loopback_packet_callback = NULL;           // todo: this needs to be used for both payload, and passthrough packets in loopback mode
+    config->send_loopback_packet_callback = NULL;
     config->process_passthrough_callback = NULL;
 };
 
@@ -728,8 +728,7 @@ void snapshot_client_send_payload( struct snapshot_client_t * client )
     if ( client->state != SNAPSHOT_CLIENT_STATE_CONNECTED )
         return;
 
-    // todo
-    int payload_bytes = 1024; // SNAPSHOT_MAX_PAYLOAD_BYTES - SNAPSHOT_MAX_PACKET_HEADER_BYTES;
+    int payload_bytes = SNAPSHOT_MAX_PAYLOAD_BYTES - SNAPSHOT_MAX_PACKET_HEADER_BYTES;  // IMPORTANT: MAX PAYLOAD so we trigger fragmentation and reassembly! :D
 
     uint8_t * payload_data = snapshot_create_packet( client->config.context, payload_bytes );
 

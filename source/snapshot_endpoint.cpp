@@ -146,6 +146,8 @@ void snapshot_endpoint_write_packets( struct snapshot_endpoint_t * endpoint, uin
 
         uint8_t header[SNAPSHOT_MAX_PACKET_HEADER_BYTES];
 
+        memset( header, 0, SNAPSHOT_MAX_PACKET_HEADER_BYTES );
+
         int header_bytes = snapshot_write_packet_header( header, sequence, ack, ack_bits );
 
         *num_packets = 1;
@@ -158,14 +160,13 @@ void snapshot_endpoint_write_packets( struct snapshot_endpoint_t * endpoint, uin
     {
         // fragmented packet
 
-/*
-        uint8_t packet_header[SNAPSHOT_MAX_PACKET_HEADER_BYTES];
+        uint8_t header[SNAPSHOT_MAX_PACKET_HEADER_BYTES];
 
-        memset( packet_header, 0, SNAPSHOT_MAX_PACKET_HEADER_BYTES );
+        memset( header, 0, SNAPSHOT_MAX_PACKET_HEADER_BYTES );
 
-        int packet_header_bytes = snapshot_write_packet_header( packet_header, sequence, ack, ack_bits );        
+        int header_bytes = snapshot_write_packet_header( header, sequence, ack, ack_bits );
 
-        int num_fragments = ( packet_bytes / endpoint->config.fragment_size ) + ( ( packet_bytes % endpoint->config.fragment_size ) != 0 ? 1 : 0 );
+        int num_fragments = ( payload_bytes / endpoint->config.fragment_size ) + ( ( payload_bytes % endpoint->config.fragment_size ) != 0 ? 1 : 0 );
 
         snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] sending packet %d as %d fragments", endpoint->config.name, sequence, num_fragments );
 
@@ -176,9 +177,9 @@ void snapshot_endpoint_write_packets( struct snapshot_endpoint_t * endpoint, uin
 
         uint8_t * fragment_packet_data = snapshot_create_packet( endpoint->context, fragment_buffer_size );
 
-        uint8_t * q = packet_data;
+        uint8_t * q = payload_data;
 
-        uint8_t * end = q + packet_bytes;
+        uint8_t * end = q + payload_bytes;
 
         for ( int fragment_id = 0; fragment_id < num_fragments; ++fragment_id )
         {
@@ -191,8 +192,8 @@ void snapshot_endpoint_write_packets( struct snapshot_endpoint_t * endpoint, uin
 
             if ( fragment_id == 0 )
             {
-                memcpy( p, packet_header, packet_header_bytes );
-                p += packet_header_bytes;
+                memcpy( p, header, header_bytes );
+                p += header_bytes;
             }
 
             int bytes_to_copy = endpoint->config.fragment_size;
@@ -208,15 +209,16 @@ void snapshot_endpoint_write_packets( struct snapshot_endpoint_t * endpoint, uin
 
             int fragment_packet_bytes = (int) ( p - fragment_packet_data );
 
-            // todo: no callbacks
-            (void) fragment_packet_bytes;
+            // todo: stash in output packets
   //          endpoint->config.transmit_packet_function( endpoint->config.context, endpoint->config.index, sequence, fragment_packet_data, fragment_packet_bytes );
+
+            // todo
+            (void) fragment_packet_bytes;
 
             endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_FRAGMENTS_SENT]++;
         }
 
         snapshot_destroy_packet( endpoint->context, fragment_packet_data );
-*/
     }
 
     endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_SENT]++;
