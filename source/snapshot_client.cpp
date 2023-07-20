@@ -715,9 +715,9 @@ void snapshot_client_send_payload( struct snapshot_client_t * client )
 {
     snapshot_assert( client );
 
-    int payload_bytes = SNAPSHOT_MAX_PAYLOAD_BYTES;
+    int payload_bytes = SNAPSHOT_MAX_PAYLOAD_BYTES - SNAPSHOT_MAX_PACKET_HEADER_BYTES;
 
-    uint8_t * payload_data = snapshot_create_packet( client->config.context, SNAPSHOT_MAX_PAYLOAD_BYTES );
+    uint8_t * payload_data = snapshot_create_packet( client->config.context, payload_bytes );
 
     // todo: build payload
 
@@ -727,13 +727,15 @@ void snapshot_client_send_payload( struct snapshot_client_t * client )
 
     snapshot_endpoint_write_packets( client->endpoint, payload_data, payload_bytes, &num_packets, &packet_data[0], &packet_bytes[0] );
 
-    if ( num_packets == 0 )
+    if ( num_packets == 1 )
     {
-        snapshot_destroy_packet( client->config.context, payload_data );
-        return;
-    }
+        // send whole packet
 
-    if ( num_packets > 1 )
+        snapshot_payload_packet_t * packet = snapshot_wrap_payload_packet( packet_data[0], packet_bytes[0] );
+
+        snapshot_client_send_packet_to_server_internal( client, packet );
+    }
+    else
     {
         // send fragments
 
@@ -745,14 +747,6 @@ void snapshot_client_send_payload( struct snapshot_client_t * client )
 
             snapshot_destroy_packet( client->config.context, packet_data[i] );
         }
-    }
-    else
-    {
-        // send whole packet
-
-        snapshot_payload_packet_t * packet = snapshot_wrap_payload_packet( packet_data[0], packet_bytes[0] );
-
-        snapshot_client_send_packet_to_server_internal( client, packet );
     }
 
     snapshot_destroy_packet( client->config.context, payload_data );

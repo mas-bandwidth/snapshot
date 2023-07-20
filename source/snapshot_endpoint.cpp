@@ -26,7 +26,6 @@ void snapshot_endpoint_default_config( struct snapshot_endpoint_config_t * confi
     config->name[6] = 'n';
     config->name[7] = 't';
     config->name[8] = '\0';
-    config->max_packet_size = 16 * 1024;
     config->fragment_above = 1024;
     config->max_fragments = 16;
     config->fragment_size = 1024;
@@ -43,7 +42,6 @@ void snapshot_endpoint_default_config( struct snapshot_endpoint_config_t * confi
 struct snapshot_endpoint_t * snapshot_endpoint_create( struct snapshot_endpoint_config_t * config, double time )
 {
     snapshot_assert( config );
-    snapshot_assert( config->max_packet_size > 0 );
     snapshot_assert( config->fragment_above > 0 );
     snapshot_assert( config->max_fragments > 0 );
     snapshot_assert( config->max_fragments <= 256 );
@@ -119,27 +117,9 @@ void snapshot_endpoint_write_packets( struct snapshot_endpoint_t * endpoint, uin
     snapshot_assert( packet_data );
     snapshot_assert( packet_bytes );
 
-    // todo
-
-    (void) endpoint;
-    (void) payload_data;
-    (void) payload_bytes;
-    (void) num_packets;
-    (void) packet_data;
-    (void) packet_bytes;
-}
-
-
-// todo: remove
-void snapshot_endpoint_send_packet( struct snapshot_endpoint_t * endpoint, uint8_t * packet_data, int packet_bytes )
-{
-    snapshot_assert( endpoint );
-    snapshot_assert( packet_data );
-    snapshot_assert( packet_bytes > 0 );
-
-    if ( packet_bytes > endpoint->config.max_packet_size )
+    if ( payload_bytes > SNAPSHOT_MAX_PAYLOAD_BYTES )
     {
-        snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "[%s] packet too large to send. packet is %d bytes, maximum is %d\n", endpoint->config.name, packet_bytes, endpoint->config.max_packet_size );
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "[%s] packet too large to send. payload is %d bytes, maximum is %d\n", endpoint->config.name, payload_bytes, SNAPSHOT_MAX_PAYLOAD_BYTES );
         endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_TOO_LARGE_TO_SEND]++;
         return;
     }
@@ -150,39 +130,37 @@ void snapshot_endpoint_send_packet( struct snapshot_endpoint_t * endpoint, uint8
 
     snapshot_sequence_buffer_generate_ack_bits( endpoint->received_packets, &ack, &ack_bits );
 
-    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] sending packet %d\n", endpoint->config.name, sequence );
+    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] sending payload %d\n", endpoint->config.name, sequence );
 
     struct snapshot_endpoint_sent_packet_data_t * sent_packet_data = (struct snapshot_endpoint_sent_packet_data_t*) snapshot_sequence_buffer_insert( endpoint->sent_packets, sequence );
 
     snapshot_assert( sent_packet_data );
 
     sent_packet_data->time = endpoint->time;
-    sent_packet_data->packet_bytes = endpoint->config.packet_header_size + packet_bytes;
+    sent_packet_data->packet_bytes = endpoint->config.packet_header_size + payload_bytes;
     sent_packet_data->acked = 0;
 
-    if ( packet_bytes <= endpoint->config.fragment_above )
+    if ( payload_bytes <= endpoint->config.fragment_above )
     {
         // regular packet
 
-        snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] sending packet %d without fragmentation\n", endpoint->config.name, sequence );
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] sending payload %d without fragmentation\n", endpoint->config.name, sequence );
 
-        uint8_t * transmit_packet_data = snapshot_create_packet( endpoint->context, packet_bytes + SNAPSHOT_MAX_PACKET_HEADER_BYTES );
+        uint8_t header[SNAPSHOT_MAX_PACKET_HEADER_BYTES];
 
-        int packet_header_bytes = snapshot_write_packet_header( transmit_packet_data, sequence, ack, ack_bits );
+        int header_bytes = snapshot_write_packet_header( header, sequence, ack, ack_bits );
 
-        memcpy( transmit_packet_data + packet_header_bytes, packet_data, packet_bytes );
+        *num_packets = 1;
+        packet_data[0] = payload_data - header_bytes;
+        packet_bytes[0] = payload_bytes + header_bytes;
 
-        // todo: no callbacks
-        /*
-        endpoint->config.transmit_packet_function( endpoint->config.context, endpoint->config.index, sequence, transmit_packet_data, packet_header_bytes + packet_bytes );
-        */
-
-        snapshot_destroy_packet( endpoint->context, transmit_packet_data );
+        memcpy( packet_data[0], header, header_bytes );
     }
     else
     {
         // fragmented packet
 
+/*
         uint8_t packet_header[SNAPSHOT_MAX_PACKET_HEADER_BYTES];
 
         memset( packet_header, 0, SNAPSHOT_MAX_PACKET_HEADER_BYTES );
@@ -204,8 +182,7 @@ void snapshot_endpoint_send_packet( struct snapshot_endpoint_t * endpoint, uint8
 
         uint8_t * end = q + packet_bytes;
 
-        int fragment_id;
-        for ( fragment_id = 0; fragment_id < num_fragments; ++fragment_id )
+        for ( int fragment_id = 0; fragment_id < num_fragments; ++fragment_id )
         {
             uint8_t * p = fragment_packet_data;
 
@@ -235,14 +212,13 @@ void snapshot_endpoint_send_packet( struct snapshot_endpoint_t * endpoint, uint8
 
             // todo: no callbacks
             (void) fragment_packet_bytes;
-            /*
-            endpoint->config.transmit_packet_function( endpoint->config.context, endpoint->config.index, sequence, fragment_packet_data, fragment_packet_bytes );
-            */
+  //          endpoint->config.transmit_packet_function( endpoint->config.context, endpoint->config.index, sequence, fragment_packet_data, fragment_packet_bytes );
 
             endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_FRAGMENTS_SENT]++;
         }
 
         snapshot_destroy_packet( endpoint->context, fragment_packet_data );
+*/
     }
 
     endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_SENT]++;

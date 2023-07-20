@@ -12,7 +12,7 @@
 #define SNAPSHOT_PACKET_PREFIX_BYTES               256
 #define SNAPSHOT_PACKET_POSTFIX_BYTES              256
 
-#define SNAPSHOT_MAX_PAYLOAD_BYTES                1024
+#define SNAPSHOT_MAX_PAYLOAD_BYTES                4096
 
 #define SNAPSHOT_MAX_PASSTHROUGH_BYTES            1024
 

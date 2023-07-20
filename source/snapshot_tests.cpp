@@ -1372,7 +1372,7 @@ void test_payload_packet()
     uint8_t allowed_packet_types[SNAPSHOT_NUM_PACKETS];
     memset( allowed_packet_types, 1, sizeof( allowed_packet_types ) );
 
-    uint8_t out_packet_data[2048];
+    uint8_t out_packet_data[SNAPSHOT_MAX_PAYLOAD_BYTES * 2];
 
     struct snapshot_payload_packet_t * output_packet = (struct snapshot_payload_packet_t*) snapshot_read_packet( packet_data, packet_bytes, &sequence, packet_key, TEST_PROTOCOL_ID, time( NULL ), NULL, allowed_packet_types, out_packet_data, NULL );
 
