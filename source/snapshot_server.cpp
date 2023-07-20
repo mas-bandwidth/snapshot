@@ -12,6 +12,8 @@
 #include "snapshot_replay_protection.h"
 #include "snapshot_encryption_manager.h"
 #include "snapshot_network_simulator.h"
+#include "snapshot_endpoint.h"
+
 #include <time.h>
 
 #define SNAPSHOT_MAX_CONNECT_TOKEN_ENTRIES            ( SNAPSHOT_MAX_CLIENTS * 4 )
@@ -126,6 +128,7 @@ struct snapshot_server_t
     double client_last_packet_receive_time[SNAPSHOT_MAX_CLIENTS];
     uint8_t client_user_data[SNAPSHOT_MAX_CLIENTS][SNAPSHOT_USER_DATA_BYTES];
     struct snapshot_replay_protection_t client_replay_protection[SNAPSHOT_MAX_CLIENTS];
+    struct snapshot_endpoint_t * client_endpoint[SNAPSHOT_MAX_CLIENTS];
     struct snapshot_address_t client_address[SNAPSHOT_MAX_CLIENTS];
     struct snapshot_connect_token_entry_t connect_token_entries[SNAPSHOT_MAX_CONNECT_TOKEN_ENTRIES];
     struct snapshot_encryption_manager_t encryption_manager;
@@ -236,16 +239,39 @@ struct snapshot_server_t * snapshot_server_create( const char * server_address_s
     server->allowed_packets[SNAPSHOT_PASSTHROUGH_PACKET] = 1;
     server->allowed_packets[SNAPSHOT_DISCONNECT_PACKET] = 1;
 
+    for ( int i = 0; i < SNAPSHOT_MAX_CLIENTS; i++ )
+    {
+        snapshot_endpoint_config_t endpoint_config;
+        snapshot_endpoint_default_config( &endpoint_config );
+        snprintf( endpoint_config.name, sizeof(endpoint_config.name), "server[%d]", i );
+        endpoint_config.context = config->context;
+        
+        server->client_endpoint[i] = snapshot_endpoint_create( &endpoint_config, time );
+
+        if ( !server->client_endpoint[i] )
+        {
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to create client endpoint #%d", i );
+            snapshot_server_destroy( server );
+            return NULL;
+        }
+    }
+
     return server;
 }
-
-void snapshot_server_stop( struct snapshot_server_t * server );
 
 void snapshot_server_destroy( struct snapshot_server_t * server )
 {
     snapshot_assert( server );
 
     snapshot_server_stop( server );
+
+    for ( int i = 0; i < SNAPSHOT_MAX_CLIENTS; i++ )
+    {
+        if ( server->client_endpoint[i] )
+        {
+            snapshot_endpoint_destroy( server->client_endpoint[i] );
+        }
+    }
 
     if ( server->socket )
     {
@@ -378,6 +404,11 @@ void snapshot_server_disconnect_client_internal( struct snapshot_server_t * serv
     }
 
     snapshot_replay_protection_reset( &server->client_replay_protection[client_index] );
+
+    if ( server->client_endpoint[client_index] )
+    {
+        snapshot_endpoint_reset( server->client_endpoint[client_index] );
+    }
 
     server->encryption_manager.client_index[server->client_encryption_index[client_index]] = -1;
 
@@ -534,9 +565,9 @@ void snapshot_server_process_connection_request_packet( snapshot_server_t * serv
     }
 
     if ( !snapshot_connect_token_entries_find_or_add( server->connect_token_entries, 
-                                                     from, 
-                                                     packet->connect_token_data + SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES - SNAPSHOT_MAC_BYTES, 
-                                                     server->time ) )
+                                                      from, 
+                                                      packet->connect_token_data + SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES - SNAPSHOT_MAC_BYTES, 
+                                                      server->time ) )
     {
         snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server ignored connection request. connect token has already been used" );
         return;

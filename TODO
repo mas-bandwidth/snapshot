@@ -122,7 +122,7 @@ TODO
 
 		1. Uncompressed snapshots probably won't work, players are remote working not LAN
 
-		2. Concerns around disruptive integration, how exactly does it integrate? Dislike various snapnet embedding things.
+		2. Concerns around disruptive integration, how exactly does it integrate?
 
 		3. How do we tell when object properties have changed? <----- call function when changed?
 

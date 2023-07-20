@@ -78,8 +78,6 @@ struct snapshot_client_t
     int loopback;
 };
 
-void snapshot_client_destroy( struct snapshot_client_t * client );
-
 struct snapshot_client_t * snapshot_client_create( const char * bind_address_string,
                                                    const struct snapshot_client_config_t * config,
                                                    double time )
