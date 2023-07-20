@@ -752,8 +752,6 @@ void snapshot_client_send_payload( struct snapshot_client_t * client )
 
         for ( int i = 0; i < num_packets; i++ )
         {
-            printf( "client send fragment %d to server\n", i );
-
             snapshot_payload_packet_t * packet = snapshot_wrap_payload_packet( packet_data[i], packet_bytes[i] );
 
             snapshot_client_send_packet_to_server( client, packet );

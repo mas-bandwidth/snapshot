@@ -221,19 +221,20 @@ void snapshot_endpoint_write_packets( struct snapshot_endpoint_t * endpoint, uin
     endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_SENT]++;
 }
 
-void snapshot_endpoint_process_packet( struct snapshot_endpoint_t * endpoint, uint8_t * packet_data, int packet_bytes )
+void snapshot_endpoint_process_packet( struct snapshot_endpoint_t * endpoint, uint8_t * packet_data, int packet_bytes, uint8_t * payload_buffer, uint8_t ** out_payload_data, int * out_payload_bytes, uint16_t * out_payload_sequence, uint16_t * out_payload_ack, uint32_t * out_payload_ack_bits )
 {
     snapshot_assert( endpoint );
     snapshot_assert( packet_data );
     snapshot_assert( packet_bytes > 0 );
+    snapshot_assert( payload_buffer );
+    snapshot_assert( out_payload_data );
+    snapshot_assert( out_payload_sequence );
+    snapshot_assert( out_payload_ack );
+    snapshot_assert( out_payload_ack_bits );
 
-    // todo
-
-    printf( "snapshot_endpoint_process_packet (%d bytes)\n", packet_bytes );
-
-    (void) endpoint;
-    (void) packet_data;
-    (void) packet_bytes;
+    *out_payload_data = NULL;
+    *out_payload_bytes = 0;
+    *out_payload_sequence = 0;
 
     if ( packet_bytes > SNAPSHOT_MAX_PACKET_BYTES + SNAPSHOT_MAX_PACKET_HEADER_BYTES + SNAPSHOT_FRAGMENT_HEADER_BYTES )
     {
@@ -280,65 +281,11 @@ void snapshot_endpoint_process_packet( struct snapshot_endpoint_t * endpoint, ui
             return;
         }
 
-        // todo: we need to stash the payload somewhere for processing
-        //        snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] processing packet %d", endpoint->config.name, sequence );
-
-        // todo: no callbacks
-        /*
-        if ( endpoint->config.process_packet_function( endpoint->config.context, 
-                                                       endpoint->config.index, 
-                                                       sequence, 
-                                                       packet_data + packet_header_bytes, 
-                                                       packet_bytes - packet_header_bytes ) )
-        {
-            snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] process packet %d successful", endpoint->config.name, sequence );
-
-            struct snapshot_endpoint_received_packet_data_t * received_packet_data = (struct snapshot_endpoint_received_packet_data_t*) snapshot_sequence_buffer_insert( endpoint->received_packets, sequence );
-
-            snapshot_sequence_buffer_advance_with_cleanup( endpoint->fragment_reassembly, sequence, snapshot_fragment_reassembly_data_cleanup );
-
-            snapshot_assert( received_packet_data );
-
-            received_packet_data->time = endpoint->time;
-            received_packet_data->packet_bytes = endpoint->config.packet_header_size + packet_bytes;
-
-            for ( int i = 0; i < 32; ++i )
-            {
-                if ( ack_bits & 1 )
-                {                    
-                    uint16_t ack_sequence = ack - ((uint16_t)i);
-                    
-                    struct snapshot_endpoint_sent_packet_data_t * sent_packet_data = (struct snapshot_endpoint_sent_packet_data_t*) snapshot_sequence_buffer_find( endpoint->sent_packets, ack_sequence );
-
-                    if ( sent_packet_data && !sent_packet_data->acked && endpoint->num_acks < endpoint->config.ack_buffer_size )
-                    {
-                        snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] acked packet %d", endpoint->config.name, ack_sequence );
-                        endpoint->acks[endpoint->num_acks++] = ack_sequence;
-                        endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_ACKED]++;
-                        sent_packet_data->acked = 1;
-
-                        float rtt = (float) ( endpoint->time - sent_packet_data->time ) * 1000.0f;
-                        snapshot_assert( rtt >= 0.0 );
-                        if ( ( endpoint->rtt == 0.0f && rtt > 0.0f ) || fabs( endpoint->rtt - rtt ) < 0.00001 )
-                        {
-                            endpoint->rtt = rtt;
-                        }
-                        else
-                        {
-                            endpoint->rtt += ( rtt - endpoint->rtt ) * endpoint->config.rtt_smoothing_factor;
-                        }
-                    }
-                }
-                ack_bits >>= 1;
-            }
-        }
-        else
-        {
-            snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "[%s] process packet failed", endpoint->config.name );
-        }
-        */
-
-        // todo: we need some call from the application to us when we have successfully processed a packet, so we can update acks
+        *out_payload_data = packet_data + packet_header_bytes;
+        *out_payload_bytes = packet_bytes - packet_header_bytes;
+        *out_payload_sequence = sequence;
+        *out_payload_ack = ack;
+        *out_payload_ack_bits = ack_bits;
     }
     else
     {
@@ -370,8 +317,6 @@ void snapshot_endpoint_process_packet( struct snapshot_endpoint_t * endpoint, ui
             endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_FRAGMENTS_INVALID]++;
             return;
         }
-
-        printf( "processing packet %d [fragment %d/%d]\n", sequence, fragment_id + 1, num_fragments );
 
         struct snapshot_fragment_reassembly_data_t * reassembly_data = (struct snapshot_fragment_reassembly_data_t*)  snapshot_sequence_buffer_find( endpoint->fragment_reassembly, sequence );
 
@@ -431,20 +376,59 @@ void snapshot_endpoint_process_packet( struct snapshot_endpoint_t * endpoint, ui
         {
             snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] completed reassembly of payload %d", endpoint->config.name, sequence );
 
-            // todo
-            printf( "completed reassembly of payload %d\n", sequence );
+            int payload_bytes = reassembly_data->packet_header_bytes + reassembly_data->packet_bytes;
 
-            // todo: we need to stash this reassembled payload somewhere
-            /*
-            snapshot_endpoint_receive_packet( endpoint, 
-                                              reassembly_data->packet_data + SNAPSHOT_MAX_PACKET_HEADER_BYTES - reassembly_data->packet_header_bytes, 
-                                              reassembly_data->packet_header_bytes + reassembly_data->packet_bytes );
-                                              */
+            memcpy( payload_buffer, reassembly_data->packet_data + SNAPSHOT_MAX_PACKET_HEADER_BYTES - reassembly_data->packet_header_bytes, payload_bytes );
 
             snapshot_sequence_buffer_remove_with_cleanup( endpoint->fragment_reassembly, sequence, snapshot_fragment_reassembly_data_cleanup );
+
+            *out_payload_data = payload_buffer;
+            *out_payload_bytes = payload_bytes;
+            *out_payload_sequence = sequence;
+            *out_payload_ack = ack;
+            *out_payload_ack_bits = ack_bits;
         }
 
         endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_FRAGMENTS_RECEIVED]++;
+    }
+}
+
+void snapshot_endpoint_mark_payload_processed( snapshot_endpoint_t * endpoint, uint16_t sequence, uint16_t ack, uint32_t ack_bits )
+{
+    snapshot_assert( endpoint );
+
+    snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] marking packet %d as processed", endpoint->config.name, sequence );
+
+    snapshot_sequence_buffer_advance_with_cleanup( endpoint->fragment_reassembly, sequence, snapshot_fragment_reassembly_data_cleanup );
+
+    for ( int i = 0; i < 32; ++i )
+    {
+        if ( ack_bits & 1 )
+        {                    
+            uint16_t ack_sequence = ack - ((uint16_t)i);
+            
+            struct snapshot_endpoint_sent_packet_data_t * sent_packet_data = (struct snapshot_endpoint_sent_packet_data_t*) snapshot_sequence_buffer_find( endpoint->sent_packets, ack_sequence );
+
+            if ( sent_packet_data && !sent_packet_data->acked && endpoint->num_acks < endpoint->config.ack_buffer_size )
+            {
+                snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] acked packet %d", endpoint->config.name, ack_sequence );
+                endpoint->acks[endpoint->num_acks++] = ack_sequence;
+                endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_ACKED]++;
+                sent_packet_data->acked = 1;
+
+                float rtt = (float) ( endpoint->time - sent_packet_data->time ) * 1000.0f;
+                snapshot_assert( rtt >= 0.0 );
+                if ( ( endpoint->rtt == 0.0f && rtt > 0.0f ) || fabs( endpoint->rtt - rtt ) < 0.00001 )
+                {
+                    endpoint->rtt = rtt;
+                }
+                else
+                {
+                    endpoint->rtt += ( rtt - endpoint->rtt ) * endpoint->config.rtt_smoothing_factor;
+                }
+            }
+        }
+        ack_bits >>= 1;
     }
 }
 

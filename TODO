@@ -26,13 +26,15 @@ DONE
 
 	Why aren't fragments getting through on server? Fixed. Bad logic in endpoint fragmented send.
 
-TODO
-
 	Implement method for endpoint to process packets, and return (out of band) whole packets for the client to process (post fragment...)
 
-	-------------
+	Extend server process payload to take payload sequence (uint16_t), and to return SNAPSHOT_OK on successful processing, SNAPSHOT_ERROR on fail.
 
-	Setup server so it sends payload packets down to each client.
+	Implement method to mark payload packet successfully processed (for acks) in endpoint.
+
+TODO
+
+	Setup server so it sends payload packets down to each client each time it is updated.
 
 	-------------
 
@@ -40,7 +42,7 @@ TODO
 
 	-------------
 
-	Bring back endpoint tests with updates for the new functions for reading and writing fragmented packets.
+	Bring back endpoint tests with updates for the new functions.
 
 	-------------
 
@@ -106,6 +108,10 @@ TODO
 
 	-------------
 
+	*** FIRST MILESTONE: SnapshotNetDriver in UE5, working on PC and PS5 ***
+
+	-------------
+
 	Now think what are the essential other things?
 
 	A reliable-ordered channel with messages, bidirectional between client and server. For sure.
@@ -117,6 +123,10 @@ TODO
 	Player commands with input and dt sent redundantly all unacked.
 
 	Choke.
+
+	*** SECOND MILESTONE: Low-level protocol is complete ***
+
+	---------------------------
 
 	Schema
 
