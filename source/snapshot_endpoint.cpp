@@ -248,10 +248,6 @@ void snapshot_endpoint_process_packet( struct snapshot_endpoint_t * endpoint, ui
     {
         // regular packet
 
-        // todo
-        printf( "regular packet\n" );
-
-        /*
         endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_RECEIVED]++;
 
         uint16_t sequence;
@@ -270,9 +266,9 @@ void snapshot_endpoint_process_packet( struct snapshot_endpoint_t * endpoint, ui
 
         int packet_payload_bytes = packet_bytes - packet_header_bytes;
 
-        if ( packet_payload_bytes > endpoint->config.max_packet_size )
+        if ( packet_payload_bytes > SNAPSHOT_MAX_PACKET_BYTES )
         {
-            snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "[%s] packet too large to receive. packet is at %d bytes, maximum is %d", endpoint->config.name, packet_payload_bytes, endpoint->config.max_packet_size );
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "[%s] packet too large to receive. packet is at %d bytes, maximum is %d", endpoint->config.name, packet_payload_bytes, SNAPSHOT_MAX_PACKET_BYTES );
             endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_TOO_LARGE_TO_RECEIVE]++;
             return;
         }
@@ -284,8 +280,8 @@ void snapshot_endpoint_process_packet( struct snapshot_endpoint_t * endpoint, ui
             return;
         }
 
-        snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] processing packet %d", endpoint->config.name, sequence );
-        */
+        // todo: we need to stash the payload somewhere for processing
+        //        snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] processing packet %d", endpoint->config.name, sequence );
 
         // todo: no callbacks
         /*
@@ -341,13 +337,12 @@ void snapshot_endpoint_process_packet( struct snapshot_endpoint_t * endpoint, ui
             snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "[%s] process packet failed", endpoint->config.name );
         }
         */
+
+        // todo: we need some call from the application to us when we have successfully processed a packet, so we can update acks
     }
     else
     {
-        // fragment packet
-
-        // todo
-        printf( "fragment packet\n" );
+        // fragment
 
         int fragment_id;
         int num_fragments;
@@ -376,9 +371,8 @@ void snapshot_endpoint_process_packet( struct snapshot_endpoint_t * endpoint, ui
             return;
         }
 
-        printf( "processing packet %x [fragment %d/%d]\n", sequence, fragment_id + 1, num_fragments );
+        printf( "processing packet %d [fragment %d/%d]\n", sequence, fragment_id + 1, num_fragments );
 
-        /*
         struct snapshot_fragment_reassembly_data_t * reassembly_data = (struct snapshot_fragment_reassembly_data_t*)  snapshot_sequence_buffer_find( endpoint->fragment_reassembly, sequence );
 
         if ( !reassembly_data )
@@ -415,11 +409,11 @@ void snapshot_endpoint_process_packet( struct snapshot_endpoint_t * endpoint, ui
 
         if ( reassembly_data->fragment_received[fragment_id] )
         {
-            snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "[%s] ignoring fragment %d of packet %d. fragment already received", endpoint->config.name, fragment_id, sequence );
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "[%s] ignoring fragment %d of payload %d. fragment already received", endpoint->config.name, fragment_id, sequence );
             return;
         }
 
-        snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] received fragment %d of packet %d (%d/%d)", endpoint->config.name, fragment_id, sequence, reassembly_data->num_fragments_received+1, num_fragments );
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] received fragment %d of payload %d (%d/%d)", endpoint->config.name, fragment_id, sequence, reassembly_data->num_fragments_received+1, num_fragments );
 
         reassembly_data->num_fragments_received++;
         reassembly_data->fragment_received[fragment_id] = 1;
@@ -435,17 +429,22 @@ void snapshot_endpoint_process_packet( struct snapshot_endpoint_t * endpoint, ui
 
         if ( reassembly_data->num_fragments_received == reassembly_data->num_fragments_total )
         {
-            snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] completed reassembly of packet %d", endpoint->config.name, sequence );
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] completed reassembly of payload %d", endpoint->config.name, sequence );
 
+            // todo
+            printf( "completed reassembly of payload %d\n", sequence );
+
+            // todo: we need to stash this reassembled payload somewhere
+            /*
             snapshot_endpoint_receive_packet( endpoint, 
                                               reassembly_data->packet_data + SNAPSHOT_MAX_PACKET_HEADER_BYTES - reassembly_data->packet_header_bytes, 
                                               reassembly_data->packet_header_bytes + reassembly_data->packet_bytes );
+                                              */
 
             snapshot_sequence_buffer_remove_with_cleanup( endpoint->fragment_reassembly, sequence, snapshot_fragment_reassembly_data_cleanup );
         }
 
         endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_FRAGMENTS_RECEIVED]++;
-        */
     }
 }
 
