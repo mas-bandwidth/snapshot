@@ -223,6 +223,10 @@ void snapshot_endpoint_write_packets( struct snapshot_endpoint_t * endpoint, uin
 
 void snapshot_endpoint_process_packet( struct snapshot_endpoint_t * endpoint, uint8_t * packet_data, int packet_bytes )
 {
+    snapshot_assert( endpoint );
+    snapshot_assert( packet_data );
+    snapshot_assert( packet_bytes > 0 );
+
     // todo
 
     printf( "snapshot_endpoint_process_packet (%d bytes)\n", packet_bytes );
@@ -230,19 +234,10 @@ void snapshot_endpoint_process_packet( struct snapshot_endpoint_t * endpoint, ui
     (void) endpoint;
     (void) packet_data;
     (void) packet_bytes;
-}
 
-// todo
-#if 0
-void snapshot_endpoint_receive_packet( struct snapshot_endpoint_t * endpoint, uint8_t * packet_data, int packet_bytes )
-{
-    snapshot_assert( endpoint );
-    snapshot_assert( packet_data );
-    snapshot_assert( packet_bytes > 0 );
-
-    if ( packet_bytes > endpoint->config.max_packet_size + SNAPSHOT_MAX_PACKET_HEADER_BYTES + SNAPSHOT_FRAGMENT_HEADER_BYTES )
+    if ( packet_bytes > SNAPSHOT_MAX_PACKET_BYTES + SNAPSHOT_MAX_PACKET_HEADER_BYTES + SNAPSHOT_FRAGMENT_HEADER_BYTES )
     {
-        snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] packet too large to receive. packet is at least %d bytes, maximum is %d", endpoint->config.name, packet_bytes - ( SNAPSHOT_MAX_PACKET_HEADER_BYTES + SNAPSHOT_FRAGMENT_HEADER_BYTES ), endpoint->config.max_packet_size );
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] packet too large to receive. packet is at least %d bytes, maximum is %d", endpoint->config.name, packet_bytes - ( SNAPSHOT_MAX_PACKET_HEADER_BYTES + SNAPSHOT_FRAGMENT_HEADER_BYTES ), SNAPSHOT_MAX_PACKET_BYTES );
         endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_TOO_LARGE_TO_RECEIVE]++;
         return;
     }
@@ -253,6 +248,10 @@ void snapshot_endpoint_receive_packet( struct snapshot_endpoint_t * endpoint, ui
     {
         // regular packet
 
+        // todo
+        printf( "regular packet\n" );
+
+        /*
         endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_RECEIVED]++;
 
         uint16_t sequence;
@@ -286,6 +285,7 @@ void snapshot_endpoint_receive_packet( struct snapshot_endpoint_t * endpoint, ui
         }
 
         snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] processing packet %d", endpoint->config.name, sequence );
+        */
 
         // todo: no callbacks
         /*
@@ -346,6 +346,9 @@ void snapshot_endpoint_receive_packet( struct snapshot_endpoint_t * endpoint, ui
     {
         // fragment packet
 
+        // todo
+        printf( "fragment packet\n" );
+
         int fragment_id;
         int num_fragments;
         int fragment_bytes;
@@ -373,6 +376,9 @@ void snapshot_endpoint_receive_packet( struct snapshot_endpoint_t * endpoint, ui
             return;
         }
 
+        printf( "processing packet %x [fragment %d/%d]\n", sequence, fragment_id + 1, num_fragments );
+
+        /*
         struct snapshot_fragment_reassembly_data_t * reassembly_data = (struct snapshot_fragment_reassembly_data_t*)  snapshot_sequence_buffer_find( endpoint->fragment_reassembly, sequence );
 
         if ( !reassembly_data )
@@ -439,9 +445,9 @@ void snapshot_endpoint_receive_packet( struct snapshot_endpoint_t * endpoint, ui
         }
 
         endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_FRAGMENTS_RECEIVED]++;
+        */
     }
 }
-#endif // #if 0
 
 uint16_t * snapshot_endpoint_get_acks( struct snapshot_endpoint_t * endpoint, int * num_acks )
 {

@@ -29,7 +29,6 @@ struct snapshot_endpoint_config_t
     void * context;
     char name[SNAPSHOT_ENDPOINT_NAME_BYTES];
     int index;
-    int max_packet_size;
     int fragment_above;
     int max_fragments;
     int fragment_size;
