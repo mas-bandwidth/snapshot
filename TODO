@@ -12,11 +12,9 @@ DONE
 
 	It was just a logic error last time ackets sent. Fixed by only using that last time packet sent var for internal packets.
 
+	Extend endpoint so it performs fragmented send.
+
 TODO
-
-	Extend endpoint so it performs fragmentation
-
-	------------
 
 	Integrate endpoint with server.
 
@@ -26,10 +24,25 @@ TODO
 
 	-------------
 
+	Setup client so it processes payload packets from the server.
+
+	-------------
+
+	Bring back endpoint tests with updates for the new functions for reading and writing fragmented packets.
+
+	-------------
+
 	Implement a test that verifies we get payload packets exchanged between client and server.
 
 	-------------
 
+	Test that large fragmented packets get exchanged between client and server.
+
+	-------------
+
+	Test that payload and passthrough packets work with loopback.
+
+	-------------
 
 
 
