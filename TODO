@@ -32,9 +32,11 @@ DONE
 
 	Implement method to mark payload packet successfully processed (for acks) in endpoint.
 
+	Setup server so it sends payload packets down to each client each time it is updated.
+
 TODO
 
-	Setup server so it sends payload packets down to each client each time it is updated.
+	Fix payload packet issue with loopback. For example, we don't really want to encrypt/decrypt with loopback...
 
 	-------------
 
@@ -42,15 +44,23 @@ TODO
 
 	-------------
 
+	Extend client and server to generate range of valid payload packet sizes, with contents that are fully verifiable.
+
+	Verify payload received on client.
+
+	Verify payload received on server.
+
+	-------------
+
 	Bring back endpoint tests with updates for the new functions.
 
 	-------------
 
-	Implement a test that verifies we get payload packets exchanged between client and server.
+	Implement a test that verifies we get payload packets exchanged between client and server. Counters? Flag to send dummy payloads?
 
 	-------------
 
-	Test that large fragmented packets get exchanged between client and server.
+	Test that large fragmented payloads get exchanged between client and server.
 
 	-------------
 
