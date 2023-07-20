@@ -221,6 +221,17 @@ void snapshot_endpoint_write_packets( struct snapshot_endpoint_t * endpoint, uin
     endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_SENT]++;
 }
 
+void snapshot_endpoint_process_packet( struct snapshot_endpoint_t * endpoint, uint8_t * packet_data, int packet_bytes )
+{
+    // todo
+
+    (void) endpoint;
+    (void) packet_data;
+    (void) packet_bytes;
+}
+
+// todo
+#if 0
 void snapshot_endpoint_receive_packet( struct snapshot_endpoint_t * endpoint, uint8_t * packet_data, int packet_bytes )
 {
     snapshot_assert( endpoint );
@@ -428,6 +439,7 @@ void snapshot_endpoint_receive_packet( struct snapshot_endpoint_t * endpoint, ui
         endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_FRAGMENTS_RECEIVED]++;
     }
 }
+#endif // #if 0
 
 uint16_t * snapshot_endpoint_get_acks( struct snapshot_endpoint_t * endpoint, int * num_acks )
 {

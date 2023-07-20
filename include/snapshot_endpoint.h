@@ -85,8 +85,7 @@ uint16_t snapshot_endpoint_sequence( struct snapshot_endpoint_t * endpoint );
 
 void snapshot_endpoint_write_packets( struct snapshot_endpoint_t * endpoint, uint8_t * payload_data, int payload_bytes, int * num_packets, uint8_t ** packet_data, int * packet_bytes );
 
-// todo: rework this
-void snapshot_endpoint_receive_packet( struct snapshot_endpoint_t * endpoint, uint8_t * packet_data, int packet_bytes );
+void snapshot_endpoint_process_packet( struct snapshot_endpoint_t * endpoint, uint8_t * packet_data, int packet_bytes );
 
 uint16_t * snapshot_endpoint_get_acks( struct snapshot_endpoint_t * endpoint, int * num_acks );
 

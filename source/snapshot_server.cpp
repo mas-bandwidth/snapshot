@@ -763,8 +763,12 @@ void snapshot_server_process_payload( struct snapshot_server_t * server, int cli
     snapshot_assert( payload_data );
     snapshot_assert( payload_bytes > 0 );
     snapshot_assert( payload_bytes <= SNAPSHOT_MAX_PAYLOAD_BYTES );
+    snapshot_assert( server->client_connected[client_index] );
 
-    // process payload ...
+    if ( !server->client_connected[client_index] )
+        return;
+
+    // todo
 
     (void) server;
     (void) client_index;
@@ -900,7 +904,7 @@ bool snapshot_server_process_packet( struct snapshot_server_t * server, struct s
                     server->client_confirmed[client_index] = 1;
                 }
                 struct snapshot_payload_packet_t * payload_packet = (snapshot_payload_packet_t*) packet;
-                snapshot_server_process_payload( server, client_index, sequence, payload_packet->payload_data, payload_packet->payload_bytes );
+                snapshot_endpoint_process_packet( server->client_endpoint[client_index], payload_packet->payload_data, payload_packet->payload_bytes );
                 return true;
             }
         }
