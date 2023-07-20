@@ -209,11 +209,8 @@ void snapshot_endpoint_write_packets( struct snapshot_endpoint_t * endpoint, uin
 
             int fragment_packet_bytes = (int) ( p - fragment_packet_data );
 
-            // todo: stash in output packets
-  //          endpoint->config.transmit_packet_function( endpoint->config.context, endpoint->config.index, sequence, fragment_packet_data, fragment_packet_bytes );
-
-            // todo
-            (void) fragment_packet_bytes;
+            packet_data[fragment_id] = fragment_packet_data;
+            packet_bytes[fragment_id] = fragment_packet_bytes;
 
             endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_FRAGMENTS_SENT]++;
         }
