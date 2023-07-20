@@ -124,7 +124,7 @@ struct snapshot_server_t
     int client_encryption_index[SNAPSHOT_MAX_CLIENTS];
     uint64_t client_id[SNAPSHOT_MAX_CLIENTS];
     uint64_t client_sequence[SNAPSHOT_MAX_CLIENTS];
-    double client_last_packet_send_time[SNAPSHOT_MAX_CLIENTS];
+    double client_last_internal_packet_send_time[SNAPSHOT_MAX_CLIENTS];
     double client_last_packet_receive_time[SNAPSHOT_MAX_CLIENTS];
     uint8_t client_user_data[SNAPSHOT_MAX_CLIENTS][SNAPSHOT_USER_DATA_BYTES];
     struct snapshot_replay_protection_t client_replay_protection[SNAPSHOT_MAX_CLIENTS];
@@ -213,7 +213,7 @@ struct snapshot_server_t * snapshot_server_create( const char * server_address_s
     memset( server->client_confirmed, 0, sizeof( server->client_confirmed ) );
     memset( server->client_id, 0, sizeof( server->client_id ) );
     memset( server->client_sequence, 0, sizeof( server->client_sequence ) );
-    memset( server->client_last_packet_send_time, 0, sizeof( server->client_last_packet_send_time ) );
+    memset( server->client_last_internal_packet_send_time, 0, sizeof( server->client_last_internal_packet_send_time ) );
     memset( server->client_last_packet_receive_time, 0, sizeof( server->client_last_packet_receive_time ) );
     memset( server->client_address, 0, sizeof( server->client_address ) );
     memset( server->client_user_data, 0, sizeof( server->client_user_data ) );
@@ -326,14 +326,17 @@ void snapshot_server_send_global_packet( snapshot_server_t * server, void * pack
     server->global_sequence++;
 }
 
-void snapshot_server_send_client_packet( struct snapshot_server_t * server, void * packet, int client_index )
+void snapshot_server_send_packet_to_client( struct snapshot_server_t * server, int client_index, void * packet )
 {
     snapshot_assert( server );
     snapshot_assert( packet );
     snapshot_assert( client_index >= 0 );
     snapshot_assert( client_index < server->max_clients );
     snapshot_assert( server->client_connected[client_index] );
-    snapshot_assert( !server->client_loopback[client_index] );
+
+    // todo: we have to fix loopback payloads. they don't have encryption mappings?!
+    if ( server->client_loopback[client_index] )
+        return;
 
     if ( !snapshot_encryption_manager_touch( &server->encryption_manager, 
                                              server->client_encryption_index[client_index], 
@@ -363,9 +366,15 @@ void snapshot_server_send_client_packet( struct snapshot_server_t * server, void
         snapshot_network_simulator_send_packet( server->config.network_simulator, &server->address, &server->client_address[client_index], packet_data, packet_bytes );
     }
 
-    server->client_sequence[client_index]++;
+    // todo: what to do here? we don't really want to encrypt/decrypt a loopback packet?
+    /*
+    else
+    {
+        server->config.send_loopback_packet_callback( server->config.context, &server->address, packet_data, packet_bytes );
+    }
+    */
 
-    server->client_last_packet_send_time[client_index] = server->time;
+    server->client_sequence[client_index]++;
 }
 
 void snapshot_server_disconnect_client_internal( struct snapshot_server_t * server, int client_index, int send_disconnect_packets )
@@ -399,7 +408,7 @@ void snapshot_server_disconnect_client_internal( struct snapshot_server_t * serv
             struct snapshot_disconnect_packet_t packet;
             packet.packet_type = SNAPSHOT_DISCONNECT_PACKET;
 
-            snapshot_server_send_client_packet( server, &packet, client_index );
+            snapshot_server_send_packet_to_client( server, client_index, &packet );
         }
     }
 
@@ -418,7 +427,7 @@ void snapshot_server_disconnect_client_internal( struct snapshot_server_t * serv
     server->client_confirmed[client_index] = 0;
     server->client_id[client_index] = 0;
     server->client_sequence[client_index] = 0;
-    server->client_last_packet_send_time[client_index] = 0.0;
+    server->client_last_internal_packet_send_time[client_index] = 0.0;
     server->client_last_packet_receive_time[client_index] = 0.0;
     memset( &server->client_address[client_index], 0, sizeof( struct snapshot_address_t ) );
     server->client_encryption_index[client_index] = -1;
@@ -670,7 +679,7 @@ void snapshot_server_connect_client( struct snapshot_server_t * server,
     server->client_id[client_index] = client_id;
     server->client_sequence[client_index] = 0;
     server->client_address[client_index] = *address;
-    server->client_last_packet_send_time[client_index] = server->time;
+    server->client_last_internal_packet_send_time[client_index] = server->time;
     server->client_last_packet_receive_time[client_index] = server->time;
     memcpy( server->client_user_data[client_index], user_data, SNAPSHOT_USER_DATA_BYTES );
 
@@ -683,7 +692,9 @@ void snapshot_server_connect_client( struct snapshot_server_t * server,
     packet.client_index = client_index;
     packet.max_clients = server->max_clients;
 
-    snapshot_server_send_client_packet( server, &packet, client_index );
+    snapshot_server_send_packet_to_client( server, client_index, &packet );
+
+    server->client_last_internal_packet_send_time[client_index] = server->time;
 
     if ( server->config.connect_disconnect_callback )
     {
@@ -1023,14 +1034,15 @@ void snapshot_server_send_packets( struct snapshot_server_t * server )
     for ( i = 0; i < server->max_clients; ++i )
     {
         if ( server->client_connected[i] && !server->client_loopback[i] &&
-             ( server->client_last_packet_send_time[i] + 0.1 <= server->time ) )
+             ( server->client_last_internal_packet_send_time[i] + 0.1 <= server->time ) )
         {
             snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server sent keep alive packet to client %d", i );
             struct snapshot_keep_alive_packet_t packet;
             packet.packet_type = SNAPSHOT_KEEP_ALIVE_PACKET;
             packet.client_index = i;
             packet.max_clients = server->max_clients;
-            snapshot_server_send_client_packet( server, &packet, i );
+            snapshot_server_send_packet_to_client( server, i, &packet );
+            server->client_last_internal_packet_send_time[i] = server->time;
         }
     }
 }
@@ -1102,55 +1114,6 @@ uint64_t snapshot_server_next_packet_sequence( struct snapshot_server_t * server
     return server->client_sequence[client_index];    
 }
 
-void snapshot_server_send_packet( struct snapshot_server_t * server, int client_index, uint8_t * packet_data, int packet_bytes )
-{
-    snapshot_assert( server );
-    snapshot_assert( packet_data );
-    snapshot_assert( packet_bytes >= 0 );
-    snapshot_assert( packet_bytes <= SNAPSHOT_MAX_PACKET_BYTES );
-
-    if ( !server->running )
-        return;
-
-    snapshot_assert( client_index >= 0 );
-    snapshot_assert( client_index < server->max_clients );
-    if ( !server->client_connected[client_index] )
-        return;
-
-    if ( !server->client_loopback[client_index] )
-    {
-        uint8_t buffer[SNAPSHOT_MAX_PAYLOAD_BYTES*2];
-
-        struct snapshot_payload_packet_t * packet = (struct snapshot_payload_packet_t*) buffer;
-
-        packet->packet_type = SNAPSHOT_PAYLOAD_PACKET;
-        packet->payload_bytes = packet_bytes;
-        memcpy( packet->payload_data, packet_data, packet_bytes );
-
-        if ( !server->client_confirmed[client_index] )
-        {
-            struct snapshot_keep_alive_packet_t keep_alive_packet;
-            keep_alive_packet.packet_type = SNAPSHOT_KEEP_ALIVE_PACKET;
-            keep_alive_packet.client_index = client_index;
-            keep_alive_packet.max_clients = server->max_clients;
-            snapshot_server_send_client_packet( server, &keep_alive_packet, client_index );
-        }
-
-        snapshot_server_send_client_packet( server, packet, client_index );
-    }
-    else
-    {
-        snapshot_assert( server->config.send_loopback_packet_callback );
-
-        server->config.send_loopback_packet_callback( server->config.context,
-                                                      &server->client_address[client_index],
-                                                      packet_data, 
-                                                      packet_bytes );
-
-        server->client_last_packet_send_time[client_index] = server->time;
-    }
-}
-
 int snapshot_server_num_connected_clients( struct snapshot_server_t * server )
 {
     snapshot_assert( server );
@@ -1176,11 +1139,73 @@ int snapshot_server_max_clients( struct snapshot_server_t * server )
     return server->max_clients;
 }
 
+void snapshot_server_send_payload_to_client( struct snapshot_server_t * server, int client_index )
+{
+    snapshot_assert( server );
+    snapshot_assert( client_index >= 0 );
+    snapshot_assert( client_index < server->max_clients );
+
+    if ( !server->client_connected[client_index] )
+        return;
+
+    int payload_bytes = SNAPSHOT_MAX_PAYLOAD_BYTES - SNAPSHOT_MAX_PACKET_HEADER_BYTES;  // IMPORTANT: MAX PAYLOAD so we trigger fragmentation and reassembly! :D
+
+    uint8_t * payload_data = snapshot_create_packet( server->config.context, payload_bytes );
+
+    // todo: build payload
+
+    int num_packets = 0;
+    uint8_t * packet_data[SNAPSHOT_ENDPOINT_MAX_WRITE_PACKETS];
+    int packet_bytes[SNAPSHOT_ENDPOINT_MAX_WRITE_PACKETS];
+
+    snapshot_endpoint_write_packets( server->client_endpoint[client_index], payload_data, payload_bytes, &num_packets, &packet_data[0], &packet_bytes[0] );
+
+    if ( num_packets == 1 )
+    {
+        // send whole packet
+
+        // todo
+        printf( "server send whole payload to client %d\n", client_index );
+
+        snapshot_payload_packet_t * packet = snapshot_wrap_payload_packet( packet_data[0], packet_bytes[0] );
+
+        snapshot_server_send_packet_to_client( server, client_index, packet );
+    }
+    else
+    {
+        // send fragments
+
+        // todo
+        printf( "server send %d payload fragments to client %d\n", num_packets, client_index );
+
+        for ( int i = 0; i < num_packets; i++ )
+        {
+            snapshot_payload_packet_t * packet = snapshot_wrap_payload_packet( packet_data[i], packet_bytes[i] );
+
+            snapshot_server_send_packet_to_client( server, client_index, packet );
+
+            snapshot_destroy_packet( server->config.context, packet_data[i] );
+        }
+    }
+
+    snapshot_destroy_packet( server->config.context, payload_data );
+}
+
+void snapshot_server_send_payloads( struct snapshot_server_t * server )
+{
+    snapshot_assert( server );
+    for ( int i = 0; i < server->max_clients; i++ )
+    {
+        snapshot_server_send_payload_to_client( server, i );
+    }
+}
+
 void snapshot_server_update( struct snapshot_server_t * server, double time )
 {
     snapshot_assert( server );
     server->time = time;
     snapshot_server_receive_packets( server );
+    snapshot_server_send_payloads( server );
     snapshot_server_send_packets( server );
     snapshot_server_check_for_timeouts( server );
 }
@@ -1204,7 +1229,7 @@ void snapshot_server_connect_loopback_client( struct snapshot_server_t * server,
     server->client_id[client_index] = client_id;
     server->client_sequence[client_index] = 0;
     memset( &server->client_address[client_index], 0, sizeof( struct snapshot_address_t ) );
-    server->client_last_packet_send_time[client_index] = server->time - 1.0;
+    server->client_last_internal_packet_send_time[client_index] = server->time - 1.0;
     server->client_last_packet_receive_time[client_index] = server->time - 1.0;
 
     if ( user_data )
@@ -1245,7 +1270,7 @@ void snapshot_server_disconnect_loopback_client( struct snapshot_server_t * serv
     server->client_confirmed[client_index] = 0;
     server->client_id[client_index] = 0;
     server->client_sequence[client_index] = 0;
-    server->client_last_packet_send_time[client_index] = 0.0;
+    server->client_last_internal_packet_send_time[client_index] = 0.0;
     server->client_last_packet_receive_time[client_index] = 0.0;
     memset( &server->client_address[client_index], 0, sizeof( struct snapshot_address_t ) );
     server->client_encryption_index[client_index] = -1;
@@ -1272,7 +1297,7 @@ void snapshot_server_send_passthrough_packet( struct snapshot_server_t * server,
     packet->passthrough_bytes = passthrough_bytes;
     memcpy( packet->passthrough_data, passthrough_data, passthrough_bytes );
 
-    snapshot_server_send_client_packet( server, packet, client_index );
+    snapshot_server_send_packet_to_client( server, client_index, packet );
 }
 
 int snapshot_server_client_loopback( struct snapshot_server_t * server, int client_index )
