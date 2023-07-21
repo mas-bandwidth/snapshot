@@ -2,13 +2,31 @@ DONE
 
 	Fix payload packet issue with loopback. For example, we don't really want to encrypt/decrypt with loopback...
 
+	Setup client so it processes payload packets from the server.
+
 TODO
 
-	Setup client so it processes payload packets from the server.
+	Bring back endpoint tests with updates for the new functions.
+
+	Standardize the generate/verify packets to the existing functions (move these functions into snapshot_packets.h/cpp?)
+
+	Make sure all endpoint tests pass.
 
 	-------------
 
-	Extend client and server to generate range of valid payload packet sizes, with contents that are fully verifiable.
+	Add back #define SNAPSHOT_DEVELOPMENT 1 into premake file
+
+	Wrap the network simulator stuff with #if SNAPSHOT_DEVELOPMENT
+
+	Add some new client and server flags, for the "VALIDATE_PAYLOAD"
+
+	Create some tests where these flags get turned on, wrapped with #if SNAPSHOT_DEVELOPMENT
+
+	Make sure tests are wrapped with #if SNAPSHOT_DEVELOPMENT
+
+	-------------
+
+	Extend client and server to generate range of valid payload packet sizes, with contents that are fully verifiable (using new functions in snapshot_packets.h)
 
 	Verify payload received on client.
 
@@ -16,19 +34,7 @@ TODO
 
 	-------------
 
-	Bring back endpoint tests with updates for the new functions.
-
-	-------------
-
-	Implement a test that verifies we get payload packets exchanged between client and server. Counters? Flag to send dummy payloads?
-
-	-------------
-
-	Test that large fragmented payloads get exchanged between client and server.
-
-	-------------
-
-	Test that payload and passthrough packets work with loopback.
+	Implement a test for payload packets, ipv4, ipv6 and loopback.
 
 	-------------
 
