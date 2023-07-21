@@ -76,7 +76,7 @@ const char * snapshot_log_level_string( int level )
 }
 
 static bool log_quiet;
-static int log_level = 9000; //todo SNAPSHOT_LOG_LEVEL_INFO;
+static int log_level = SNAPSHOT_LOG_LEVEL_INFO;
 
 static void log_function( int level, const char * format, ... )
 {
@@ -86,8 +86,7 @@ static void log_function( int level, const char * format, ... )
     vsnprintf( buffer, sizeof( buffer ), format, args );
     if ( level != SNAPSHOT_LOG_LEVEL_NONE )
     {
-        // todo
-//        if ( !log_quiet )
+        if ( !log_quiet )
         {
             const char * level_string = snapshot_log_level_string( level );
             // todo: custom log function

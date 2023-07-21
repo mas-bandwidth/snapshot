@@ -334,20 +334,21 @@ void snapshot_server_send_packet_to_client( struct snapshot_server_t * server, i
     snapshot_assert( client_index < server->max_clients );
     snapshot_assert( server->client_connected[client_index] );
 
-    // todo: we have to fix loopback payloads. they don't have encryption mappings?!
-    if ( server->client_loopback[client_index] )
-        return;
+    uint8_t * packet_key = NULL;
 
-    if ( !snapshot_encryption_manager_touch( &server->encryption_manager, 
-                                             server->client_encryption_index[client_index], 
-                                             &server->client_address[client_index], 
-                                             server->time ) )
+    if ( !server->client_loopback[client_index] )
     {
-        snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "encryption mapping is out of date for client %d", client_index );
-        return;
-    }
+        if ( !snapshot_encryption_manager_touch( &server->encryption_manager, 
+                                                 server->client_encryption_index[client_index], 
+                                                 &server->client_address[client_index], 
+                                                 server->time ) )
+        {
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "encryption mapping is out of date for client %d", client_index );
+            return;
+        }
 
-    uint8_t * packet_key = snapshot_encryption_manager_get_send_key( &server->encryption_manager, server->client_encryption_index[client_index] );
+        packet_key = snapshot_encryption_manager_get_send_key( &server->encryption_manager, server->client_encryption_index[client_index] );
+    }
 
     uint8_t buffer[SNAPSHOT_MAX_PACKET_BYTES];
 
@@ -357,22 +358,21 @@ void snapshot_server_send_packet_to_client( struct snapshot_server_t * server, i
 
     snapshot_assert( packet_bytes <= SNAPSHOT_MAX_PACKET_BYTES );
 
-    if ( !server->config.network_simulator )
+    if ( !server->client_loopback[client_index] )
     {
-        snapshot_platform_socket_send_packet( server->socket, &server->client_address[client_index], packet_data, packet_bytes );
+        if ( !server->config.network_simulator )
+        {
+            snapshot_platform_socket_send_packet( server->socket, &server->client_address[client_index], packet_data, packet_bytes );
+        }
+        else
+        {
+            snapshot_network_simulator_send_packet( server->config.network_simulator, &server->address, &server->client_address[client_index], packet_data, packet_bytes );
+        }
     }
-    else
-    {
-        snapshot_network_simulator_send_packet( server->config.network_simulator, &server->address, &server->client_address[client_index], packet_data, packet_bytes );
-    }
-
-    // todo: what to do here? we don't really want to encrypt/decrypt a loopback packet?
-    /*
     else
     {
         server->config.send_loopback_packet_callback( server->config.context, &server->address, packet_data, packet_bytes );
     }
-    */
 
     server->client_sequence[client_index]++;
 }

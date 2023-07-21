@@ -469,10 +469,6 @@ void * snapshot_read_packet( uint8_t * buffer,
         {
             case SNAPSHOT_CONNECTION_DENIED_PACKET:
             {
-                // todo
-                printf( "decrypted bytes = %d\n", decrypted_bytes );
-                fflush( stdout );
-
                 if ( decrypted_bytes != 0 )
                 {
                     snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "ignored connection denied packet. decrypted packet data is wrong size" );

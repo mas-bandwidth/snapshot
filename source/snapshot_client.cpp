@@ -521,7 +521,7 @@ void snapshot_client_send_packet_to_server( struct snapshot_client_t * client, v
                                                    buffer, 
                                                    SNAPSHOT_MAX_PACKET_BYTES, 
                                                    client->sequence++, 
-                                                   client->write_packet_key, 
+                                                   !client->loopback ? client->write_packet_key : NULL,
                                                    client->connect_token.protocol_id,
                                                    &packet_bytes );
 
