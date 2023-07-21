@@ -1,10 +1,8 @@
 DONE
 
-TODO
-
 	Fix payload packet issue with loopback. For example, we don't really want to encrypt/decrypt with loopback...
 
-	-------------
+TODO
 
 	Setup client so it processes payload packets from the server.
 

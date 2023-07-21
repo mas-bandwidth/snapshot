@@ -283,19 +283,24 @@ void snapshot_client_connect( struct snapshot_client_t * client, uint8_t * conne
     snapshot_client_set_state( client, SNAPSHOT_CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 }
 
-void snapshot_client_process_payload( struct snapshot_client_t * client, uint64_t sequence, uint8_t * data, int bytes )
+int snapshot_client_process_payload( struct snapshot_client_t * client, uint8_t * payload_data, int payload_bytes, uint16_t payload_sequence )
 {
     snapshot_assert( client );
-    snapshot_assert( data );
-    snapshot_assert( bytes > 0 );
-    snapshot_assert( bytes <= SNAPSHOT_MAX_PAYLOAD_BYTES );
+    snapshot_assert( payload_data );
+    snapshot_assert( payload_bytes > 0 );
+    snapshot_assert( payload_bytes <= SNAPSHOT_MAX_PAYLOAD_BYTES );
 
     // process the payload ...
  
+    // todo
+    // printf( "client processed payload %d (%d bytes)\n", payload_sequence, payload_bytes );
+
     (void) client;
-    (void) sequence;
-    (void) data;
-    (void) bytes;
+    (void) payload_data;
+    (void) payload_bytes;
+    (void) payload_sequence;
+
+    return SNAPSHOT_OK;
 }
 
 void snapshot_client_process_passthrough( struct snapshot_client_t * client, uint8_t * data, int bytes )
@@ -414,9 +419,28 @@ bool snapshot_client_process_packet( struct snapshot_client_t * client, struct s
             {
                 snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client received payload packet from server" );
 
-                struct snapshot_payload_packet_t * p = (struct snapshot_payload_packet_t*) packet;
+                struct snapshot_payload_packet_t * payload_packet = (snapshot_payload_packet_t*) packet;
 
-                snapshot_client_process_payload( client, sequence, p->payload_data, p->payload_bytes );
+                uint8_t * payload_packet_data = payload_packet->payload_data;
+                int payload_packet_bytes = payload_packet->payload_bytes;
+
+                uint8_t buffer[SNAPSHOT_PACKET_PREFIX_BYTES + SNAPSHOT_MAX_PACKET_BYTES + SNAPSHOT_PACKET_POSTFIX_BYTES];
+
+                uint8_t * payload_data = NULL;
+                int payload_bytes = 0;
+                uint16_t payload_sequence = 0;
+                uint16_t payload_ack = 0;
+                uint32_t payload_ack_bits = 0;
+
+                snapshot_endpoint_process_packet( client->endpoint, payload_packet_data, payload_packet_bytes, buffer, &payload_data, &payload_bytes, &payload_sequence, &payload_ack, &payload_ack_bits );
+
+                if ( payload_data )
+                {
+                    if ( snapshot_client_process_payload( client, payload_data, payload_bytes, payload_sequence ) == SNAPSHOT_OK )
+                    {
+                        snapshot_endpoint_mark_payload_processed( client->endpoint, payload_sequence, payload_ack, payload_ack_bits );
+                    }
+                }
 
                 client->last_packet_receive_time = client->time;
 

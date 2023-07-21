@@ -780,7 +780,7 @@ int snapshot_server_process_payload( struct snapshot_server_t * server, int clie
         return SNAPSHOT_ERROR;
 
     // todo
-    printf( "server processed payload #%d for client %d (%d bytes)\n", payload_sequence, client_index, payload_bytes );
+    // printf( "server processed payload #%d for client %d (%d bytes)\n", payload_sequence, client_index, payload_bytes );
 
     (void) server;
     (void) client_index;
@@ -1164,9 +1164,6 @@ void snapshot_server_send_payload_to_client( struct snapshot_server_t * server, 
     {
         // send whole packet
 
-        // todo
-        printf( "server send whole payload to client %d\n", client_index );
-
         snapshot_payload_packet_t * packet = snapshot_wrap_payload_packet( packet_data[0], packet_bytes[0] );
 
         snapshot_server_send_packet_to_client( server, client_index, packet );
@@ -1174,9 +1171,6 @@ void snapshot_server_send_payload_to_client( struct snapshot_server_t * server, 
     else
     {
         // send fragments
-
-        // todo
-        printf( "server send %d payload fragments to client %d\n", num_packets, client_index );
 
         for ( int i = 0; i < num_packets; i++ )
         {
