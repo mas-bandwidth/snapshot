@@ -66,8 +66,7 @@ uint8_t * snapshot_write_packet( void * packet, uint8_t * buffer, int buffer_len
 {
     snapshot_assert( packet );
     snapshot_assert( buffer );
-    snapshot_assert( write_packet_key );
-
+ 
     (void) buffer_length;
 
     uint8_t packet_type = ((uint8_t*)packet)[0];
@@ -207,29 +206,32 @@ uint8_t * snapshot_write_packet( void * packet, uint8_t * buffer, int buffer_len
 
         uint8_t * encrypted_finish = p;
 
-        // encrypt the per-packet packet written with the prefix byte, protocol id and version as the associated data. this must match to decrypt.
+        // encrypt the per-packet packet written with the prefix byte, protocol id and version as the associated data. this must match to decrypt
 
-        uint8_t additional_data[SNAPSHOT_VERSION_INFO_BYTES+8+1];
+        if ( write_packet_key )
         {
-            uint8_t * q = additional_data;
-            snapshot_write_bytes( &q, SNAPSHOT_VERSION_INFO, SNAPSHOT_VERSION_INFO_BYTES );
-            snapshot_write_uint64( &q, protocol_id );
-            snapshot_write_uint8( &q, prefix_byte );
-        }
+            uint8_t additional_data[SNAPSHOT_VERSION_INFO_BYTES+8+1];
+            {
+                uint8_t * q = additional_data;
+                snapshot_write_bytes( &q, SNAPSHOT_VERSION_INFO, SNAPSHOT_VERSION_INFO_BYTES );
+                snapshot_write_uint64( &q, protocol_id );
+                snapshot_write_uint8( &q, prefix_byte );
+            }
 
-        uint8_t nonce[12];
-        {
-            uint8_t * q = nonce;
-            snapshot_write_uint32( &q, 0 );
-            snapshot_write_uint64( &q, sequence );
-        }
+            uint8_t nonce[12];
+            {
+                uint8_t * q = nonce;
+                snapshot_write_uint32( &q, 0 );
+                snapshot_write_uint64( &q, sequence );
+            }
 
-        if ( snapshot_crypto_encrypt_aead( encrypted_start, 
-                                           encrypted_finish - encrypted_start, 
-                                           additional_data, sizeof( additional_data ), 
-                                           nonce, write_packet_key ) != SNAPSHOT_OK )
-        {
-            return NULL;
+            if ( snapshot_crypto_encrypt_aead( encrypted_start, 
+                                               encrypted_finish - encrypted_start, 
+                                               additional_data, sizeof( additional_data ), 
+                                               nonce, write_packet_key ) != SNAPSHOT_OK )
+            {
+                return NULL;
+            }
         }
 
         p += SNAPSHOT_MAC_BYTES;
@@ -362,12 +364,6 @@ void * snapshot_read_packet( uint8_t * buffer,
     {
         // *** encrypted packets ***
 
-        if ( !read_packet_key )
-        {
-            snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "ignored encrypted packet. no read packet key for this address" );
-            return NULL;
-        }
-
         if ( buffer_length < 1 + 1 + SNAPSHOT_MAC_BYTES )
         {
             snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "ignored encrypted packet. packet is too small to be valid (%d bytes)", buffer_length );
@@ -426,36 +422,39 @@ void * snapshot_read_packet( uint8_t * buffer,
 
         // decrypt the per-packet type data
 
-        uint8_t additional_data[SNAPSHOT_VERSION_INFO_BYTES+8+1];
-        {
-            uint8_t * q = additional_data;
-            snapshot_write_bytes( &q, SNAPSHOT_VERSION_INFO, SNAPSHOT_VERSION_INFO_BYTES );
-            snapshot_write_uint64( &q, protocol_id );
-            snapshot_write_uint8( &q, prefix_byte );
-        }
-
-        uint8_t nonce[12];
-        {
-            uint8_t * q = nonce;
-            snapshot_write_uint32( &q, 0 );
-            snapshot_write_uint64( &q, *sequence );
-        }
-
         int encrypted_bytes = (int) ( buffer_length - ( p - start ) );
 
-        if ( encrypted_bytes < SNAPSHOT_MAC_BYTES )
-        {
-            snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "ignored encrypted packet. encrypted payload is too small" );
-            return NULL;
-        }
-
-        if ( snapshot_crypto_decrypt_aead( (uint8_t*)p, encrypted_bytes, additional_data, sizeof( additional_data ), nonce, read_packet_key ) != SNAPSHOT_OK )
-        {
-            snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "ignored encrypted packet. failed to decrypt" );
-            return NULL;
-        }
-
         int decrypted_bytes = encrypted_bytes - SNAPSHOT_MAC_BYTES;
+
+        if ( read_packet_key )
+        {
+            uint8_t additional_data[SNAPSHOT_VERSION_INFO_BYTES+8+1];
+            {
+                uint8_t * q = additional_data;
+                snapshot_write_bytes( &q, SNAPSHOT_VERSION_INFO, SNAPSHOT_VERSION_INFO_BYTES );
+                snapshot_write_uint64( &q, protocol_id );
+                snapshot_write_uint8( &q, prefix_byte );
+            }
+
+            uint8_t nonce[12];
+            {
+                uint8_t * q = nonce;
+                snapshot_write_uint32( &q, 0 );
+                snapshot_write_uint64( &q, *sequence );
+            }
+
+            if ( encrypted_bytes < SNAPSHOT_MAC_BYTES )
+            {
+                snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "ignored encrypted packet. encrypted payload is too small" );
+                return NULL;
+            }
+
+            if ( snapshot_crypto_decrypt_aead( (uint8_t*)p, encrypted_bytes, additional_data, sizeof( additional_data ), nonce, read_packet_key ) != SNAPSHOT_OK )
+            {
+                snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "ignored encrypted packet. failed to decrypt" );
+                return NULL;
+            }
+        }
 
         // update the latest replay protection sequence #
 
@@ -470,6 +469,10 @@ void * snapshot_read_packet( uint8_t * buffer,
         {
             case SNAPSHOT_CONNECTION_DENIED_PACKET:
             {
+                // todo
+                printf( "decrypted bytes = %d\n", decrypted_bytes );
+                fflush( stdout );
+
                 if ( decrypted_bytes != 0 )
                 {
                     snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "ignored connection denied packet. decrypted packet data is wrong size" );

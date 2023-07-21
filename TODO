@@ -1,39 +1,5 @@
 DONE
 
-	Integrate endpoint with client.
-
-	Setup client to start sending payload packets regularly.
-
-	Work out how to get endpoint zero copy on write.
-
-	Rework endpoint so it doesn't operate via callbacks... gross.
-
-	Debug what's going wrong with payload packet send, breaking connect.
-
-	It was just a logic error last time ackets sent. Fixed by only using that last time packet sent var for internal packets.
-
-	Extend endpoint so it performs fragmented send.
-
-	Integrate endpoint with server.
-
-	Need to rethink how the fragmentation and reassembly is working with the protocol.
-
-	Right now the idea seems to be that fragmentation would only apply to the payload packet.
-
-	The code I'm working with however was running the fragmentation across all packet types, will need to make adjustments here.
-
-	Setup server to process payload packets from client.
-
-	Why aren't fragments getting through on server? Fixed. Bad logic in endpoint fragmented send.
-
-	Implement method for endpoint to process packets, and return (out of band) whole packets for the client to process (post fragment...)
-
-	Extend server process payload to take payload sequence (uint16_t), and to return SNAPSHOT_OK on successful processing, SNAPSHOT_ERROR on fail.
-
-	Implement method to mark payload packet successfully processed (for acks) in endpoint.
-
-	Setup server so it sends payload packets down to each client each time it is updated.
-
 TODO
 
 	Fix payload packet issue with loopback. For example, we don't really want to encrypt/decrypt with loopback...
