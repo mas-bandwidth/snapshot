@@ -12,7 +12,6 @@
 #include "snapshot_packets.h"
 #include "snapshot_network_simulator.h"
 #include "snapshot_endpoint.h"
-#include "snapshot_fragment.h"
 #include <time.h>
 
 #define SNAPSHOT_CLIENT_MAX_SIM_RECEIVE_PACKETS 256

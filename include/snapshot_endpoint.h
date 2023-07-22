@@ -8,6 +8,10 @@
 
 #include "snapshot_packet_header.h"
 
+#define SNAPSHOT_FRAGMENT_HEADER_BYTES                                      5
+
+#define SNAPSHOT_MAX_FRAGMENTS                                            256
+
 #define SNAPSHOT_ENDPOINT_MAX_WRITE_PACKETS                               256
 
 #define SNAPSHOT_ENDPOINT_NAME_BYTES                                      256
@@ -63,19 +67,6 @@ struct snapshot_endpoint_t
     uint64_t counters[SNAPSHOT_ENDPOINT_NUM_COUNTERS];
 };
 
-struct snapshot_endpoint_sent_packet_data_t
-{
-    double time;
-    uint32_t acked : 1;
-    uint32_t packet_bytes : 31;
-};
-
-struct snapshot_endpoint_received_packet_data_t
-{
-    double time;
-    uint32_t packet_bytes;
-};
-
 struct snapshot_endpoint_t * snapshot_endpoint_create( struct snapshot_endpoint_config_t * config, double time );
 
 void snapshot_endpoint_destroy( struct snapshot_endpoint_t * endpoint );
@@ -103,5 +94,7 @@ float snapshot_endpoint_packet_loss( struct snapshot_endpoint_t * endpoint );
 void snapshot_endpoint_bandwidth( struct snapshot_endpoint_t * endpoint, float * sent_bandwidth_kbps, float * received_bandwidth_kbps, float * acked_bandwidth_kbps );
 
 const uint64_t * snapshot_endpoint_counters( struct snapshot_endpoint_t * endpoint );
+
+// -------------------------------------------------------------------
 
 #endif // #ifndef SNAPSHOT_ENDPOINT_H
