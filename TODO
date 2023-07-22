@@ -8,17 +8,25 @@ DONE
 
 TODO
 
-	Add some new client and server flags, for the "VALIDATE_PAYLOAD", wrapped with #if SNAPSHOT_DEVELOPMENT
+	Add some client and server development flags, wrapped with #if SNAPSHOT_DEVELOPMENT
 
-	Extend client and server to generate range of valid payload packet sizes, with contents that are fully verifiable (using new functions in snapshot_packets.h)
-
-	Verify payload received on client.
-
-	Verify payload received on server.
+	First flag is DEVELOPMENT_FLAG_VALIDATE_PAYLOAD
 
 	-------------
 
-	Create some tests where these flags get turned on and payloads are generated and validated.
+	Move generate_packet_data / validate_packet_data functions into snapshot_packets.h / cppp
+
+	-------------
+
+	Extend client and server to generate and send test payloads with the new generate_packet_data function, #if SNAPSHOT_DEVELOPMENT and the flag validate payload is set.
+
+	Payloads should be a range of sizes, from minimum (1 byte payload) to maximum size (with fragmentation and reassembly.)
+
+	Both client and server should validate payloads received, if the development flag is set.
+
+	-------------
+
+	Implement tests where this development flag is set on client and server.
 
 		test_ipv4_client_server_payload
 		test_ipv4_client_server_payload
