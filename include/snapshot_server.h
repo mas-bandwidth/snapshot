@@ -66,4 +66,8 @@ uint16_t snapshot_server_port( struct snapshot_server_t * server );
 
 void snapshot_server_set_flags( struct snapshot_server_t * server, uint64_t flags );
 
+#if SNAPSHOT_DEVELOPMENT
+void snapshot_server_set_development_flags( struct snapshot_server_t * server, uint64_t flags );
+#endif // #if SNAPSHOT_DEVELOPMENT
+
 #endif // #ifndef SNAPSHOT_SERVER_H

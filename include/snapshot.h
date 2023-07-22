@@ -211,4 +211,12 @@ void snapshot_copy_string( char * dest, const char * source, size_t dest_size );
 
 // -----------------------------------------
 
+#if SNAPSHOT_DEVELOPMENT
+
+#define SNAPSHOT_DEVELOPMENT_FLAG_VALIDATE_PAYLOAD (1<<0)
+
+#endif // #if SNAPSHOT_DEVELOPMENT
+
+// -----------------------------------------
+
 #endif // #ifndef SNAPSHOT_H

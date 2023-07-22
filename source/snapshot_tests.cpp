@@ -4176,6 +4176,91 @@ void test_endpoint_payload()
     snapshot_endpoint_destroy( receiver );
 }
 
+void test_client_server_payload()
+{
+    double time = 0.0;
+    double delta_time = 1.0 / 10.0;
+
+    struct snapshot_client_config_t client_config;
+    snapshot_default_client_config( &client_config );
+
+    // connect client to server
+
+    struct snapshot_client_t * client = snapshot_client_create( "0.0.0.0:50000", &client_config, time );
+
+    snapshot_check( client );
+
+    uint8_t private_key[SNAPSHOT_KEY_BYTES];
+    snapshot_crypto_random_bytes( private_key, SNAPSHOT_KEY_BYTES );
+
+    struct snapshot_server_config_t server_config;
+    snapshot_default_server_config( &server_config );
+    server_config.protocol_id = TEST_PROTOCOL_ID;
+    memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
+
+    const char * server_address = "127.0.0.1:40000";
+
+    struct snapshot_server_t * server = snapshot_server_create( server_address, &server_config, time );
+
+    snapshot_check( server );
+
+    snapshot_server_start( server, 1 );
+
+    uint8_t connect_token[SNAPSHOT_CONNECT_TOKEN_BYTES];
+
+    uint64_t client_id = 0;
+    snapshot_crypto_random_bytes( (uint8_t*) &client_id, 8 );
+
+    uint8_t user_data[SNAPSHOT_USER_DATA_BYTES];
+    snapshot_crypto_random_bytes(user_data, SNAPSHOT_USER_DATA_BYTES);
+
+    snapshot_check( snapshot_generate_connect_token( 1, &server_address, TEST_CONNECT_TOKEN_EXPIRY, TEST_TIMEOUT_SECONDS, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) == SNAPSHOT_OK );
+
+    snapshot_client_connect( client, connect_token );
+
+    while ( 1 )
+    {
+        snapshot_client_update( client, time );
+
+        snapshot_server_update( server, time );
+
+        if ( snapshot_client_state( client ) <= SNAPSHOT_CLIENT_STATE_DISCONNECTED )
+            break;
+
+        if ( snapshot_client_state( client ) == SNAPSHOT_CLIENT_STATE_CONNECTED )
+            break;
+
+        time += delta_time;
+    }
+
+    snapshot_check( snapshot_client_state( client ) == SNAPSHOT_CLIENT_STATE_CONNECTED );
+
+    // exchange payload packets
+
+    snapshot_client_set_development_flags( client, SNAPSHOT_DEVELOPMENT_FLAG_VALIDATE_PAYLOAD );
+    snapshot_server_set_development_flags( server, SNAPSHOT_DEVELOPMENT_FLAG_VALIDATE_PAYLOAD );
+
+    for ( int i = 0; i < 256; i++ )
+    {
+        snapshot_client_update( client, time );
+
+        snapshot_server_update( server, time );
+
+        if ( snapshot_client_state( client ) <= SNAPSHOT_CLIENT_STATE_DISCONNECTED )
+            break;
+
+        time += delta_time;
+    }
+
+    // todo: we should have some payload counter here to make sure payloads are actually being exchanged
+
+    // clean up
+
+    snapshot_server_destroy( server );
+
+    snapshot_client_destroy( client );
+}
+
 #define RUN_TEST( test_function )                                           \
     do                                                                      \
     {                                                                       \
@@ -4255,10 +4340,7 @@ void snapshot_run_tests()
         RUN_TEST( test_acks );
         RUN_TEST( test_acks_packet_loss );
         RUN_TEST( test_endpoint_payload );
-
-        // todo: test_ipv4_client_server_payload
-        // todo: test_ipv6_client_server_payload
-        // todo: test_loopback_client_server_payload
+        RUN_TEST( test_client_server_payload );
     }
 
     printf( "\nAll tests pass.\n\n" );

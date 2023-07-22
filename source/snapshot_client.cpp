@@ -73,10 +73,13 @@ struct snapshot_client_t
     uint8_t read_packet_key[SNAPSHOT_KEY_BYTES];
     uint8_t write_packet_key[SNAPSHOT_KEY_BYTES];
     uint8_t allowed_packets[SNAPSHOT_NUM_PACKETS];
+    int loopback;
+#if SNAPSHOT_DEVELOPMENT
+    uint64_t development_flags;
     uint8_t * sim_receive_packet_data[SNAPSHOT_CLIENT_MAX_SIM_RECEIVE_PACKETS];
     int sim_receive_packet_bytes[SNAPSHOT_CLIENT_MAX_SIM_RECEIVE_PACKETS];
     struct snapshot_address_t sim_receive_from[SNAPSHOT_CLIENT_MAX_SIM_RECEIVE_PACKETS];
-    int loopback;
+#endif // #if SNAPSHOT_DEVELOPMENT
 };
 
 struct snapshot_client_t * snapshot_client_create( const char * bind_address_string,
@@ -295,11 +298,22 @@ int snapshot_client_process_payload( struct snapshot_client_t * client, uint8_t 
     snapshot_assert( payload_bytes > 0 );
     snapshot_assert( payload_bytes <= SNAPSHOT_MAX_PAYLOAD_BYTES );
 
-    // todo: process the payload
+#if SNAPSHOT_DEVELOPMENT
 
-    (void) client;
-    (void) payload_data;
-    (void) payload_bytes;
+    if ( client->development_flags & SNAPSHOT_DEVELOPMENT_FLAG_VALIDATE_PAYLOAD )
+    {    
+        (void) client;
+        (void) payload_data;
+        (void) payload_bytes;
+
+        // todo: validate the payload
+
+        return SNAPSHOT_OK;
+    }
+
+#endif // #if SNAPSHOT_DEVELOPMENT
+
+    // todo: process the real payload
 
     return SNAPSHOT_OK;
 }
@@ -756,41 +770,51 @@ void snapshot_client_send_payload( struct snapshot_client_t * client )
     if ( client->state != SNAPSHOT_CLIENT_STATE_CONNECTED )
         return;
 
-    int payload_bytes = SNAPSHOT_MAX_PAYLOAD_BYTES - SNAPSHOT_MAX_PACKET_HEADER_BYTES;  // IMPORTANT: MAX PAYLOAD so we trigger fragmentation and reassembly! :D
+#if SNAPSHOT_DEVELOPMENT
 
-    uint8_t * payload_data = snapshot_create_packet( client->config.context, payload_bytes );
+    // test payload for validation
 
-    // todo: build payload
-
-    int num_packets = 0;
-    uint8_t * packet_data[SNAPSHOT_ENDPOINT_MAX_WRITE_PACKETS];
-    int packet_bytes[SNAPSHOT_ENDPOINT_MAX_WRITE_PACKETS];
-
-    snapshot_endpoint_write_packets( client->endpoint, payload_data, payload_bytes, &num_packets, &packet_data[0], &packet_bytes[0] );
-
-    if ( num_packets == 1 )
+    if ( client->development_flags & SNAPSHOT_DEVELOPMENT_FLAG_VALIDATE_PAYLOAD )
     {
-        // send whole packet
+        int payload_bytes = SNAPSHOT_MAX_PAYLOAD_BYTES - SNAPSHOT_MAX_PACKET_HEADER_BYTES;  // IMPORTANT: MAX PAYLOAD so we trigger fragmentation and reassembly! :D
 
-        snapshot_payload_packet_t * packet = snapshot_wrap_payload_packet( packet_data[0], packet_bytes[0] );
+        uint8_t * payload_data = snapshot_create_packet( client->config.context, payload_bytes );
 
-        snapshot_client_send_packet_to_server( client, packet );
-    }
-    else
-    {
-        // send fragments
+        int num_packets = 0;
+        uint8_t * packet_data[SNAPSHOT_ENDPOINT_MAX_WRITE_PACKETS];
+        int packet_bytes[SNAPSHOT_ENDPOINT_MAX_WRITE_PACKETS];
 
-        for ( int i = 0; i < num_packets; i++ )
+        snapshot_endpoint_write_packets( client->endpoint, payload_data, payload_bytes, &num_packets, &packet_data[0], &packet_bytes[0] );
+
+        if ( num_packets == 1 )
         {
-            snapshot_payload_packet_t * packet = snapshot_wrap_payload_packet( packet_data[i], packet_bytes[i] );
+            // send whole packet
+
+            snapshot_payload_packet_t * packet = snapshot_wrap_payload_packet( packet_data[0], packet_bytes[0] );
 
             snapshot_client_send_packet_to_server( client, packet );
-
-            snapshot_destroy_packet( client->config.context, packet_data[i] );
         }
-    }
+        else
+        {
+            // send fragments
 
-    snapshot_destroy_packet( client->config.context, payload_data );
+            for ( int i = 0; i < num_packets; i++ )
+            {
+                snapshot_payload_packet_t * packet = snapshot_wrap_payload_packet( packet_data[i], packet_bytes[i] );
+
+                snapshot_client_send_packet_to_server( client, packet );
+
+                snapshot_destroy_packet( client->config.context, packet_data[i] );
+            }
+        }
+
+        snapshot_destroy_packet( client->config.context, payload_data );
+
+        return;
+    }
+#endif // #if SNAPSHOT_DEVELOPMENT
+
+    // todo: generate real payload
 }
 
 void snapshot_client_update( struct snapshot_client_t * client, double time )
@@ -927,3 +951,13 @@ const struct snapshot_address_t * snapshot_client_server_address( struct snapsho
     snapshot_assert( client );
     return &client->server_address;
 }
+
+#if SNAPSHOT_DEVELOPMENT
+
+void snapshot_client_set_development_flags( struct snapshot_client_t * client, uint64_t flags )
+{
+    snapshot_assert( client );
+    client->development_flags = flags;
+}
+
+#endif // #if SNAPSHOT_DEVELOPMENT

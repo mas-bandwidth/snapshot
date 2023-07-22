@@ -72,4 +72,8 @@ const struct snapshot_address_t * snapshot_client_server_address( struct snapsho
 
 const char * snapshot_client_state_name( int client_state );
 
+#if SNAPSHOT_DEVELOPMENT
+void snapshot_client_set_development_flags( struct snapshot_client_t * client, uint64_t flags );
+#endif // #if SNAPSHOT_DEVELOPMENT
+
 #endif // #ifndef SNAPSHOT_CLIENT_H

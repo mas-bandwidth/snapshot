@@ -6,11 +6,11 @@ DONE
 
 	Wrap the network simulator stuff with #if SNAPSHOT_DEVELOPMENT
 
-TODO
-
 	Add some client and server development flags, wrapped with #if SNAPSHOT_DEVELOPMENT
 
 	First flag is DEVELOPMENT_FLAG_VALIDATE_PAYLOAD
+
+TODO
 
 	-------------
 
@@ -34,7 +34,9 @@ TODO
 
 	-------------
 
+	Client should really have a protocol id that is validated against server and connect token on join?
 
+	-------------
 
 
 
