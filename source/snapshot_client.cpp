@@ -438,7 +438,7 @@ bool snapshot_client_process_packet( struct snapshot_client_t * client, struct s
                 {
                     if ( snapshot_client_process_payload( client, payload_data, payload_bytes, payload_sequence ) == SNAPSHOT_OK )
                     {
-                        snapshot_endpoint_mark_payload_processed( client->endpoint, payload_sequence, payload_ack, payload_ack_bits );
+                        snapshot_endpoint_mark_payload_processed( client->endpoint, payload_bytes, payload_sequence, payload_ack, payload_ack_bits );
                     }
                 }
 

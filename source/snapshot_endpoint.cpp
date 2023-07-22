@@ -393,11 +393,18 @@ void snapshot_endpoint_process_packet( struct snapshot_endpoint_t * endpoint, ui
     }
 }
 
-void snapshot_endpoint_mark_payload_processed( snapshot_endpoint_t * endpoint, uint16_t sequence, uint16_t ack, uint32_t ack_bits )
+void snapshot_endpoint_mark_payload_processed( snapshot_endpoint_t * endpoint, int payload_bytes, uint16_t sequence, uint16_t ack, uint32_t ack_bits )
 {
     snapshot_assert( endpoint );
 
     snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] marking packet %d as processed", endpoint->config.name, sequence );
+
+    struct snapshot_endpoint_received_packet_data_t * received_packet_data = (struct snapshot_endpoint_received_packet_data_t*) snapshot_sequence_buffer_insert( endpoint->received_packets, sequence );
+
+    snapshot_assert( received_packet_data );
+
+    received_packet_data->time = endpoint->time;
+    received_packet_data->packet_bytes = endpoint->config.packet_header_size + payload_bytes;
 
     snapshot_sequence_buffer_advance_with_cleanup( endpoint->fragment_reassembly, sequence, snapshot_fragment_reassembly_data_cleanup );
 

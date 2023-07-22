@@ -3758,8 +3758,12 @@ void test_acks()
 
         snapshot_check( receiver_payload_data );
         snapshot_check( receiver_payload_bytes == 8 );
+        for ( int i = 0; i < 8; i++ )
+        {
+            snapshot_check( receiver_payload_data[i] == 0 );
+        }
 
-        snapshot_endpoint_mark_payload_processed( receiver, receiver_payload_sequence, receiver_payload_ack, receiver_payload_ack_bits );
+        snapshot_endpoint_mark_payload_processed( receiver, receiver_payload_bytes, receiver_payload_sequence, receiver_payload_ack, receiver_payload_ack_bits );
 
         // receiver write packet
 
@@ -3784,7 +3788,7 @@ void test_acks()
         snapshot_check( sender_payload_data );
         snapshot_check( sender_payload_bytes == 8 );
 
-        snapshot_endpoint_mark_payload_processed( sender, sender_payload_sequence, sender_payload_ack, sender_payload_ack_bits );
+        snapshot_endpoint_mark_payload_processed( sender, sender_payload_bytes, sender_payload_sequence, sender_payload_ack, sender_payload_ack_bits );
 
         // update endpoints
 
@@ -3801,15 +3805,10 @@ void test_acks()
     memset( sender_acked_packet, 0, sizeof( sender_acked_packet ) );
     int sender_num_acks;
     uint16_t * sender_acks = snapshot_endpoint_get_acks( sender, &sender_num_acks );
-
-    // todo
-    printf( "%d sender acks\n", sender_num_acks );
-
     for ( int i = 0; i < sender_num_acks; ++i )
     {
         if ( sender_acks[i] < TEST_ACKS_NUM_ITERATIONS )
         {
-            printf( "sender acked %d\n", sender_acks[i] );
             sender_acked_packet[sender_acks[i]] = 1;
         }
     }
@@ -3824,14 +3823,12 @@ void test_acks()
     memset( receiver_acked_packet, 0, sizeof( receiver_acked_packet ) );
     int receiver_num_acks;
     uint16_t * receiver_acks = snapshot_endpoint_get_acks( receiver, &receiver_num_acks );
-
-    // todo
-    printf( "%d receiver acks\n", receiver_num_acks );
-
     for ( int i = 0; i < receiver_num_acks; ++i )
     {
         if ( receiver_acks[i] < TEST_ACKS_NUM_ITERATIONS )
+        {
             receiver_acked_packet[receiver_acks[i]] = 1;
+        }
     }
     for ( int i = 0; i < TEST_ACKS_NUM_ITERATIONS / 2; ++i )
     {
