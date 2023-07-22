@@ -5,6 +5,8 @@
 
 #include "snapshot_network_simulator.h"
 
+#if SNAPSHOT_DEVELOPMENT
+
 #include "snapshot_address.h"
 #include "snapshot_packets.h"
 #include <stdlib.h>
@@ -251,3 +253,9 @@ void snapshot_network_simulator_update( struct snapshot_network_simulator_t * ne
         }
     }
 }
+
+#else // #if SNAPSHOT_DEVELOPMENT
+
+int snapshot_network_simulator_dummy = 0;
+
+#endif // #if SNAPSHOT_DEVELOPMENT

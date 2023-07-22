@@ -4,6 +4,9 @@
 */
 
 #include "snapshot_tests.h"
+
+#if SNAPSHOT_DEVELOPMENT
+
 #include "snapshot_crypto.h"
 #include "snapshot_platform.h"
 #include "snapshot_address.h"
@@ -4262,3 +4265,14 @@ void snapshot_run_tests()
 
     fflush( stdout );
 }
+
+#else // #if SNAPSHOT_DEVELOPMENT
+
+#include <stdio.h>
+
+void snapshot_run_tests()
+{
+    printf( "\n[tests are not included in this build]\n\n" );
+}
+
+#endif // #if SNAPSHOT_DEVELOPMENT

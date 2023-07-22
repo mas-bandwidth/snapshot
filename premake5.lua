@@ -6,6 +6,7 @@ solution "snapshot"
 	rtti "Off"
 	warnings "Extra"
 	floatingpoint "Fast"
+	defines { "SNAPSHOT_DEVELOPMENT=1" }
 	flags { "FatalWarnings" }
 	filter "configurations:Debug"
 		symbols "On"

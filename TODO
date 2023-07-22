@@ -1,72 +1,14 @@
 DONE
 
-	Fix payload packet issue with loopback. For example, we don't really want to encrypt/decrypt with loopback...
-
-	Setup client so it processes payload packets from the server.
-
-	Bring back endpoint tests with updates for the new functions.
-
-	test_acks is breaking. Acks aren't working. There's something not right in ack processing since the refactor.
-
-	Dig in...
-
-	Just missing some code in the refactor, fixed.
-
-	test_acks_packet_loss is working. Acks are done!
-
-	There is a crash in the test_acks test.
-
-	It's release only in MacOS, and seems to reproduce on windows only.
-
-	Most likely some sort of stack trashing... ?
-
-	Let's fix it.
-
-	Payload packet needed to be expanded on stack for prefix.
-
-	Now windows is failing (debug and release) with receiver payload bytes != 8. 
-
-	Print out what it is so I can work out what's going on... I guess zero?
-
-	Fixed. There was a sizeof on a pointer that used to be a fixed array.
-
-	Get the payload test working. I suspect there is a slight mismatch on the payload bytes for fragmented packets. Seems like we're not removing the payload header on the first bytes?
-
-	There is a still a mismatch on payload byte delivery in fragmented case, but the non-fragmented case is verified working.
-
-	Debug fragment header mismatch.
-
-	Changed "mark_payload_processed" to "mark_packet_processed". When fragment comes in, it has no payload, but we still need to process acks!!!
-
-	So acks/sequence/ack_bits are at the packet level, not the payload level.
-
-	Looks like fragmentation packet data isn't exactly matching yet, but the size is correct.
-
-	The fragment header is mixed up everywhere.
-
-	The idea is generally, to include the packet header in with each fragment sent, even though it's only really needed on one.
-
-	I should adjust how the fragment header is written to make sure it's simpler... right now it's mismatching on read/write.
-
-	Fixed. I just had some bad logic on read, based on my incorrect assumption on how my old code worked.
-
-TODO
-
-	Clean up. All tests pass now...
-
-	-------------
-
 	Add back #define SNAPSHOT_DEVELOPMENT 1 into premake file
+
+	Wrap the tests with #if SNAPSHOT_DEVELOPMENT
 
 	Wrap the network simulator stuff with #if SNAPSHOT_DEVELOPMENT
 
-	Add some new client and server flags, for the "VALIDATE_PAYLOAD"
+TODO
 
-	Create some tests where these flags get turned on, wrapped with #if SNAPSHOT_DEVELOPMENT
-
-	Make sure tests are wrapped with #if SNAPSHOT_DEVELOPMENT
-
-	-------------
+	Add some new client and server flags, for the "VALIDATE_PAYLOAD", wrapped with #if SNAPSHOT_DEVELOPMENT
 
 	Extend client and server to generate range of valid payload packet sizes, with contents that are fully verifiable (using new functions in snapshot_packets.h)
 
@@ -76,9 +18,14 @@ TODO
 
 	-------------
 
-	Implement a test for payload packets, ipv4, ipv6 and loopback.
+	Create some tests where these flags get turned on and payloads are generated and validated.
+
+		test_ipv4_client_server_payload
+		test_ipv4_client_server_payload
+		test_ipv4_client_server_payload
 
 	-------------
+
 
 
 
@@ -131,6 +78,34 @@ TODO
 	-------------
 
 	*** FIRST MILESTONE: SnapshotNetDriver in UE5, working on PC and PS5 ***
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	-------------
 

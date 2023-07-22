@@ -314,13 +314,15 @@ void snapshot_server_send_global_packet( snapshot_server_t * server, void * pack
 
     snapshot_assert( packet_bytes <= SNAPSHOT_MAX_PACKET_BYTES );
 
-    if ( !server->config.network_simulator )
-    {
-        snapshot_platform_socket_send_packet( server->socket, to, packet_data, packet_bytes );
-    }
-    else
+#if SNAPSHOT_DEVELOPMENT
+    if ( server->config.network_simulator )
     {
         snapshot_network_simulator_send_packet( server->config.network_simulator, &server->address, to, packet_data, packet_bytes );
+    }
+    else
+#endif // #if SNAPSHOT_DEVELOPMENT
+    {
+        snapshot_platform_socket_send_packet( server->socket, to, packet_data, packet_bytes );
     }
 
     server->global_sequence++;
@@ -360,13 +362,15 @@ void snapshot_server_send_packet_to_client( struct snapshot_server_t * server, i
 
     if ( !server->client_loopback[client_index] )
     {
-        if ( !server->config.network_simulator )
-        {
-            snapshot_platform_socket_send_packet( server->socket, &server->client_address[client_index], packet_data, packet_bytes );
-        }
-        else
+#if SNAPSHOT_DEVELOPMENT
+        if ( server->config.network_simulator )
         {
             snapshot_network_simulator_send_packet( server->config.network_simulator, &server->address, &server->client_address[client_index], packet_data, packet_bytes );
+        }
+        else
+#endif // #if SNAPSHOT_DEVELOPMENT
+        {
+            snapshot_platform_socket_send_packet( server->socket, &server->client_address[client_index], packet_data, packet_bytes );
         }
     }
     else
@@ -977,7 +981,27 @@ void snapshot_server_receive_packets( struct snapshot_server_t * server )
 {
     snapshot_assert( server );
 
-    if ( !server->config.network_simulator )
+#if SNAPSHOT_DEVELOPMENT
+    if ( server->config.network_simulator )
+    {
+        // process packets received from network simulator
+
+        int num_packets_received = snapshot_network_simulator_receive_packets( server->config.network_simulator, 
+                                                                               &server->address, 
+                                                                               SNAPSHOT_SERVER_MAX_SIM_RECEIVE_PACKETS, 
+                                                                               server->sim_receive_packet_data, 
+                                                                               server->sim_receive_packet_bytes, 
+                                                                               server->sim_receive_from );
+
+        int i;
+        for ( i = 0; i < num_packets_received; ++i )
+        {
+            snapshot_server_process_packet( server, &server->sim_receive_from[i], server->sim_receive_packet_data[i], server->sim_receive_packet_bytes[i] );
+            snapshot_destroy_packet( server->config.context, server->sim_receive_packet_data[i] );
+        }
+    }
+    else
+#endif // #if SNAPSHOT_DEVELOPMENT
     {
         // process packets received from socket
 
@@ -999,24 +1023,6 @@ void snapshot_server_receive_packets( struct snapshot_server_t * server )
                 break;
 
             snapshot_server_process_packet( server, &from, packet_data + SNAPSHOT_PACKET_PREFIX_BYTES, packet_bytes );
-        }
-    }
-    else
-    {
-        // process packets received from network simulator
-
-        int num_packets_received = snapshot_network_simulator_receive_packets( server->config.network_simulator, 
-                                                                               &server->address, 
-                                                                               SNAPSHOT_SERVER_MAX_SIM_RECEIVE_PACKETS, 
-                                                                               server->sim_receive_packet_data, 
-                                                                               server->sim_receive_packet_bytes, 
-                                                                               server->sim_receive_from );
-
-        int i;
-        for ( i = 0; i < num_packets_received; ++i )
-        {
-            snapshot_server_process_packet( server, &server->sim_receive_from[i], server->sim_receive_packet_data[i], server->sim_receive_packet_bytes[i] );
-            snapshot_destroy_packet( server->config.context, server->sim_receive_packet_data[i] );
         }
     }
 }

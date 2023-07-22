@@ -8,6 +8,8 @@
 
 #include "snapshot.h"
 
+#if SNAPSHOT_DEVELOPMENT
+
 struct snapshot_network_simulator_t * snapshot_network_simulator_create( void * context );
 
 void snapshot_network_simulator_set( struct snapshot_network_simulator_t * network_simulator, 
@@ -34,5 +36,7 @@ int snapshot_network_simulator_receive_packets( struct snapshot_network_simulato
                                                 struct snapshot_address_t * from );
 
 void snapshot_network_simulator_update( struct snapshot_network_simulator_t * network_simulator, double time );
+
+#endif // #if SNAPSHOT_DEVELOPMENT
 
 #endif // #ifndef SNAPSHOT_NETWORK_SIMULATOR

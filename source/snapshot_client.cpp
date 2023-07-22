@@ -40,10 +40,12 @@ void snapshot_default_client_config( struct snapshot_client_config_t * config )
 {
     snapshot_assert( config );
     config->context = NULL;
-    config->network_simulator = NULL;
     config->state_change_callback = NULL;
     config->send_loopback_packet_callback = NULL;
     config->process_passthrough_callback = NULL;
+#if SNAPSHOT_DEVELOPMENT
+    config->network_simulator = NULL;
+#endif // #if SNAPSHOT_DEVELOPMENT
 };
 
 struct snapshot_client_t
@@ -93,21 +95,23 @@ struct snapshot_client_t * snapshot_client_create( const char * bind_address_str
 
     struct snapshot_platform_socket_t * socket = NULL;
 
-    if ( !config->network_simulator )
+#if SNAPSHOT_DEVELOPMENT
+    if ( config->network_simulator )
+    {
+        if ( bind_address.port == 0 )
+        {
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "must bind to a specific port when using network simulator" );
+            return NULL;
+        }
+    }
+    else
+#endif // #if SNAPSHOT_DEVELOPMENT
     {
         socket = snapshot_platform_socket_create( config->context, &bind_address, SNAPSHOT_PLATFORM_SOCKET_NON_BLOCKING, 0.0f, SNAPSHOT_CLIENT_SOCKET_SNDBUF_SIZE, SNAPSHOT_CLIENT_SOCKET_RCVBUF_SIZE );
 
         if ( socket == NULL )
         {
             snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to create client socket" );
-            return NULL;
-        }
-    }
-    else
-    {
-        if ( bind_address.port == 0 )
-        {
-            snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "must bind to a specific port when using network simulator" );
             return NULL;
         }
     }
@@ -125,13 +129,15 @@ struct snapshot_client_t * snapshot_client_create( const char * bind_address_str
         return NULL;
     }
 
+#if SNAPSHOT_DEVELOPMENT
     if ( !config->network_simulator )
     {
-        snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client started on port %d", bind_address.port );
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client started on port %d (network simulator)", bind_address.port );
     }
     else
+#endif // #if SNAPSHOT_DEVELOPMENT
     {
-        snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client started on port %d (network simulator)", bind_address.port );
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client started on port %d", bind_address.port );
     }
 
     client->config = *config;
@@ -493,23 +499,8 @@ void snapshot_client_receive_packets( struct snapshot_client_t * client )
 
     snapshot_assert( !client->loopback );
 
-    if ( !client->config.network_simulator )
-    {
-        // process packets received from socket
-
-        while ( 1 )
-        {
-            struct snapshot_address_t from;
-            uint8_t buffer[SNAPSHOT_PACKET_PREFIX_BYTES + SNAPSHOT_MAX_PACKET_BYTES + SNAPSHOT_PACKET_POSTFIX_BYTES];
-            uint8_t * packet_data = buffer + SNAPSHOT_PACKET_PREFIX_BYTES;
-            int packet_bytes = snapshot_platform_socket_receive_packet( client->socket, &from, packet_data, SNAPSHOT_MAX_PACKET_BYTES );
-            if ( packet_bytes == 0 )
-                break;
-
-            snapshot_client_process_packet( client, &from, packet_data, packet_bytes );
-        }
-    }
-    else
+#if SNAPSHOT_DEVELOPMENT
+    if ( client->config.network_simulator )
     {
         // process packets received from network simulator
 
@@ -525,6 +516,23 @@ void snapshot_client_receive_packets( struct snapshot_client_t * client )
             snapshot_client_process_packet( client, &client->sim_receive_from[i], client->sim_receive_packet_data[i], client->sim_receive_packet_bytes[i] );
             snapshot_destroy_packet( client->config.context, client->sim_receive_packet_data[i] );
             client->sim_receive_packet_data[i] = NULL;
+        }
+    }
+    else
+#endif // #if SNAPSHOT_DEVELOPMENT
+    {
+        // process packets received from socket
+
+        while ( 1 )
+        {
+            struct snapshot_address_t from;
+            uint8_t buffer[SNAPSHOT_PACKET_PREFIX_BYTES + SNAPSHOT_MAX_PACKET_BYTES + SNAPSHOT_PACKET_POSTFIX_BYTES];
+            uint8_t * packet_data = buffer + SNAPSHOT_PACKET_PREFIX_BYTES;
+            int packet_bytes = snapshot_platform_socket_receive_packet( client->socket, &from, packet_data, SNAPSHOT_MAX_PACKET_BYTES );
+            if ( packet_bytes == 0 )
+                break;
+
+            snapshot_client_process_packet( client, &from, packet_data, packet_bytes );
         }
     }
 }
@@ -549,11 +557,13 @@ void snapshot_client_send_packet_to_server( struct snapshot_client_t * client, v
 
     if ( !client->loopback )
     {
+#if SNAPSHOT_DEVELOPMENT
         if ( client->config.network_simulator )
         {
             snapshot_network_simulator_send_packet( client->config.network_simulator, &client->bind_address, &client->server_address, packet_data, packet_bytes );
         }
         else
+#endif // #if SNAPSHOT_DEVELOPMENT
         {
             snapshot_platform_socket_send_packet( client->socket, &client->server_address, packet_data, packet_bytes );
         }
