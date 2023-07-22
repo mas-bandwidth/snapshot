@@ -302,16 +302,14 @@ int snapshot_client_process_payload( struct snapshot_client_t * client, uint8_t 
 
     if ( client->development_flags & SNAPSHOT_DEVELOPMENT_FLAG_VALIDATE_PAYLOAD )
     {    
-        (void) client;
-        (void) payload_data;
-        (void) payload_bytes;
-
-        // todo: validate the payload
+        snapshot_verify_packet_data( payload_data, payload_bytes );
 
         return SNAPSHOT_OK;
     }
 
-#endif // #if SNAPSHOT_DEVELOPMENT
+#endif // #if SNAPSHOT_DEVELOPME SNAPSHOT_OKNT
+
+    (void) client;
 
     // todo: process the real payload
 
@@ -776,9 +774,11 @@ void snapshot_client_send_payload( struct snapshot_client_t * client )
 
     if ( client->development_flags & SNAPSHOT_DEVELOPMENT_FLAG_VALIDATE_PAYLOAD )
     {
-        int payload_bytes = SNAPSHOT_MAX_PAYLOAD_BYTES - SNAPSHOT_MAX_PACKET_HEADER_BYTES;  // IMPORTANT: MAX PAYLOAD so we trigger fragmentation and reassembly! :D
+        uint8_t * payload_data = snapshot_create_packet( client->config.context, SNAPSHOT_MAX_PAYLOAD_BYTES );
 
-        uint8_t * payload_data = snapshot_create_packet( client->config.context, payload_bytes );
+        int payload_bytes = 0;
+
+        snapshot_generate_packet_data( payload_data, payload_bytes, SNAPSHOT_MAX_PAYLOAD_BYTES );
 
         int num_packets = 0;
         uint8_t * packet_data[SNAPSHOT_ENDPOINT_MAX_WRITE_PACKETS];

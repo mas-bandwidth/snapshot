@@ -10,13 +10,9 @@ DONE
 
 	First flag is DEVELOPMENT_FLAG_VALIDATE_PAYLOAD
 
-TODO
+	Move generate_packet_data / validate_packet_data functions into snapshot_packets.h
 
-	-------------
-
-	Move generate_packet_data / validate_packet_data functions into snapshot_packets.h / cppp
-
-	-------------
+	Update tests to use new methods
 
 	Extend client and server to generate and send test payloads with the new generate_packet_data function, #if SNAPSHOT_DEVELOPMENT and the flag validate payload is set.
 
@@ -24,17 +20,11 @@ TODO
 
 	Both client and server should validate payloads received, if the development flag is set.
 
-	-------------
+TODO
 
-	Implement tests where this development flag is set on client and server.
+	Extend client and server to have counters
 
-		test_ipv4_client_server_payload
-		test_ipv4_client_server_payload
-		test_ipv4_client_server_payload
-
-	-------------
-
-	Client should really have a protocol id that is validated against server and connect token on join?
+	Extend payload test to check that both client and server are sending and receiving payloads
 
 	-------------
 

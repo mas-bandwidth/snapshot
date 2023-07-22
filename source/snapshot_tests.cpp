@@ -4000,25 +4000,6 @@ void test_acks_packet_loss()
     snapshot_endpoint_destroy( receiver );
 }
 
-void generate_payload_packet( uint8_t * packet_data, int & packet_bytes )
-{
-    packet_bytes = rand() % SNAPSHOT_MAX_PAYLOAD_BYTES;
-    const int start = packet_bytes % 256;
-    for ( int i = 0; i < packet_bytes; i++ )
-    {
-        packet_data[i] = (uint8_t) ( start + i ) % 256;
-    }
-}
-
-void verify_payload_packet( const uint8_t * packet_data, int packet_bytes )
-{
-    const int start = packet_bytes % 256;
-    for ( int i = 0; i < packet_bytes; i++ )
-    {
-        snapshot_check( packet_data[i] == (uint8_t) ( ( start + i ) % 256 ) );
-    }
-}
-
 void test_endpoint_payload()
 {
     double time = 100.0;
@@ -4043,7 +4024,7 @@ void test_endpoint_payload()
 
         int dummy_payload_bytes = 0;
         uint8_t * dummy_payload_data = payload_buffer + SNAPSHOT_PACKET_PREFIX_BYTES;
-        generate_payload_packet( dummy_payload_data, dummy_payload_bytes );
+        snapshot_generate_packet_data( dummy_payload_data, dummy_payload_bytes, SNAPSHOT_MAX_PAYLOAD_BYTES );
 
         // sender write packet(s)
 
@@ -4072,7 +4053,7 @@ void test_endpoint_payload()
                 snapshot_check( receiver_payload_data );
                 snapshot_check( receiver_payload_bytes == dummy_payload_bytes );
 
-                verify_payload_packet( receiver_payload_data, receiver_payload_bytes );
+                snapshot_verify_packet_data( receiver_payload_data, receiver_payload_bytes );
 
                 snapshot_endpoint_mark_payload_processed( receiver, receiver_payload_sequence, receiver_payload_ack, receiver_payload_ack_bits, receiver_payload_bytes );
             }
@@ -4111,7 +4092,7 @@ void test_endpoint_payload()
                 snapshot_check( sender_payload_data );
                 snapshot_check( sender_payload_bytes == dummy_payload_bytes );
 
-                verify_payload_packet( sender_payload_data, sender_payload_bytes );
+                snapshot_verify_packet_data( sender_payload_data, sender_payload_bytes );
 
                 snapshot_endpoint_mark_payload_processed( sender, sender_payload_sequence, sender_payload_ack, sender_payload_ack_bits, sender_payload_bytes );
             }

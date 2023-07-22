@@ -115,4 +115,32 @@ void * snapshot_read_packet( uint8_t * buffer,
                              uint8_t * out_packet_buffer,
                              struct snapshot_replay_protection_t * replay_protection );
 
+#if SNAPSHOT_DEVELOPMENT
+
+inline void snapshot_generate_packet_data( uint8_t * packet_data, int & packet_bytes, int max_size )
+{
+    packet_bytes = 1 + rand() % ( max_size - 1 );
+    const int start = packet_bytes % 256;
+    for ( int i = 0; i < packet_bytes; i++ )
+    {
+        packet_data[i] = (uint8_t) ( start + i ) % 256;
+    }
+}
+
+inline void snapshot_verify_packet_data( const uint8_t * packet_data, int packet_bytes )
+{
+    const int start = packet_bytes % 256;
+    for ( int i = 0; i < packet_bytes; i++ )
+    {
+        if ( packet_data[i] != (uint8_t) ( ( start + i ) % 256 ) )
+        {
+            printf( "packet data failed validation!\n" );
+            fflush( stdout );
+            exit( 1 );
+        }
+    }
+}
+
+#endif // #if SNAPSHOT_DEVELOPMENT
+
 #endif // #ifndef SNAPSHOT_PACKETS_H
