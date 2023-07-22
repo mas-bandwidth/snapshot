@@ -425,21 +425,19 @@ bool snapshot_client_process_packet( struct snapshot_client_t * client, struct s
                 uint8_t * payload_data = NULL;
                 int payload_bytes = 0;
 
-                uint16_t packet_sequence = 0;
-                uint16_t packet_ack = 0;
-                uint32_t packet_ack_bits = 0;
+                uint16_t payload_sequence = 0;
+                uint16_t payload_ack = 0;
+                uint32_t payload_ack_bits = 0;
 
-                snapshot_endpoint_process_packet( client->endpoint, payload_packet_data, payload_packet_bytes, buffer, &payload_data, &payload_bytes, &packet_sequence, &packet_ack, &packet_ack_bits );
+                snapshot_endpoint_process_packet( client->endpoint, payload_packet_data, payload_packet_bytes, buffer, &payload_data, &payload_bytes, &payload_sequence, &payload_ack, &payload_ack_bits );
 
                 if ( payload_data )
                 {
-                    if ( snapshot_client_process_payload( client, payload_data, payload_bytes ) != SNAPSHOT_OK )
+                    if ( snapshot_client_process_payload( client, payload_data, payload_bytes ) == SNAPSHOT_OK )
                     {
-                        return false;
+                        snapshot_endpoint_mark_payload_processed( client->endpoint, payload_sequence, payload_ack, payload_ack_bits, payload_bytes );
                     }
                 }
-
-                snapshot_endpoint_mark_packet_processed( client->endpoint, packet_sequence, packet_ack, packet_ack_bits, payload_packet_bytes );
 
                 client->last_packet_receive_time = client->time;
 

@@ -921,18 +921,17 @@ bool snapshot_server_process_packet( struct snapshot_server_t * server, struct s
                 uint8_t buffer[SNAPSHOT_PACKET_PREFIX_BYTES + SNAPSHOT_MAX_PACKET_BYTES + SNAPSHOT_PACKET_POSTFIX_BYTES];
                 uint8_t * payload_data = NULL;
                 int payload_bytes = 0;
-                uint16_t packet_sequence = 0;
-                uint16_t packet_ack = 0;
-                uint32_t packet_ack_bits = 0;
-                snapshot_endpoint_process_packet( server->client_endpoint[client_index], payload_packet_data, payload_packet_bytes, buffer, &payload_data, &payload_bytes, &packet_sequence, &packet_ack, &packet_ack_bits );
+                uint16_t payload_sequence = 0;
+                uint16_t payload_ack = 0;
+                uint32_t payload_ack_bits = 0;
+                snapshot_endpoint_process_packet( server->client_endpoint[client_index], payload_packet_data, payload_packet_bytes, buffer, &payload_data, &payload_bytes, &payload_sequence, &payload_ack, &payload_ack_bits );
                 if ( payload_data )
                 {
-                    if ( snapshot_server_process_payload( server, client_index, payload_data, payload_bytes ) != SNAPSHOT_OK )
+                    if ( snapshot_server_process_payload( server, client_index, payload_data, payload_bytes ) == SNAPSHOT_OK )
                     {
-                        return false;
+                        snapshot_endpoint_mark_payload_processed( server->client_endpoint[client_index], payload_sequence, payload_ack, payload_ack_bits, payload_packet_bytes );
                     }
                 }
-                snapshot_endpoint_mark_packet_processed( server->client_endpoint[client_index], packet_sequence, packet_ack, packet_ack_bits, payload_packet_bytes );
                 return true;
             }
         }

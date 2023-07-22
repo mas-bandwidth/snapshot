@@ -40,9 +40,19 @@ DONE
 
 	So acks/sequence/ack_bits are at the packet level, not the payload level.
 
+	Looks like fragmentation packet data isn't exactly matching yet, but the size is correct.
+
+	The fragment header is mixed up everywhere.
+
+	The idea is generally, to include the packet header in with each fragment sent, even though it's only really needed on one.
+
+	I should adjust how the fragment header is written to make sure it's simpler... right now it's mismatching on read/write.
+
+	Fixed. I just had some bad logic on read, based on my incorrect assumption on how my old code worked.
+
 TODO
 
-	Looks like fragmentation packet data isn't exactly matching yet, but the size is correct.
+	Clean up. All tests pass now...
 
 	-------------
 

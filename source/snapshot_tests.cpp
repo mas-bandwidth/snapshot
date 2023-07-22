@@ -426,14 +426,14 @@ struct TestObject
         data.g = true;
 
         data.numItems = MaxItems / 2;
-        for ( int i = 0; i < data.numItems; ++i )
+        for ( int i = 0; i < data.numItems; i++ )
             data.items[i] = i + 10;
 
         data.float_value = 3.1415926f;
         data.double_value = 1 / 3.0;
         data.uint64_value = 0x1234567898765432L;
 
-        for ( int i = 0; i < (int) sizeof( data.bytes ); ++i )
+        for ( int i = 0; i < (int) sizeof( data.bytes ); i++ )
             data.bytes[i] = ( i * 37 ) % 255;
 
         strcpy( data.string, "hello world!" );
@@ -463,7 +463,7 @@ struct TestObject
         serialize_bool( stream, data.g );
 
         serialize_int( stream, data.numItems, 0, MaxItems - 1 );
-        for ( int i = 0; i < data.numItems; ++i )
+        for ( int i = 0; i < data.numItems; i++ )
             serialize_bits( stream, data.items[i], 8 );
 
         serialize_float( stream, data.float_value );
@@ -530,7 +530,7 @@ void test_crypto_random_bytes()
     const int BufferSize = 64;
     uint8_t buffer[BufferSize];
     snapshot_crypto_random_bytes( buffer, BufferSize );
-    for ( int i = 0; i < 100; ++i )
+    for ( int i = 0; i < 100; i++ )
     {
         uint8_t buffer2[BufferSize];
         snapshot_crypto_random_bytes( buffer2, BufferSize );
@@ -1499,7 +1499,7 @@ void test_encryption_manager()
 
     struct encryption_mapping_t encryption_mapping[NUM_ENCRYPTION_MAPPINGS];
     memset( encryption_mapping, 0, sizeof( encryption_mapping ) );
-    for ( int i = 0; i < NUM_ENCRYPTION_MAPPINGS; ++i )
+    for ( int i = 0; i < NUM_ENCRYPTION_MAPPINGS; i++ )
     {
         encryption_mapping[i].address.type = SNAPSHOT_ADDRESS_IPV6;
         encryption_mapping[i].address.data.ipv6[7] = 1;
@@ -1510,7 +1510,7 @@ void test_encryption_manager()
 
     // add the encryption mappings to the manager and make sure they can be looked up by address
 
-    for ( int i = 0; i < NUM_ENCRYPTION_MAPPINGS; ++i )
+    for ( int i = 0; i < NUM_ENCRYPTION_MAPPINGS; i++ )
     {
         int encryption_index = snapshot_encryption_manager_find_encryption_mapping( &encryption_manager, &encryption_mapping[i].address, time );
 
@@ -1557,7 +1557,7 @@ void test_encryption_manager()
 
     // make sure the encryption mappings that were removed can no longer be looked up by address
 
-    for ( int i = 0; i < NUM_ENCRYPTION_MAPPINGS; ++i )
+    for ( int i = 0; i < NUM_ENCRYPTION_MAPPINGS; i++ )
     {
         int encryption_index = snapshot_encryption_manager_find_encryption_mapping( &encryption_manager, &encryption_mapping[i].address, time );
 
@@ -1599,7 +1599,7 @@ void test_encryption_manager()
 
     // all encryption mappings should be able to be looked up by address again
 
-    for ( int i = 0; i < NUM_ENCRYPTION_MAPPINGS; ++i )
+    for ( int i = 0; i < NUM_ENCRYPTION_MAPPINGS; i++ )
     {
         int encryption_index = snapshot_encryption_manager_find_encryption_mapping( &encryption_manager, &encryption_mapping[i].address, time );
 
@@ -1617,7 +1617,7 @@ void test_encryption_manager()
 
     time += TEST_TIMEOUT_SECONDS * 2;
 
-    for ( int i = 0; i < NUM_ENCRYPTION_MAPPINGS; ++i )
+    for ( int i = 0; i < NUM_ENCRYPTION_MAPPINGS; i++ )
     {
         int encryption_index = snapshot_encryption_manager_find_encryption_mapping( &encryption_manager, &encryption_mapping[i].address, time );
 
@@ -1630,7 +1630,7 @@ void test_encryption_manager()
 
     // add the same encryption mappings after timeout
 
-    for ( int i = 0; i < NUM_ENCRYPTION_MAPPINGS; ++i )
+    for ( int i = 0; i < NUM_ENCRYPTION_MAPPINGS; i++ )
     {
         int encryption_index = snapshot_encryption_manager_find_encryption_mapping( &encryption_manager, &encryption_mapping[i].address, time );
 
@@ -1663,7 +1663,7 @@ void test_encryption_manager()
 
     snapshot_encryption_manager_reset( &encryption_manager );
 
-    for ( int i = 0; i < NUM_ENCRYPTION_MAPPINGS; ++i )
+    for ( int i = 0; i < NUM_ENCRYPTION_MAPPINGS; i++ )
     {
         int encryption_index = snapshot_encryption_manager_find_encryption_mapping( &encryption_manager, &encryption_mapping[i].address, time );
 
@@ -1699,7 +1699,7 @@ void test_replay_protection()
 {
     struct snapshot_replay_protection_t replay_protection;
 
-    for ( int i = 0; i < 2; ++i )
+    for ( int i = 0; i < 2; i++ )
     {
         snapshot_replay_protection_reset( &replay_protection );
 
@@ -1834,7 +1834,7 @@ void generate_passthrough_packet( uint8_t * packet_data, int & packet_bytes )
 {
     packet_bytes = rand() % SNAPSHOT_MAX_PASSTHROUGH_BYTES;
     const int start = packet_bytes % 256;
-    for ( int i = 0; i < packet_bytes; ++i )
+    for ( int i = 0; i < packet_bytes; i++ )
     {
         packet_data[i] = (uint8_t) ( start + i ) % 256;
     }
@@ -1843,7 +1843,7 @@ void generate_passthrough_packet( uint8_t * packet_data, int & packet_bytes )
 void verify_passthrough_packet( const uint8_t * packet_data, int packet_bytes )
 {
     const int start = packet_bytes % 256;
-    for ( int i = 0; i < packet_bytes; ++i )
+    for ( int i = 0; i < packet_bytes; i++ )
     {
         snapshot_check( packet_data[i] == (uint8_t) ( ( start + i ) % 256 ) );
     }
@@ -2450,7 +2450,7 @@ void test_client_server_keep_alive()
 
     int num_iterations = (int) ceil( 1.25f * TEST_TIMEOUT_SECONDS / delta_time );
 
-    for ( int i = 0; i < num_iterations; ++i )
+    for ( int i = 0; i < num_iterations; i++ )
     {
         snapshot_network_simulator_update( network_simulator, time );
 
@@ -2502,7 +2502,7 @@ void test_client_server_multiple_clients()
 
     snapshot_check( server );
 
-    for ( int i = 0; i < NUM_START_STOP_ITERATIONS; ++i )
+    for ( int i = 0; i < NUM_START_STOP_ITERATIONS; i++ )
     {
         // start the server with max # of clients for this iteration
 
@@ -2514,7 +2514,7 @@ void test_client_server_multiple_clients()
 
         snapshot_check( client );
 
-        for ( int j = 0; j < max_clients[i]; ++j )
+        for ( int j = 0; j < max_clients[i]; j++ )
         {
             char client_bind_address[SNAPSHOT_MAX_ADDRESS_STRING_LENGTH];
             snprintf( client_bind_address, sizeof(client_bind_address), "0.0.0.0:%d", 30000 + j );
@@ -2556,7 +2556,7 @@ void test_client_server_multiple_clients()
         {
             snapshot_network_simulator_update( network_simulator, time );
 
-            for ( int j = 0; j < max_clients[i]; ++j )
+            for ( int j = 0; j < max_clients[i]; j++ )
             {
                 snapshot_client_update( client[j], time );
             }
@@ -2565,7 +2565,7 @@ void test_client_server_multiple_clients()
 
             int num_connected_clients = 0;
 
-            for ( int j = 0; j < max_clients[i]; ++j )
+            for ( int j = 0; j < max_clients[i]; j++ )
             {
                 if ( snapshot_client_state( client[j] ) <= SNAPSHOT_CLIENT_STATE_DISCONNECTED )
                     break;
@@ -2582,13 +2582,13 @@ void test_client_server_multiple_clients()
 
         snapshot_check( snapshot_server_num_connected_clients( server ) == max_clients[i] );
 
-        for ( int j = 0; j < max_clients[i]; ++j )
+        for ( int j = 0; j < max_clients[i]; j++ )
         {
             snapshot_check( snapshot_client_state( client[j] ) == SNAPSHOT_CLIENT_STATE_CONNECTED );
             snapshot_check( snapshot_server_client_connected( server, j ) == 1 );
         }
 
-        for ( int j = 0; j < max_clients[i]; ++j )
+        for ( int j = 0; j < max_clients[i]; j++ )
         {
             snapshot_client_destroy( client[j] );
         }
@@ -3176,7 +3176,7 @@ void test_client_side_disconnect()
 
     snapshot_client_disconnect( client );
 
-    for ( int i = 0; i < 10; ++i )
+    for ( int i = 0; i < 10; i++ )
     {
         snapshot_network_simulator_update( network_simulator, time );
 
@@ -3274,7 +3274,7 @@ void test_server_side_disconnect()
 
     snapshot_server_disconnect_client( server, 0 );
 
-    for ( int i = 0; i < 10; ++i )
+    for ( int i = 0; i < 10; i++ )
     {
         snapshot_network_simulator_update( network_simulator, time );
 
@@ -3544,12 +3544,12 @@ void test_sequence_buffer()
     snapshot_check( sequence_buffer->num_entries == TEST_SEQUENCE_BUFFER_SIZE );
     snapshot_check( sequence_buffer->entry_stride == sizeof( struct test_sequence_data_t ) );
 
-    for ( int i = 0; i < TEST_SEQUENCE_BUFFER_SIZE; ++i )
+    for ( int i = 0; i < TEST_SEQUENCE_BUFFER_SIZE; i++ )
     {
         snapshot_check( snapshot_sequence_buffer_find( sequence_buffer, ((uint16_t)i) ) == NULL );
     }                                                                      
 
-    for ( int i = 0; i <= TEST_SEQUENCE_BUFFER_SIZE*4; ++i )
+    for ( int i = 0; i <= TEST_SEQUENCE_BUFFER_SIZE*4; i++ )
     {
         struct test_sequence_data_t * entry = (struct test_sequence_data_t*) snapshot_sequence_buffer_insert( sequence_buffer, ((uint16_t)i) );
         snapshot_check( entry );
@@ -3557,14 +3557,14 @@ void test_sequence_buffer()
         snapshot_check( sequence_buffer->sequence == i + 1 );
     }
 
-    for ( int i = 0; i <= TEST_SEQUENCE_BUFFER_SIZE; ++i )
+    for ( int i = 0; i <= TEST_SEQUENCE_BUFFER_SIZE; i++ )
     {
         struct test_sequence_data_t * entry = (struct test_sequence_data_t*) snapshot_sequence_buffer_insert( sequence_buffer, ((uint16_t)i) );
         snapshot_check( entry == NULL );
     }    
 
     int index = TEST_SEQUENCE_BUFFER_SIZE * 4;
-    for ( int i = 0; i < TEST_SEQUENCE_BUFFER_SIZE; ++i )
+    for ( int i = 0; i < TEST_SEQUENCE_BUFFER_SIZE; i++ )
     {
         struct test_sequence_data_t * entry = (struct test_sequence_data_t*) snapshot_sequence_buffer_find( sequence_buffer, (uint16_t) index );
         snapshot_check( entry );
@@ -3579,7 +3579,7 @@ void test_sequence_buffer()
     snapshot_check( sequence_buffer->num_entries == TEST_SEQUENCE_BUFFER_SIZE );
     snapshot_check( sequence_buffer->entry_stride == sizeof( struct test_sequence_data_t ) );
 
-    for ( int i = 0; i < TEST_SEQUENCE_BUFFER_SIZE; ++i )
+    for ( int i = 0; i < TEST_SEQUENCE_BUFFER_SIZE; i++ )
     {
         snapshot_check( snapshot_sequence_buffer_find( sequence_buffer, (uint16_t) i ) == NULL );
     }
@@ -3598,7 +3598,7 @@ void test_generate_ack_bits()
     snapshot_check( ack == 0xFFFF );
     snapshot_check( ack_bits == 0 );
 
-    for ( int i = 0; i <= TEST_SEQUENCE_BUFFER_SIZE; ++i )
+    for ( int i = 0; i <= TEST_SEQUENCE_BUFFER_SIZE; i++ )
     {
         snapshot_sequence_buffer_insert( sequence_buffer, (uint16_t) i );
     }
@@ -3611,7 +3611,7 @@ void test_generate_ack_bits()
 
     uint16_t input_acks[] = { 1, 5, 9, 11 };
     int input_num_acks = sizeof( input_acks ) / sizeof( uint16_t );
-    for ( int i = 0; i < input_num_acks; ++i )
+    for ( int i = 0; i < input_num_acks; i++ )
     {
         snapshot_sequence_buffer_insert( sequence_buffer, input_acks[i] );
     }
@@ -3729,7 +3729,7 @@ void test_acks()
 
     double delta_time = 0.01;
 
-    for ( int i = 0; i < TEST_ACKS_NUM_ITERATIONS; ++i )
+    for ( int i = 0; i < TEST_ACKS_NUM_ITERATIONS; i++ )
     {
         uint8_t payload_buffer[SNAPSHOT_PACKET_PREFIX_BYTES + 8 + SNAPSHOT_PACKET_POSTFIX_BYTES];
 
@@ -3768,7 +3768,7 @@ void test_acks()
             snapshot_check( receiver_payload_data[j] == 0 );
         }
 
-        snapshot_endpoint_mark_packet_processed( receiver, receiver_payload_sequence, receiver_payload_ack, receiver_payload_ack_bits, sender_packet_bytes[0] );
+        snapshot_endpoint_mark_payload_processed( receiver, receiver_payload_sequence, receiver_payload_ack, receiver_payload_ack_bits, receiver_payload_bytes );
 
         // receiver write packet
 
@@ -3797,7 +3797,7 @@ void test_acks()
             snapshot_check( sender_payload_data[j] == 0 );
         }
 
-        snapshot_endpoint_mark_packet_processed( sender, sender_payload_sequence, sender_payload_ack, sender_payload_ack_bits, receiver_packet_bytes[0] );
+        snapshot_endpoint_mark_payload_processed( sender, sender_payload_sequence, sender_payload_ack, sender_payload_ack_bits, sender_payload_bytes );
 
         // update endpoints
 
@@ -3814,14 +3814,14 @@ void test_acks()
     memset( sender_acked_packet, 0, sizeof( sender_acked_packet ) );
     int sender_num_acks;
     uint16_t * sender_acks = snapshot_endpoint_get_acks( sender, &sender_num_acks );
-    for ( int i = 0; i < sender_num_acks; ++i )
+    for ( int i = 0; i < sender_num_acks; i++ )
     {
         if ( sender_acks[i] < TEST_ACKS_NUM_ITERATIONS )
         {
             sender_acked_packet[sender_acks[i]] = 1;
         }
     }
-    for ( int i = 0; i < TEST_ACKS_NUM_ITERATIONS / 2; ++i )
+    for ( int i = 0; i < TEST_ACKS_NUM_ITERATIONS / 2; i++ )
     {
         snapshot_check( sender_acked_packet[i] == 1 );
     }
@@ -3832,14 +3832,14 @@ void test_acks()
     memset( receiver_acked_packet, 0, sizeof( receiver_acked_packet ) );
     int receiver_num_acks;
     uint16_t * receiver_acks = snapshot_endpoint_get_acks( receiver, &receiver_num_acks );
-    for ( int i = 0; i < receiver_num_acks; ++i )
+    for ( int i = 0; i < receiver_num_acks; i++ )
     {
         if ( receiver_acks[i] < TEST_ACKS_NUM_ITERATIONS )
         {
             receiver_acked_packet[receiver_acks[i]] = 1;
         }
     }
-    for ( int i = 0; i < TEST_ACKS_NUM_ITERATIONS / 2; ++i )
+    for ( int i = 0; i < TEST_ACKS_NUM_ITERATIONS / 2; i++ )
     {
         snapshot_check( receiver_acked_packet[i] == 1 );
     }
@@ -3868,7 +3868,7 @@ void test_acks_packet_loss()
 
     double delta_time = 0.01;
 
-    for ( int i = 0; i < TEST_ACKS_NUM_ITERATIONS; ++i )
+    for ( int i = 0; i < TEST_ACKS_NUM_ITERATIONS; i++ )
     {
         uint8_t payload_buffer[SNAPSHOT_PACKET_PREFIX_BYTES + 8 + SNAPSHOT_PACKET_POSTFIX_BYTES];
 
@@ -3911,7 +3911,7 @@ void test_acks_packet_loss()
                 snapshot_check( receiver_payload_data[j] == 0 );
             }
 
-            snapshot_endpoint_mark_packet_processed( receiver, receiver_payload_sequence, receiver_payload_ack, receiver_payload_ack_bits, sender_packet_bytes[0] );
+            snapshot_endpoint_mark_payload_processed( receiver, receiver_payload_sequence, receiver_payload_ack, receiver_payload_ack_bits, receiver_payload_bytes );
         }
 
         // receiver write packet
@@ -3943,7 +3943,7 @@ void test_acks_packet_loss()
                 snapshot_check( sender_payload_data[j] == 0 );
             }
 
-            snapshot_endpoint_mark_packet_processed( sender, sender_payload_sequence, sender_payload_ack, sender_payload_ack_bits, receiver_packet_bytes[0] );
+            snapshot_endpoint_mark_payload_processed( sender, sender_payload_sequence, sender_payload_ack, sender_payload_ack_bits, sender_payload_bytes );
         }
 
         // update endpoints
@@ -3961,14 +3961,14 @@ void test_acks_packet_loss()
     memset( sender_acked_packet, 0, sizeof( sender_acked_packet ) );
     int sender_num_acks;
     uint16_t * sender_acks = snapshot_endpoint_get_acks( sender, &sender_num_acks );
-    for ( int i = 0; i < sender_num_acks; ++i )
+    for ( int i = 0; i < sender_num_acks; i++ )
     {
         if ( sender_acks[i] < TEST_ACKS_NUM_ITERATIONS )
         {
             sender_acked_packet[sender_acks[i]] = 1;
         }
     }
-    for ( int i = 0; i < TEST_ACKS_NUM_ITERATIONS / 2; ++i )
+    for ( int i = 0; i < TEST_ACKS_NUM_ITERATIONS / 2; i++ )
     {
         snapshot_check( sender_acked_packet[i] == (i+1) % 2 );
     }
@@ -3979,14 +3979,14 @@ void test_acks_packet_loss()
     memset( receiver_acked_packet, 0, sizeof( receiver_acked_packet ) );
     int receiver_num_acks;
     uint16_t * receiver_acks = snapshot_endpoint_get_acks( receiver, &receiver_num_acks );
-    for ( int i = 0; i < receiver_num_acks; ++i )
+    for ( int i = 0; i < receiver_num_acks; i++ )
     {
         if ( receiver_acks[i] < TEST_ACKS_NUM_ITERATIONS )
         {
             receiver_acked_packet[receiver_acks[i]] = 1;
         }
     }
-    for ( int i = 0; i < TEST_ACKS_NUM_ITERATIONS / 2; ++i )
+    for ( int i = 0; i < TEST_ACKS_NUM_ITERATIONS / 2; i++ )
     {
         snapshot_check( receiver_acked_packet[i] == (i+1) % 2 );
     }
@@ -4001,7 +4001,7 @@ void generate_payload_packet( uint8_t * packet_data, int & packet_bytes )
 {
     packet_bytes = rand() % SNAPSHOT_MAX_PAYLOAD_BYTES;
     const int start = packet_bytes % 256;
-    for ( int i = 0; i < packet_bytes; ++i )
+    for ( int i = 0; i < packet_bytes; i++ )
     {
         packet_data[i] = (uint8_t) ( start + i ) % 256;
     }
@@ -4010,7 +4010,7 @@ void generate_payload_packet( uint8_t * packet_data, int & packet_bytes )
 void verify_payload_packet( const uint8_t * packet_data, int packet_bytes )
 {
     const int start = packet_bytes % 256;
-    for ( int i = 0; i < packet_bytes; ++i )
+    for ( int i = 0; i < packet_bytes; i++ )
     {
         snapshot_check( packet_data[i] == (uint8_t) ( ( start + i ) % 256 ) );
     }
@@ -4034,7 +4034,7 @@ void test_endpoint_payload()
 
     double delta_time = 0.01;
 
-    for ( int i = 0; i < TEST_ACKS_NUM_ITERATIONS; ++i )
+    for ( int i = 0; i < TEST_ACKS_NUM_ITERATIONS; i++ )
     {
         uint8_t payload_buffer[SNAPSHOT_PACKET_PREFIX_BYTES + SNAPSHOT_MAX_PAYLOAD_BYTES + SNAPSHOT_PACKET_POSTFIX_BYTES];
 
@@ -4071,7 +4071,7 @@ void test_endpoint_payload()
 
                 verify_payload_packet( receiver_payload_data, receiver_payload_bytes );
 
-                snapshot_endpoint_mark_packet_processed( receiver, receiver_payload_sequence, receiver_payload_ack, receiver_payload_ack_bits, sender_packet_bytes[j] );
+                snapshot_endpoint_mark_payload_processed( receiver, receiver_payload_sequence, receiver_payload_ack, receiver_payload_ack_bits, receiver_payload_bytes );
             }
         }
 
@@ -4110,7 +4110,7 @@ void test_endpoint_payload()
 
                 verify_payload_packet( sender_payload_data, sender_payload_bytes );
 
-                snapshot_endpoint_mark_packet_processed( sender, sender_payload_sequence, sender_payload_ack, sender_payload_ack_bits, receiver_packet_bytes[j] );
+                snapshot_endpoint_mark_payload_processed( sender, sender_payload_sequence, sender_payload_ack, sender_payload_ack_bits, sender_payload_bytes );
             }
         }
 
@@ -4137,14 +4137,14 @@ void test_endpoint_payload()
     memset( sender_acked_packet, 0, sizeof( sender_acked_packet ) );
     int sender_num_acks;
     uint16_t * sender_acks = snapshot_endpoint_get_acks( sender, &sender_num_acks );
-    for ( int i = 0; i < sender_num_acks; ++i )
+    for ( int i = 0; i < sender_num_acks; i++ )
     {
         if ( sender_acks[i] < TEST_ACKS_NUM_ITERATIONS )
         {
             sender_acked_packet[sender_acks[i]] = 1;
         }
     }
-    for ( int i = 0; i < TEST_ACKS_NUM_ITERATIONS / 2; ++i )
+    for ( int i = 0; i < TEST_ACKS_NUM_ITERATIONS / 2; i++ )
     {
         snapshot_check( sender_acked_packet[i] == 1 );
     }
@@ -4155,14 +4155,14 @@ void test_endpoint_payload()
     memset( receiver_acked_packet, 0, sizeof( receiver_acked_packet ) );
     int receiver_num_acks;
     uint16_t * receiver_acks = snapshot_endpoint_get_acks( receiver, &receiver_num_acks );
-    for ( int i = 0; i < receiver_num_acks; ++i )
+    for ( int i = 0; i < receiver_num_acks; i++ )
     {
         if ( receiver_acks[i] < TEST_ACKS_NUM_ITERATIONS )
         {
             receiver_acked_packet[receiver_acks[i]] = 1;
         }
     }
-    for ( int i = 0; i < TEST_ACKS_NUM_ITERATIONS / 2; ++i )
+    for ( int i = 0; i < TEST_ACKS_NUM_ITERATIONS / 2; i++ )
     {
         snapshot_check( receiver_acked_packet[i] == 1 );
     }
@@ -4252,6 +4252,10 @@ void snapshot_run_tests()
         RUN_TEST( test_acks );
         RUN_TEST( test_acks_packet_loss );
         RUN_TEST( test_endpoint_payload );
+
+        // todo: test_ipv4_client_server_payload
+        // todo: test_ipv6_client_server_payload
+        // todo: test_loopback_client_server_payload
     }
 
     printf( "\nAll tests pass.\n\n" );

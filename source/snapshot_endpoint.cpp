@@ -85,10 +85,10 @@ void snapshot_endpoint_destroy( struct snapshot_endpoint_t * endpoint )
     {
         struct snapshot_fragment_reassembly_data_t * reassembly_data = (struct snapshot_fragment_reassembly_data_t*) snapshot_sequence_buffer_at_index( endpoint->fragment_reassembly, i );
 
-        if ( reassembly_data && reassembly_data->packet_data )
+        if ( reassembly_data && reassembly_data->payload_data )
         {
-            snapshot_destroy_packet( endpoint->context, reassembly_data->packet_data );
-            reassembly_data->packet_data = NULL;
+            snapshot_destroy_packet( endpoint->context, reassembly_data->payload_data );
+            reassembly_data->payload_data = NULL;
         }
     }
 
@@ -160,12 +160,6 @@ void snapshot_endpoint_write_packets( struct snapshot_endpoint_t * endpoint, uin
     {
         // fragmented packet
 
-        uint8_t header[SNAPSHOT_MAX_PACKET_HEADER_BYTES];
-
-        memset( header, 0, SNAPSHOT_MAX_PACKET_HEADER_BYTES );
-
-        int header_bytes = snapshot_write_packet_header( header, sequence, ack, ack_bits );
-
         int num_fragments = ( payload_bytes / endpoint->config.fragment_size ) + ( ( payload_bytes % endpoint->config.fragment_size ) != 0 ? 1 : 0 );
 
         snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] sending packet %d as %d fragments", endpoint->config.name, sequence, num_fragments );
@@ -185,13 +179,16 @@ void snapshot_endpoint_write_packets( struct snapshot_endpoint_t * endpoint, uin
 
             uint8_t * p = fragment_packet_data;
 
-            snapshot_write_uint8( &p, 1 );
+            snapshot_write_uint8( &p, 1 ); // fragment
             snapshot_write_uint16( &p, sequence );
             snapshot_write_uint8( &p, (uint8_t) fragment_id );
             snapshot_write_uint8( &p, (uint8_t) ( num_fragments - 1 ) );
 
             if ( fragment_id == 0 )
             {
+                uint8_t header[SNAPSHOT_MAX_PACKET_HEADER_BYTES];
+                memset( header, 0, SNAPSHOT_MAX_PACKET_HEADER_BYTES );
+                int header_bytes = snapshot_write_packet_header( header, sequence, ack, ack_bits );
                 memcpy( p, header, header_bytes );
                 p += header_bytes;
             }
@@ -318,10 +315,6 @@ void snapshot_endpoint_process_packet( struct snapshot_endpoint_t * endpoint, ui
             return;
         }
 
-        *out_payload_sequence = sequence;
-        *out_payload_ack = ack;
-        *out_payload_ack_bits = ack_bits;
-
         struct snapshot_fragment_reassembly_data_t * reassembly_data = (struct snapshot_fragment_reassembly_data_t*)  snapshot_sequence_buffer_find( endpoint->fragment_reassembly, sequence );
 
         if ( !reassembly_data )
@@ -337,15 +330,12 @@ void snapshot_endpoint_process_packet( struct snapshot_endpoint_t * endpoint, ui
 
             snapshot_sequence_buffer_advance( endpoint->received_packets, sequence );
 
-            int packet_buffer_size = SNAPSHOT_MAX_PACKET_HEADER_BYTES + num_fragments * endpoint->config.fragment_size;
+            int payload_buffer_size = num_fragments * endpoint->config.fragment_size;
 
-            reassembly_data->sequence = sequence;
-            reassembly_data->ack = 0;
-            reassembly_data->ack_bits = 0;
             reassembly_data->num_fragments_received = 0;
             reassembly_data->num_fragments_total = num_fragments;
-            reassembly_data->packet_data = snapshot_create_packet( endpoint->context, packet_buffer_size );
-            reassembly_data->packet_bytes = 0;
+            reassembly_data->payload_data = snapshot_create_packet( endpoint->context, payload_buffer_size );
+            reassembly_data->payload_bytes = 0;
             memset( reassembly_data->fragment_received, 0, sizeof( reassembly_data->fragment_received ) );
         }
 
@@ -368,23 +358,23 @@ void snapshot_endpoint_process_packet( struct snapshot_endpoint_t * endpoint, ui
         reassembly_data->fragment_received[fragment_id] = 1;
 
         snapshot_store_fragment_data( reassembly_data, 
-                                      sequence, 
-                                      ack, 
-                                      ack_bits, 
                                       fragment_id, 
                                       endpoint->config.fragment_size, 
                                       packet_data + fragment_header_bytes, 
-                                      packet_bytes - fragment_header_bytes );
+                                      packet_bytes - fragment_header_bytes,
+                                      sequence, 
+                                      ack, 
+                                      ack_bits );
 
         endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_FRAGMENTS_RECEIVED]++;
 
         if ( reassembly_data->num_fragments_received == reassembly_data->num_fragments_total )
         {
-            snapshot_assert( reassembly_data->packet_data );
+            snapshot_assert( reassembly_data->payload_data );
 
             snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] completed reassembly of payload %d", endpoint->config.name, sequence );
 
-            int payload_bytes = reassembly_data->packet_bytes;
+            int payload_bytes = reassembly_data->payload_bytes;
 
             if ( payload_bytes > SNAPSHOT_MAX_PAYLOAD_BYTES )
             {
@@ -393,7 +383,7 @@ void snapshot_endpoint_process_packet( struct snapshot_endpoint_t * endpoint, ui
                 return;
             }
 
-            memcpy( payload_buffer, reassembly_data->packet_data, payload_bytes );
+            memcpy( payload_buffer, reassembly_data->payload_data, payload_bytes );
 
             snapshot_sequence_buffer_remove_with_cleanup( endpoint->fragment_reassembly, sequence, snapshot_fragment_reassembly_data_cleanup );
 
@@ -406,13 +396,16 @@ void snapshot_endpoint_process_packet( struct snapshot_endpoint_t * endpoint, ui
 
             *out_payload_data = payload_buffer;
             *out_payload_bytes = payload_bytes;
+            *out_payload_sequence = reassembly_data->payload_sequence;
+            *out_payload_ack = reassembly_data->payload_ack;
+            *out_payload_ack_bits = reassembly_data->payload_ack_bits;
 
             endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_RECEIVED]++;
         }
     }
 }
 
-void snapshot_endpoint_mark_packet_processed( snapshot_endpoint_t * endpoint, uint16_t sequence, uint16_t ack, uint32_t ack_bits, int packet_bytes )
+void snapshot_endpoint_mark_payload_processed( snapshot_endpoint_t * endpoint, uint16_t sequence, uint16_t ack, uint32_t ack_bits, int payload_bytes )
 {
     snapshot_assert( endpoint );
 
@@ -423,7 +416,7 @@ void snapshot_endpoint_mark_packet_processed( snapshot_endpoint_t * endpoint, ui
     snapshot_assert( received_packet_data );
 
     received_packet_data->time = endpoint->time;
-    received_packet_data->packet_bytes = endpoint->config.packet_header_size + packet_bytes;
+    received_packet_data->packet_bytes = endpoint->config.packet_header_size + payload_bytes;
 
     snapshot_sequence_buffer_advance_with_cleanup( endpoint->fragment_reassembly, sequence, snapshot_fragment_reassembly_data_cleanup );
 
@@ -486,10 +479,10 @@ void snapshot_endpoint_reset( struct snapshot_endpoint_t * endpoint )
     {
         struct snapshot_fragment_reassembly_data_t * reassembly_data = (struct snapshot_fragment_reassembly_data_t*) snapshot_sequence_buffer_at_index( endpoint->fragment_reassembly, i );
 
-        if ( reassembly_data && reassembly_data->packet_data )
+        if ( reassembly_data && reassembly_data->payload_data )
         {
-            snapshot_destroy_packet( endpoint->context, reassembly_data->packet_data );
-            reassembly_data->packet_data = NULL;
+            snapshot_destroy_packet( endpoint->context, reassembly_data->payload_data );
+            reassembly_data->payload_data = NULL;
         }
     }
 
