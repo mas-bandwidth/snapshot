@@ -3758,9 +3758,9 @@ void test_acks()
 
         snapshot_check( receiver_payload_data );
         snapshot_check( receiver_payload_bytes == 8 );
-        for ( int i = 0; i < 8; i++ )
+        for ( int j = 0; j < 8; j++ )
         {
-            snapshot_check( receiver_payload_data[i] == 0 );
+            snapshot_check( receiver_payload_data[j] == 0 );
         }
 
         snapshot_endpoint_mark_payload_processed( receiver, receiver_payload_bytes, receiver_payload_sequence, receiver_payload_ack, receiver_payload_ack_bits );
