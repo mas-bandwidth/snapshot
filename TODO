@@ -14,8 +14,6 @@ DONE
 
 	test_acks_packet_loss is working. Acks are done!
 
-TODO
-
 	There is a crash in the test_acks test.
 
 	It's release only in MacOS, and seems to reproduce on windows only.
@@ -23,6 +21,14 @@ TODO
 	Most likely some sort of stack trashing... ?
 
 	Let's fix it.
+
+	Payload packet needed to be expanded on stack for prefix.
+
+TODO
+
+	Now windows is failing (debug and release) with receiver payload bytes != 8. 
+
+	Print out what it is so I can work out what's going on... I guess zero?
 
 	-------------
 

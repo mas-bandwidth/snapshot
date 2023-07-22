@@ -3733,9 +3733,11 @@ void test_acks()
     {
         uint8_t payload_buffer[SNAPSHOT_PACKET_PREFIX_BYTES + 8 + SNAPSHOT_PACKET_POSTFIX_BYTES];
 
-        uint8_t * dummy_payload = payload_buffer + SNAPSHOT_PACKET_PREFIX_BYTES;
+        uint8_t * dummy_payload_data = payload_buffer + SNAPSHOT_PACKET_PREFIX_BYTES;
 
-        memset( dummy_payload, 0, 8 );
+        int dummy_payload_bytes = 8;
+
+        memset( dummy_payload_data, 0, dummy_payload_bytes );
 
         // sender write packet
 
@@ -3743,7 +3745,7 @@ void test_acks()
         uint8_t * sender_packet_data[SNAPSHOT_ENDPOINT_MAX_WRITE_PACKETS];
         int sender_packet_bytes[SNAPSHOT_ENDPOINT_MAX_WRITE_PACKETS];
 
-        snapshot_endpoint_write_packets( sender, dummy_payload, sizeof(dummy_payload), &num_sender_packets, &sender_packet_data[0], &sender_packet_bytes[0] );
+        snapshot_endpoint_write_packets( sender, dummy_payload_data, dummy_payload_bytes, &num_sender_packets, &sender_packet_data[0], &sender_packet_bytes[0] );
 
         snapshot_check( num_sender_packets == 1 );
 
@@ -3760,8 +3762,8 @@ void test_acks()
         snapshot_endpoint_process_packet( receiver, sender_packet_data[0], sender_packet_bytes[0], buffer, &receiver_payload_data, &receiver_payload_bytes, &receiver_payload_sequence, &receiver_payload_ack, &receiver_payload_ack_bits );
 
         snapshot_check( receiver_payload_data );
-        snapshot_check( receiver_payload_bytes == 8 );
-        for ( int j = 0; j < 8; j++ )
+        snapshot_check( receiver_payload_bytes == dummy_payload_bytes );
+        for ( int j = 0; j < dummy_payload_bytes; j++ )
         {
             snapshot_check( receiver_payload_data[j] == 0 );
         }
@@ -3774,7 +3776,7 @@ void test_acks()
         uint8_t * receiver_packet_data[SNAPSHOT_ENDPOINT_MAX_WRITE_PACKETS];
         int receiver_packet_bytes[SNAPSHOT_ENDPOINT_MAX_WRITE_PACKETS];
 
-        snapshot_endpoint_write_packets( receiver, dummy_payload, sizeof(dummy_payload), &num_receiver_packets, &receiver_packet_data[0], &receiver_packet_bytes[0] );
+        snapshot_endpoint_write_packets( receiver, dummy_payload_data, dummy_payload_bytes, &num_receiver_packets, &receiver_packet_data[0], &receiver_packet_bytes[0] );
 
         snapshot_check( num_receiver_packets == 1 );
 
@@ -3789,8 +3791,8 @@ void test_acks()
         snapshot_endpoint_process_packet( receiver, receiver_packet_data[0], receiver_packet_bytes[0], buffer, &sender_payload_data, &sender_payload_bytes, &sender_payload_sequence, &sender_payload_ack, &sender_payload_ack_bits );
 
         snapshot_check( sender_payload_data );
-        snapshot_check( sender_payload_bytes == 8 );
-        for ( int j = 0; j < 8; j++ )
+        snapshot_check( sender_payload_bytes == dummy_payload_bytes );
+        for ( int j = 0; j < dummy_payload_bytes; j++ )
         {
             snapshot_check( sender_payload_data[j] == 0 );
         }
@@ -3870,9 +3872,11 @@ void test_acks_packet_loss()
     {
         uint8_t payload_buffer[SNAPSHOT_PACKET_PREFIX_BYTES + 8 + SNAPSHOT_PACKET_POSTFIX_BYTES];
 
-        uint8_t * dummy_payload = payload_buffer + SNAPSHOT_PACKET_PREFIX_BYTES;
+        uint8_t * dummy_payload_data = payload_buffer + SNAPSHOT_PACKET_PREFIX_BYTES;
 
-        memset( dummy_payload, 0, 8 );
+        int dummy_payload_bytes = 8;
+
+        memset( dummy_payload_data, 0, dummy_payload_bytes );
 
         // sender write packet
 
@@ -3880,7 +3884,7 @@ void test_acks_packet_loss()
         uint8_t * sender_packet_data[SNAPSHOT_ENDPOINT_MAX_WRITE_PACKETS];
         int sender_packet_bytes[SNAPSHOT_ENDPOINT_MAX_WRITE_PACKETS];
 
-        snapshot_endpoint_write_packets( sender, dummy_payload, sizeof(dummy_payload), &num_sender_packets, &sender_packet_data[0], &sender_packet_bytes[0] );
+        snapshot_endpoint_write_packets( sender, dummy_payload_data, dummy_payload_bytes, &num_sender_packets, &sender_packet_data[0], &sender_packet_bytes[0] );
 
         snapshot_check( num_sender_packets == 1 );
 
@@ -3901,8 +3905,8 @@ void test_acks_packet_loss()
             snapshot_endpoint_process_packet( receiver, sender_packet_data[0], sender_packet_bytes[0], buffer, &receiver_payload_data, &receiver_payload_bytes, &receiver_payload_sequence, &receiver_payload_ack, &receiver_payload_ack_bits );
 
             snapshot_check( receiver_payload_data );
-            snapshot_check( receiver_payload_bytes == 8 );
-            for ( int j = 0; j < 8; j++ )
+            snapshot_check( receiver_payload_bytes == dummy_payload_bytes );
+            for ( int j = 0; j < dummy_payload_bytes; j++ )
             {
                 snapshot_check( receiver_payload_data[j] == 0 );
             }
@@ -3916,7 +3920,7 @@ void test_acks_packet_loss()
         uint8_t * receiver_packet_data[SNAPSHOT_ENDPOINT_MAX_WRITE_PACKETS];
         int receiver_packet_bytes[SNAPSHOT_ENDPOINT_MAX_WRITE_PACKETS];
 
-        snapshot_endpoint_write_packets( receiver, dummy_payload, sizeof(dummy_payload), &num_receiver_packets, &receiver_packet_data[0], &receiver_packet_bytes[0] );
+        snapshot_endpoint_write_packets( receiver, dummy_payload_data, dummy_payload_bytes, &num_receiver_packets, &receiver_packet_data[0], &receiver_packet_bytes[0] );
 
         snapshot_check( num_receiver_packets == 1 );
 
@@ -3933,8 +3937,8 @@ void test_acks_packet_loss()
             snapshot_endpoint_process_packet( receiver, receiver_packet_data[0], receiver_packet_bytes[0], buffer, &sender_payload_data, &sender_payload_bytes, &sender_payload_sequence, &sender_payload_ack, &sender_payload_ack_bits );
 
             snapshot_check( sender_payload_data );
-            snapshot_check( sender_payload_bytes == 8 );
-            for ( int j = 0; j < 8; j++ )
+            snapshot_check( sender_payload_bytes == dummy_payload_bytes );
+            for ( int j = 0; j < dummy_payload_bytes; j++ )
             {
                 snapshot_check( sender_payload_data[j] == 0 );
             }
