@@ -125,6 +125,11 @@ int snapshot_read_fragment_header( char * name,
 
         p += packet_header_bytes;
     }
+    else
+    {
+        *ack = 0;
+        *ack_bits = 0;
+    }
 
     if ( *fragment_bytes > fragment_size )
     {
