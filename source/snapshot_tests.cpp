@@ -3768,7 +3768,7 @@ void test_acks()
             snapshot_check( receiver_payload_data[j] == 0 );
         }
 
-        snapshot_endpoint_mark_payload_processed( receiver, receiver_payload_bytes, receiver_payload_sequence, receiver_payload_ack, receiver_payload_ack_bits );
+        snapshot_endpoint_mark_packet_processed( receiver, receiver_payload_sequence, receiver_payload_ack, receiver_payload_ack_bits, sender_packet_bytes[0] );
 
         // receiver write packet
 
@@ -3797,7 +3797,7 @@ void test_acks()
             snapshot_check( sender_payload_data[j] == 0 );
         }
 
-        snapshot_endpoint_mark_payload_processed( sender, sender_payload_bytes, sender_payload_sequence, sender_payload_ack, sender_payload_ack_bits );
+        snapshot_endpoint_mark_packet_processed( sender, sender_payload_sequence, sender_payload_ack, sender_payload_ack_bits, receiver_packet_bytes[0] );
 
         // update endpoints
 
@@ -3911,7 +3911,7 @@ void test_acks_packet_loss()
                 snapshot_check( receiver_payload_data[j] == 0 );
             }
 
-            snapshot_endpoint_mark_payload_processed( receiver, receiver_payload_bytes, receiver_payload_sequence, receiver_payload_ack, receiver_payload_ack_bits );
+            snapshot_endpoint_mark_packet_processed( receiver, receiver_payload_sequence, receiver_payload_ack, receiver_payload_ack_bits, sender_packet_bytes[0] );
         }
 
         // receiver write packet
@@ -3943,7 +3943,7 @@ void test_acks_packet_loss()
                 snapshot_check( sender_payload_data[j] == 0 );
             }
 
-            snapshot_endpoint_mark_payload_processed( sender, sender_payload_bytes, sender_payload_sequence, sender_payload_ack, sender_payload_ack_bits );
+            snapshot_endpoint_mark_packet_processed( sender, sender_payload_sequence, sender_payload_ack, sender_payload_ack_bits, receiver_packet_bytes[0] );
         }
 
         // update endpoints
@@ -3997,56 +3997,146 @@ void test_acks_packet_loss()
     snapshot_endpoint_destroy( receiver );
 }
 
-#if 0 // todo
+void generate_payload_packet( uint8_t * packet_data, int & packet_bytes )
+{
+    packet_bytes = rand() % SNAPSHOT_MAX_PAYLOAD_BYTES;
+    const int start = packet_bytes % 256;
+    for ( int i = 0; i < packet_bytes; ++i )
+    {
+        packet_data[i] = (uint8_t) ( start + i ) % 256;
+    }
+}
 
-void test_acks_packet_loss()
+void verify_payload_packet( const uint8_t * packet_data, int packet_bytes )
+{
+    const int start = packet_bytes % 256;
+    for ( int i = 0; i < packet_bytes; ++i )
+    {
+        snapshot_check( packet_data[i] == (uint8_t) ( ( start + i ) % 256 ) );
+    }
+}
+
+void test_endpoint_payload()
 {
     double time = 100.0;
 
-    struct test_context_t context;
-    default_test_context( &context );
-    
     struct snapshot_endpoint_config_t sender_config;
     struct snapshot_endpoint_config_t receiver_config;
 
     snapshot_endpoint_default_config( &sender_config );
     snapshot_endpoint_default_config( &receiver_config );
 
-    sender_config.context = &context;
-    sender_config.index = 0;
-    sender_config.transmit_packet_function = &transmit_packet_function;
-    sender_config.process_packet_function = &process_packet_function;
+    strncpy( sender_config.name, "sender", sizeof(sender_config.name) );
+    strncpy( receiver_config.name, "receiver", sizeof(receiver_config.name) );
 
-    receiver_config.context = &context;
-    receiver_config.index = 1;
-    receiver_config.transmit_packet_function = &transmit_packet_function;
-    receiver_config.process_packet_function = &process_packet_function;
+    snapshot_endpoint_t * sender = snapshot_endpoint_create( &sender_config, time );
+    snapshot_endpoint_t * receiver = snapshot_endpoint_create( &receiver_config, time );
 
-    context.sender = snapshot_endpoint_create( &sender_config, time );
-    context.receiver = snapshot_endpoint_create( &receiver_config, time );
-
-    const double delta_time = 0.1f;
+    double delta_time = 0.01;
 
     for ( int i = 0; i < TEST_ACKS_NUM_ITERATIONS; ++i )
     {
-        uint8_t dummy_packet[8];
-        memset( dummy_packet, 0, sizeof( dummy_packet ) );
+        uint8_t payload_buffer[SNAPSHOT_PACKET_PREFIX_BYTES + SNAPSHOT_MAX_PAYLOAD_BYTES + SNAPSHOT_PACKET_POSTFIX_BYTES];
 
-        context.drop = ( i % 2 );
+        int dummy_payload_bytes = 0;
+        uint8_t * dummy_payload_data = payload_buffer + SNAPSHOT_PACKET_PREFIX_BYTES;
+        generate_payload_packet( dummy_payload_data, dummy_payload_bytes );
 
-        snapshot_endpoint_send_packet( context.sender, dummy_packet, sizeof( dummy_packet ) );
-        snapshot_endpoint_send_packet( context.receiver, dummy_packet, sizeof( dummy_packet ) );
+        // sender write packet(s)
 
-        snapshot_endpoint_update( context.sender, time );
-        snapshot_endpoint_update( context.receiver, time );
+        int num_sender_packets = 0;
+        uint8_t * sender_packet_data[SNAPSHOT_ENDPOINT_MAX_WRITE_PACKETS];
+        int sender_packet_bytes[SNAPSHOT_ENDPOINT_MAX_WRITE_PACKETS];
+
+        snapshot_endpoint_write_packets( sender, dummy_payload_data, dummy_payload_bytes, &num_sender_packets, &sender_packet_data[0], &sender_packet_bytes[0] );
+
+        // receiver process packet(s)
+
+        uint8_t buffer[SNAPSHOT_PACKET_PREFIX_BYTES + SNAPSHOT_MAX_PACKET_BYTES + SNAPSHOT_PACKET_POSTFIX_BYTES];
+
+        uint8_t * receiver_payload_data = NULL;
+        int receiver_payload_bytes = 0;
+        uint16_t receiver_payload_sequence = 0;
+        uint16_t receiver_payload_ack = 0;
+        uint32_t receiver_payload_ack_bits = 0;
+
+        for ( int j = 0; j < num_sender_packets; j++ )
+        {
+            snapshot_endpoint_process_packet( receiver, sender_packet_data[j], sender_packet_bytes[j], buffer, &receiver_payload_data, &receiver_payload_bytes, &receiver_payload_sequence, &receiver_payload_ack, &receiver_payload_ack_bits );
+
+            if ( receiver_payload_data )
+            {
+                snapshot_check( receiver_payload_data );
+                snapshot_check( receiver_payload_bytes == dummy_payload_bytes );
+
+                verify_payload_packet( receiver_payload_data, receiver_payload_bytes );
+
+                snapshot_endpoint_mark_packet_processed( receiver, receiver_payload_sequence, receiver_payload_ack, receiver_payload_ack_bits, sender_packet_bytes[j] );
+            }
+        }
+
+        if ( num_sender_packets > 1 )
+        {
+            for ( int j = 0; j < num_sender_packets; j++ )
+            {
+                snapshot_destroy_packet( NULL, sender_packet_data[j] );
+            }
+        }
+
+        // receiver write packet
+
+        int num_receiver_packets = 0;
+        uint8_t * receiver_packet_data[SNAPSHOT_ENDPOINT_MAX_WRITE_PACKETS];
+        int receiver_packet_bytes[SNAPSHOT_ENDPOINT_MAX_WRITE_PACKETS];
+
+        snapshot_endpoint_write_packets( receiver, dummy_payload_data, dummy_payload_bytes, &num_receiver_packets, &receiver_packet_data[0], &receiver_packet_bytes[0] );
+
+        // sender process packet
+
+        uint8_t * sender_payload_data = NULL;
+        int sender_payload_bytes = 0;
+        uint16_t sender_payload_sequence = 0;
+        uint16_t sender_payload_ack = 0;
+        uint32_t sender_payload_ack_bits = 0;
+
+        for ( int j = 0; j < num_receiver_packets; j++ )
+        {
+            snapshot_endpoint_process_packet( sender, receiver_packet_data[j], receiver_packet_bytes[j], buffer, &sender_payload_data, &sender_payload_bytes, &sender_payload_sequence, &sender_payload_ack, &sender_payload_ack_bits );
+
+            if ( sender_payload_data )
+            {
+                snapshot_check( sender_payload_data );
+                snapshot_check( sender_payload_bytes == dummy_payload_bytes );
+
+                verify_payload_packet( sender_payload_data, sender_payload_bytes );
+
+                snapshot_endpoint_mark_packet_processed( sender, sender_payload_sequence, sender_payload_ack, sender_payload_ack_bits, receiver_packet_bytes[j] );
+            }
+        }
+
+        if ( num_receiver_packets > 1 )
+        {
+            for ( int j = 0; j < num_receiver_packets; j++ )
+            {
+                snapshot_destroy_packet( NULL, receiver_packet_data[j] );
+            }
+        }
+
+        // update endpoints
+
+        snapshot_endpoint_update( sender, time );
+
+        snapshot_endpoint_update( receiver, time );
 
         time += delta_time;
     }
 
+    // check sender acks
+
     uint8_t sender_acked_packet[TEST_ACKS_NUM_ITERATIONS];
     memset( sender_acked_packet, 0, sizeof( sender_acked_packet ) );
     int sender_num_acks;
-    uint16_t * sender_acks = snapshot_endpoint_get_acks( context.sender, &sender_num_acks );
+    uint16_t * sender_acks = snapshot_endpoint_get_acks( sender, &sender_num_acks );
     for ( int i = 0; i < sender_num_acks; ++i )
     {
         if ( sender_acks[i] < TEST_ACKS_NUM_ITERATIONS )
@@ -4056,13 +4146,15 @@ void test_acks_packet_loss()
     }
     for ( int i = 0; i < TEST_ACKS_NUM_ITERATIONS / 2; ++i )
     {
-        snapshot_check( sender_acked_packet[i] == (i+1) % 2 );
+        snapshot_check( sender_acked_packet[i] == 1 );
     }
+
+    // check receiver acks
 
     uint8_t receiver_acked_packet[TEST_ACKS_NUM_ITERATIONS];
     memset( receiver_acked_packet, 0, sizeof( receiver_acked_packet ) );
     int receiver_num_acks;
-    uint16_t * receiver_acks = snapshot_endpoint_get_acks( context.sender, &receiver_num_acks );
+    uint16_t * receiver_acks = snapshot_endpoint_get_acks( receiver, &receiver_num_acks );
     for ( int i = 0; i < receiver_num_acks; ++i )
     {
         if ( receiver_acks[i] < TEST_ACKS_NUM_ITERATIONS )
@@ -4072,484 +4164,14 @@ void test_acks_packet_loss()
     }
     for ( int i = 0; i < TEST_ACKS_NUM_ITERATIONS / 2; ++i )
     {
-        snapshot_check( receiver_acked_packet[i] == (i+1) % 2 );
+        snapshot_check( receiver_acked_packet[i] == 1 );
     }
 
-    snapshot_endpoint_destroy( context.sender );
-    snapshot_endpoint_destroy( context.receiver );
+    // clean up
+
+    snapshot_endpoint_destroy( sender );
+    snapshot_endpoint_destroy( receiver );
 }
-
-struct test_context_t
-{
-    int drop;
-    int allow_packets;
-    struct snapshot_endpoint_t * sender;
-    struct snapshot_endpoint_t * receiver;
-};
-
-void default_test_context( struct test_context_t * context )
-{
-    memset( context, 0, sizeof( *context ) );
-    context->allow_packets = -1;
-}
-
-void transmit_packet_function( void * _context, int index, uint16_t sequence, uint8_t * packet_data, int packet_bytes )
-{
-    (void) sequence;
-
-    struct test_context_t * context = (struct test_context_t*) _context;
-
-    if ( context->drop )
-    {
-        return;
-    }
-
-    if ( context->allow_packets >= 0 )
-    {
-        if ( context->allow_packets == 0 )
-        {
-            return;
-        }
-
-        context->allow_packets--;
-    }
-
-    if ( index == 0 )
-    {
-        snapshot_endpoint_receive_packet( context->receiver, packet_data, packet_bytes );
-    }
-    else if ( index == 1 )
-    {
-        snapshot_endpoint_receive_packet( context->sender, packet_data, packet_bytes );
-    }
-}
-
-int process_packet_function( void * _context, int index, uint16_t sequence, uint8_t * packet_data, int packet_bytes )
-{
-    struct test_context_t * context = (struct test_context_t*) _context;
-
-    (void) context;
-    (void) index;
-    (void) sequence;
-    (void) packet_data;
-    (void) packet_bytes;
-
-    return 1;
-}
-
-#define TEST_MAX_PACKET_BYTES (4*1024)
-
-void generate_packet_data_with_size( uint16_t sequence, uint8_t * packet_data, int packet_bytes )
-{
-    snapshot_assert( packet_bytes >= 2 );
-    snapshot_assert( packet_bytes <= TEST_MAX_PACKET_BYTES );
-
-    packet_data[0] = (uint8_t) ( sequence & 0xFF );
-    packet_data[1] = (uint8_t) ( (sequence>>8) & 0xFF );
-
-    for ( int i = 2; i < packet_bytes; ++i )
-    {
-        packet_data[i] = (uint8_t) ( ( (int)i + sequence ) % 256 );
-    }
-}
-
-int generate_packet_data( uint16_t sequence, uint8_t * packet_data )
-{
-    int packet_bytes = ( ( (int)sequence * 1023 ) % ( TEST_MAX_PACKET_BYTES - 2 ) ) + 2;
-    generate_packet_data_with_size( sequence, packet_data, packet_bytes );
-    return packet_bytes;
-}
-
-void validate_packet_data( uint8_t * packet_data, int packet_bytes )
-{
-    snapshot_assert( packet_bytes >= 2 );
-    snapshot_assert( packet_bytes <= TEST_MAX_PACKET_BYTES );
-    uint16_t sequence = 0;
-    sequence |= (uint16_t) packet_data[0];
-    sequence |= ( (uint16_t) packet_data[1] ) << 8;
-    snapshot_check( packet_bytes == ( ( (int)sequence * 1023 ) % ( TEST_MAX_PACKET_BYTES - 2 ) ) + 2 );
-    for ( int i = 2; i < packet_bytes; ++i )
-    {
-        snapshot_check( packet_data[i] == (uint8_t) ( ( (int)i + sequence ) % 256 ) );
-    }
-}
-
-int process_packet_function_validate( void * context, int index, uint16_t sequence, uint8_t * packet_data, int packet_bytes )
-{
-    snapshot_assert( packet_data );
-    snapshot_assert( packet_bytes > 0 );
-    snapshot_assert( packet_bytes <= TEST_MAX_PACKET_BYTES );
-
-    (void) context;
-    (void) index;
-    (void) sequence;
-
-    validate_packet_data( packet_data, packet_bytes );
-
-    return 1;
-}
-
-int generate_packet_data_large( uint8_t* packet_data )
-{
-    int data_bytes = TEST_MAX_PACKET_BYTES - 2;
-    snapshot_assert( data_bytes >= 2) ;
-    snapshot_assert( data_bytes <= (1 << 16) );
-
-    packet_data[0] = (uint8_t) (data_bytes & 0xFF);
-    packet_data[1] = (uint8_t) ( (data_bytes >> 8) & 0xFF );
-    for ( int i = 2; i < data_bytes; ++i )
-    {
-        packet_data[i] = (uint8_t) ( i % 256 );
-    }
-    return data_bytes + 2;
-}
-
-int process_packet_function_validate_large( void * context, int index, uint16_t sequence, uint8_t * packet_data, int packet_bytes )
-{
-    snapshot_assert( packet_data );
-    snapshot_assert( packet_bytes >= 2 );
-    snapshot_assert( packet_bytes <= TEST_MAX_PACKET_BYTES );
-
-    (void)context;
-    (void)index;
-    (void)sequence;
-
-    uint16_t data_bytes = 0;
-    data_bytes |= (uint16_t) packet_data[0];
-    data_bytes |= ( (uint16_t) packet_data[1] ) << 8;
-    snapshot_check( packet_bytes == data_bytes + 2 );
-    for ( int i = 2; i < data_bytes; ++i )
-    {
-        snapshot_check( packet_data[i] == (uint8_t) ( i  % 256 ) );
-    }
-
-    return 1;
-}
-
-void test_endpoint_regular_packets()
-{
-    double time = 100.0;
-
-    struct test_context_t context;
-    default_test_context( &context );
-    
-    struct snapshot_endpoint_config_t sender_config;
-    struct snapshot_endpoint_config_t receiver_config;
-
-    snapshot_endpoint_default_config( &sender_config );
-    snapshot_endpoint_default_config( &receiver_config );
-
-    sender_config.fragment_above = 500;
-    receiver_config.fragment_above = 500;
-
-#if defined(_MSC_VER)
-    strcpy_s( sender_config.name, sizeof( sender_config.name ), "sender" );
-#else
-    strcpy( sender_config.name, "sender" );
-#endif
-    sender_config.context = &context;
-    sender_config.index = 0;
-    sender_config.transmit_packet_function = &transmit_packet_function;
-    sender_config.process_packet_function = &process_packet_function_validate;
-
-#if defined(_MSC_VER)
-    strcpy_s( receiver_config.name, sizeof( receiver_config.name ), "receiver" );
-#else
-    strcpy( receiver_config.name, "receiver" );
-#endif
-    receiver_config.context = &context;
-    receiver_config.index = 1;
-    receiver_config.transmit_packet_function = &transmit_packet_function;
-    receiver_config.process_packet_function = &process_packet_function_validate;
-
-    context.sender = snapshot_endpoint_create( &sender_config, time );
-    context.receiver = snapshot_endpoint_create( &receiver_config, time );
-
-    double delta_time = 0.1;
-
-    for ( int i = 0; i < 16; ++i )
-    {
-        {
-            uint8_t packet_data[TEST_MAX_PACKET_BYTES];
-            uint16_t sequence = snapshot_endpoint_sequence( context.sender );
-            int packet_bytes = generate_packet_data( sequence, packet_data );
-            snapshot_endpoint_send_packet( context.sender, packet_data, packet_bytes );
-        }
-
-        {
-            uint8_t packet_data[TEST_MAX_PACKET_BYTES];
-            uint16_t sequence = snapshot_endpoint_sequence( context.sender );
-            int packet_bytes = generate_packet_data( sequence, packet_data );
-            snapshot_endpoint_send_packet( context.sender, packet_data, packet_bytes );
-        }
-
-        snapshot_endpoint_update( context.sender, time );
-        snapshot_endpoint_update( context.receiver, time );
-
-        snapshot_endpoint_clear_acks( context.sender );
-        snapshot_endpoint_clear_acks( context.receiver );
-
-        time += delta_time;
-    }
-
-    snapshot_endpoint_destroy( context.sender );
-    snapshot_endpoint_destroy( context.receiver );
-}
-
-void test_endpoint_fragmented_packets()
-{
-    double time = 100.0;
-
-    struct test_context_t context;
-    default_test_context( &context );
-
-    struct snapshot_endpoint_config_t sender_config;
-    struct snapshot_endpoint_config_t receiver_config;
-
-    snapshot_endpoint_default_config( &sender_config );
-    snapshot_endpoint_default_config( &receiver_config );
-
-    sender_config.max_packet_size = TEST_MAX_PACKET_BYTES;
-    receiver_config.max_packet_size = TEST_MAX_PACKET_BYTES;
-
-    sender_config.fragment_above = TEST_MAX_PACKET_BYTES;
-    receiver_config.fragment_above = TEST_MAX_PACKET_BYTES;
-
-#if defined(_MSC_VER)
-    strcpy_s( sender_config.name, sizeof( sender_config.name ), "sender" );
-#else
-    strcpy( sender_config.name, "sender" );
-#endif
-    sender_config.context = &context;
-    sender_config.index = 0;
-    sender_config.transmit_packet_function = &transmit_packet_function;
-    sender_config.process_packet_function = &process_packet_function_validate_large;
-
-#if defined(_MSC_VER)
-    strcpy_s( receiver_config.name, sizeof( receiver_config.name ), "receiver" );
-#else
-    strcpy( receiver_config.name, "receiver" );
-#endif
-    receiver_config.context = &context;
-    receiver_config.index = 1;
-    receiver_config.transmit_packet_function = &transmit_packet_function;
-    receiver_config.process_packet_function = &process_packet_function_validate_large;
-
-    context.sender = snapshot_endpoint_create( &sender_config, time );
-    context.receiver = snapshot_endpoint_create( &receiver_config, time );
-
-    {
-        uint8_t packet_data[TEST_MAX_PACKET_BYTES];
-        int packet_bytes = generate_packet_data_large( packet_data );
-        snapshot_check( packet_bytes == TEST_MAX_PACKET_BYTES );
-        snapshot_endpoint_send_packet( context.sender, packet_data, packet_bytes );
-    }
-
-    snapshot_endpoint_update( context.sender, time );
-    snapshot_endpoint_update( context.receiver, time );
-
-    snapshot_endpoint_clear_acks( context.sender );
-    snapshot_endpoint_clear_acks( context.receiver );
-
-    const uint64_t * receiver_counters = snapshot_endpoint_counters( context.receiver );
-    snapshot_check( receiver_counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_TOO_LARGE_TO_RECEIVE] == 0 );
-    snapshot_check( receiver_counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_RECEIVED] == 1 );
-
-    snapshot_endpoint_destroy( context.sender );
-    snapshot_endpoint_destroy( context.receiver );
-}
-
-void test_sequence_buffer_rollover()
-{
-    double time = 100.0;
-
-    struct test_context_t context;
-    default_test_context( &context );
-    
-    struct snapshot_endpoint_config_t sender_config;
-    struct snapshot_endpoint_config_t receiver_config;
-
-    snapshot_endpoint_default_config( &sender_config );
-    snapshot_endpoint_default_config( &receiver_config );
-
-    sender_config.fragment_above = 500;
-    receiver_config.fragment_above = 500;
-
-#if defined(_MSC_VER)
-    strcpy_s( sender_config.name, sizeof( sender_config.name ), "sender" );
-#else
-    strcpy( sender_config.name, "sender" );
-#endif
-    sender_config.context = &context;
-    sender_config.index = 0;
-    sender_config.transmit_packet_function = &transmit_packet_function;
-    sender_config.process_packet_function = &process_packet_function;
-
-#if defined(_MSC_VER)
-    strcpy_s( receiver_config.name, sizeof( receiver_config.name ), "receiver" );
-#else
-    strcpy( receiver_config.name, "receiver" );
-#endif
-    receiver_config.context = &context;
-    receiver_config.index = 1;
-    receiver_config.transmit_packet_function = &transmit_packet_function;
-    receiver_config.process_packet_function = &process_packet_function;
-
-    context.sender = snapshot_endpoint_create( &sender_config, time );
-    context.receiver = snapshot_endpoint_create( &receiver_config, time );
-
-    int num_packets_sent = 0;
-    for ( int i = 0; i <= 32767; ++i )
-    {
-        uint8_t packet_data[16];
-        int packet_bytes = sizeof( packet_data ) / sizeof( uint8_t );
-        snapshot_endpoint_sequence( context.sender );
-        snapshot_endpoint_send_packet( context.sender, packet_data, packet_bytes );
-
-        ++num_packets_sent;
-    }
-
-    uint8_t packet_data[TEST_MAX_PACKET_BYTES];
-    int packet_bytes = sizeof( packet_data ) / sizeof( uint8_t );
-    snapshot_endpoint_sequence( context.sender );
-    snapshot_endpoint_send_packet( context.sender, packet_data, packet_bytes );
-    ++num_packets_sent;
-
-    const uint64_t * receiver_counters = snapshot_endpoint_counters( context.receiver );
-
-    snapshot_check( receiver_counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_RECEIVED] == (uint16_t) num_packets_sent );
-    snapshot_check( receiver_counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_FRAGMENTS_INVALID] == 0 );
-
-    snapshot_endpoint_destroy( context.sender );
-    snapshot_endpoint_destroy( context.receiver );
-}
-
-#define RELIABLE_ARRAY_SIZE(x) ( int( sizeof((x)) / sizeof((x)[0]) ) )
-
-struct test_tracking_allocate_context_t
-{
-    void* active_allocations[1024];
-};
-
-void * test_tracking_allocate_function( void * context, uint64_t bytes )
-{
-    struct test_tracking_allocate_context_t* tracking_context = (struct test_tracking_allocate_context_t*)context;
-    void * allocation = malloc( bytes );
-    int tracking_index;
-    for ( tracking_index = 0; tracking_index < RELIABLE_ARRAY_SIZE(tracking_context->active_allocations); ++tracking_index )
-    {
-        if ( tracking_context->active_allocations[tracking_index] == NULL )
-        {
-            break;
-        }
-    }
-
-    snapshot_assert(tracking_index < RELIABLE_ARRAY_SIZE(tracking_context->active_allocations));
-    tracking_context->active_allocations[tracking_index] = allocation;
-    return allocation;
-}
-
-void test_tracking_free_function( void * context, void * pointer )
-{
-    struct test_tracking_allocate_context_t* tracking_context = (struct test_tracking_allocate_context_t*)context;
-    int tracking_index;
-    for ( tracking_index = 0; tracking_index < RELIABLE_ARRAY_SIZE(tracking_context->active_allocations); ++tracking_index )
-    {
-        if ( tracking_context->active_allocations[tracking_index] == pointer )
-        {
-            break;
-        }
-    }
-
-    snapshot_assert(tracking_index < RELIABLE_ARRAY_SIZE(tracking_context->active_allocations));
-    tracking_context->active_allocations[tracking_index] = NULL;
-    free( pointer );
-}
-
-void test_fragment_cleanup()
-{
-    double time = 100.0;
-
-    struct test_context_t context;
-    default_test_context( &context );
-
-    struct test_tracking_allocate_context_t tracking_alloc_context;
-    memset( &tracking_alloc_context, 0, sizeof( tracking_alloc_context ) );
-    
-    struct snapshot_endpoint_config_t sender_config;
-    struct snapshot_endpoint_config_t receiver_config;
-
-    snapshot_endpoint_default_config( &sender_config );
-    snapshot_endpoint_default_config( &receiver_config );
-
-    receiver_config.context = &tracking_alloc_context;
-    receiver_config.fragment_reassembly_buffer_size = 4;
-
-#if defined(_MSC_VER)
-    strcpy_s( sender_config.name, sizeof( sender_config.name ), "sender" );
-#else
-    strcpy( sender_config.name, "sender" );
-#endif
-    sender_config.context = &context;
-    sender_config.index = 0;
-    sender_config.transmit_packet_function = &transmit_packet_function;
-    sender_config.process_packet_function = &process_packet_function;
-
-#if defined(_MSC_VER)
-    strcpy_s( receiver_config.name, sizeof( receiver_config.name ), "receiver" );
-#else
-    strcpy( receiver_config.name, "receiver" );
-#endif
-    receiver_config.context = &context;
-    receiver_config.index = 1;
-    receiver_config.transmit_packet_function = &transmit_packet_function;
-    receiver_config.process_packet_function = &process_packet_function;
-
-    context.sender = snapshot_endpoint_create( &sender_config, time );
-    context.receiver = snapshot_endpoint_create( &receiver_config, time );
-
-    double delta_time = 0.1;
-
-    int packet_sizes[] = {
-        sender_config.fragment_size + sender_config.fragment_size/2,
-        10,
-        10,
-        10,
-        10,
-    };
-
-    snapshot_assert( RELIABLE_ARRAY_SIZE( packet_sizes ) > receiver_config.fragment_reassembly_buffer_size );
-
-    for ( int i = 0; i < RELIABLE_ARRAY_SIZE( packet_sizes ); ++i )
-    {
-        context.allow_packets = 1;
-        {
-            uint8_t packet_data[TEST_MAX_PACKET_BYTES];
-            uint16_t sequence = snapshot_endpoint_sequence( context.sender );
-            generate_packet_data_with_size( sequence, packet_data, packet_sizes[i] );
-            snapshot_endpoint_send_packet( context.sender, packet_data, packet_sizes[i]);
-        }
-
-        snapshot_endpoint_update( context.sender, time );
-        snapshot_endpoint_update( context.receiver, time );
-
-        snapshot_endpoint_clear_acks( context.sender );
-        snapshot_endpoint_clear_acks( context.receiver );
-
-        time += delta_time;
-    }
-
-    snapshot_endpoint_destroy( context.sender );
-    snapshot_endpoint_destroy( context.receiver );
-    
-    int tracking_index;
-    for ( tracking_index = 0; tracking_index < RELIABLE_ARRAY_SIZE(tracking_alloc_context.active_allocations); ++tracking_index )
-    {
-        snapshot_check( tracking_alloc_context.active_allocations[tracking_index] == NULL );
-    }
-}
-
-#endif // #if 0
 
 #define RUN_TEST( test_function )                                           \
     do                                                                      \
@@ -4629,14 +4251,7 @@ void snapshot_run_tests()
         RUN_TEST( test_packet_header );
         RUN_TEST( test_acks );
         RUN_TEST( test_acks_packet_loss );
-
-        // todo
-        /*
-        RUN_TEST( test_endpoint_regular_packets );
-        RUN_TEST( test_endpoint_fragmented_packets );
-        RUN_TEST( test_sequence_buffer_rollover );
-        RUN_TEST( test_fragment_cleanup );
-        */
+        RUN_TEST( test_endpoint_payload );
     }
 
     printf( "\nAll tests pass.\n\n" );

@@ -267,9 +267,9 @@ void snapshot_endpoint_process_packet( struct snapshot_endpoint_t * endpoint, ui
 
         int packet_payload_bytes = packet_bytes - packet_header_bytes;
 
-        if ( packet_payload_bytes > SNAPSHOT_MAX_PACKET_BYTES )
+        if ( packet_payload_bytes > SNAPSHOT_MAX_PAYLOAD_BYTES )
         {
-            snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "[%s] packet too large to receive. packet is at %d bytes, maximum is %d", endpoint->config.name, packet_payload_bytes, SNAPSHOT_MAX_PACKET_BYTES );
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "[%s] payload too large to receive. payload is at %d bytes, maximum is %d", endpoint->config.name, packet_payload_bytes, SNAPSHOT_MAX_PAYLOAD_BYTES );
             endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_TOO_LARGE_TO_RECEIVE]++;
             return;
         }
@@ -317,6 +317,10 @@ void snapshot_endpoint_process_packet( struct snapshot_endpoint_t * endpoint, ui
             endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_FRAGMENTS_INVALID]++;
             return;
         }
+
+        *out_payload_sequence = sequence;
+        *out_payload_ack = ack;
+        *out_payload_ack_bits = ack_bits;
 
         struct snapshot_fragment_reassembly_data_t * reassembly_data = (struct snapshot_fragment_reassembly_data_t*)  snapshot_sequence_buffer_find( endpoint->fragment_reassembly, sequence );
 
@@ -372,28 +376,43 @@ void snapshot_endpoint_process_packet( struct snapshot_endpoint_t * endpoint, ui
                                       packet_data + fragment_header_bytes, 
                                       packet_bytes - fragment_header_bytes );
 
+        endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_FRAGMENTS_RECEIVED]++;
+
         if ( reassembly_data->num_fragments_received == reassembly_data->num_fragments_total )
         {
+            snapshot_assert( reassembly_data->packet_data );
+
             snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] completed reassembly of payload %d", endpoint->config.name, sequence );
 
-            int payload_bytes = reassembly_data->packet_header_bytes + reassembly_data->packet_bytes;
+            int payload_bytes = reassembly_data->packet_bytes;
 
-            memcpy( payload_buffer, reassembly_data->packet_data + SNAPSHOT_MAX_PACKET_HEADER_BYTES - reassembly_data->packet_header_bytes, payload_bytes );
+            if ( payload_bytes > SNAPSHOT_MAX_PAYLOAD_BYTES )
+            {
+                snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "[%s] payload too large to receive. payload is at %d bytes, maximum is %d", endpoint->config.name, payload_bytes, SNAPSHOT_MAX_PAYLOAD_BYTES );
+                endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_TOO_LARGE_TO_RECEIVE]++;
+                return;
+            }
+
+            memcpy( payload_buffer, reassembly_data->packet_data, payload_bytes );
 
             snapshot_sequence_buffer_remove_with_cleanup( endpoint->fragment_reassembly, sequence, snapshot_fragment_reassembly_data_cleanup );
 
+            if ( !snapshot_sequence_buffer_test_insert( endpoint->received_packets, sequence ) )
+            {
+                snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "[%s] ignoring stale packet %d", endpoint->config.name, sequence );
+                endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_STALE]++;
+                return;
+            }
+
             *out_payload_data = payload_buffer;
             *out_payload_bytes = payload_bytes;
-            *out_payload_sequence = sequence;
-            *out_payload_ack = ack;
-            *out_payload_ack_bits = ack_bits;
-        }
 
-        endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_FRAGMENTS_RECEIVED]++;
+            endpoint->counters[SNAPSHOT_ENDPOINT_COUNTER_NUM_PACKETS_RECEIVED]++;
+        }
     }
 }
 
-void snapshot_endpoint_mark_payload_processed( snapshot_endpoint_t * endpoint, int payload_bytes, uint16_t sequence, uint16_t ack, uint32_t ack_bits )
+void snapshot_endpoint_mark_packet_processed( snapshot_endpoint_t * endpoint, uint16_t sequence, uint16_t ack, uint32_t ack_bits, int packet_bytes )
 {
     snapshot_assert( endpoint );
 
@@ -404,7 +423,7 @@ void snapshot_endpoint_mark_payload_processed( snapshot_endpoint_t * endpoint, i
     snapshot_assert( received_packet_data );
 
     received_packet_data->time = endpoint->time;
-    received_packet_data->packet_bytes = endpoint->config.packet_header_size + payload_bytes;
+    received_packet_data->packet_bytes = endpoint->config.packet_header_size + packet_bytes;
 
     snapshot_sequence_buffer_advance_with_cleanup( endpoint->fragment_reassembly, sequence, snapshot_fragment_reassembly_data_cleanup );
 

@@ -24,15 +24,25 @@ DONE
 
 	Payload packet needed to be expanded on stack for prefix.
 
-TODO
-
 	Now windows is failing (debug and release) with receiver payload bytes != 8. 
 
 	Print out what it is so I can work out what's going on... I guess zero?
 
-	-------------
+	Fixed. There was a sizeof on a pointer that used to be a fixed array.
 
-	Bring across the remainder of endpoint tests
+	Get the payload test working. I suspect there is a slight mismatch on the payload bytes for fragmented packets. Seems like we're not removing the payload header on the first bytes?
+
+	There is a still a mismatch on payload byte delivery in fragmented case, but the non-fragmented case is verified working.
+
+	Debug fragment header mismatch.
+
+	Changed "mark_payload_processed" to "mark_packet_processed". When fragment comes in, it has no payload, but we still need to process acks!!!
+
+	So acks/sequence/ack_bits are at the packet level, not the payload level.
+
+TODO
+
+	Looks like fragmentation packet data isn't exactly matching yet, but the size is correct.
 
 	-------------
 
