@@ -3841,6 +3841,144 @@ void test_acks()
     snapshot_endpoint_destroy( receiver );
 }
 
+void test_acks_packet_loss()
+{
+    double time = 100.0;
+
+    struct snapshot_endpoint_config_t sender_config;
+    struct snapshot_endpoint_config_t receiver_config;
+
+    snapshot_endpoint_default_config( &sender_config );
+    snapshot_endpoint_default_config( &receiver_config );
+
+    strncpy( sender_config.name, "sender", sizeof(sender_config.name) );
+    strncpy( receiver_config.name, "receiver", sizeof(receiver_config.name) );
+
+    snapshot_endpoint_t * sender = snapshot_endpoint_create( &sender_config, time );
+    snapshot_endpoint_t * receiver = snapshot_endpoint_create( &receiver_config, time );
+
+    double delta_time = 0.01;
+
+    for ( int i = 0; i < TEST_ACKS_NUM_ITERATIONS; ++i )
+    {
+        uint8_t dummy_payload[8];
+        memset( dummy_payload, 0, sizeof( dummy_payload ) );
+
+        // sender write packet
+
+        int num_sender_packets = 0;
+        uint8_t * sender_packet_data[SNAPSHOT_ENDPOINT_MAX_WRITE_PACKETS];
+        int sender_packet_bytes[SNAPSHOT_ENDPOINT_MAX_WRITE_PACKETS];
+
+        snapshot_endpoint_write_packets( sender, dummy_payload, sizeof(dummy_payload), &num_sender_packets, &sender_packet_data[0], &sender_packet_bytes[0] );
+
+        snapshot_check( num_sender_packets == 1 );
+
+        // receiver process packet
+
+        bool drop = ( i % 2 ) != 0;
+
+        uint8_t buffer[SNAPSHOT_PACKET_PREFIX_BYTES + SNAPSHOT_MAX_PACKET_BYTES + SNAPSHOT_PACKET_POSTFIX_BYTES];
+
+        uint8_t * receiver_payload_data = NULL;
+        int receiver_payload_bytes = 0;
+        uint16_t receiver_payload_sequence = 0;
+        uint16_t receiver_payload_ack = 0;
+        uint32_t receiver_payload_ack_bits = 0;
+
+        if ( !drop )
+        {
+            snapshot_endpoint_process_packet( receiver, sender_packet_data[0], sender_packet_bytes[0], buffer, &receiver_payload_data, &receiver_payload_bytes, &receiver_payload_sequence, &receiver_payload_ack, &receiver_payload_ack_bits );
+
+            snapshot_check( receiver_payload_data );
+            snapshot_check( receiver_payload_bytes == 8 );
+            for ( int i = 0; i < 8; i++ )
+            {
+                snapshot_check( receiver_payload_data[i] == 0 );
+            }
+
+            snapshot_endpoint_mark_payload_processed( receiver, receiver_payload_bytes, receiver_payload_sequence, receiver_payload_ack, receiver_payload_ack_bits );
+        }
+
+        // receiver write packet
+
+        int num_receiver_packets = 0;
+        uint8_t * receiver_packet_data[SNAPSHOT_ENDPOINT_MAX_WRITE_PACKETS];
+        int receiver_packet_bytes[SNAPSHOT_ENDPOINT_MAX_WRITE_PACKETS];
+
+        snapshot_endpoint_write_packets( receiver, dummy_payload, sizeof(dummy_payload), &num_receiver_packets, &receiver_packet_data[0], &receiver_packet_bytes[0] );
+
+        snapshot_check( num_receiver_packets == 1 );
+
+        // sender process packet
+
+        if ( !drop )
+        {
+            uint8_t * sender_payload_data = NULL;
+            int sender_payload_bytes = 0;
+            uint16_t sender_payload_sequence = 0;
+            uint16_t sender_payload_ack = 0;
+            uint32_t sender_payload_ack_bits = 0;
+
+            snapshot_endpoint_process_packet( receiver, receiver_packet_data[0], receiver_packet_bytes[0], buffer, &sender_payload_data, &sender_payload_bytes, &sender_payload_sequence, &sender_payload_ack, &sender_payload_ack_bits );
+
+            snapshot_check( sender_payload_data );
+            snapshot_check( sender_payload_bytes == 8 );
+
+            snapshot_endpoint_mark_payload_processed( sender, sender_payload_bytes, sender_payload_sequence, sender_payload_ack, sender_payload_ack_bits );
+        }
+
+        // update endpoints
+
+        snapshot_endpoint_update( sender, time );
+
+        snapshot_endpoint_update( receiver, time );
+
+        time += delta_time;
+    }
+
+    // check sender acks
+
+    uint8_t sender_acked_packet[TEST_ACKS_NUM_ITERATIONS];
+    memset( sender_acked_packet, 0, sizeof( sender_acked_packet ) );
+    int sender_num_acks;
+    uint16_t * sender_acks = snapshot_endpoint_get_acks( sender, &sender_num_acks );
+    for ( int i = 0; i < sender_num_acks; ++i )
+    {
+        if ( sender_acks[i] < TEST_ACKS_NUM_ITERATIONS )
+        {
+            sender_acked_packet[sender_acks[i]] = 1;
+        }
+    }
+    for ( int i = 0; i < TEST_ACKS_NUM_ITERATIONS / 2; ++i )
+    {
+        snapshot_check( sender_acked_packet[i] == (i+1) % 2 );
+    }
+
+    // check receiver acks
+
+    uint8_t receiver_acked_packet[TEST_ACKS_NUM_ITERATIONS];
+    memset( receiver_acked_packet, 0, sizeof( receiver_acked_packet ) );
+    int receiver_num_acks;
+    uint16_t * receiver_acks = snapshot_endpoint_get_acks( receiver, &receiver_num_acks );
+    for ( int i = 0; i < receiver_num_acks; ++i )
+    {
+        if ( receiver_acks[i] < TEST_ACKS_NUM_ITERATIONS )
+        {
+            receiver_acked_packet[receiver_acks[i]] = 1;
+        }
+    }
+    for ( int i = 0; i < TEST_ACKS_NUM_ITERATIONS / 2; ++i )
+    {
+        snapshot_check( receiver_acked_packet[i] == (i+1) % 2 );
+    }
+
+    // clean up
+
+    snapshot_endpoint_destroy( sender );
+    snapshot_endpoint_destroy( receiver );
+}
+
 #if 0 // todo
 
 void test_acks_packet_loss()
@@ -4471,12 +4609,11 @@ void snapshot_run_tests()
         RUN_TEST( test_sequence_buffer );
         RUN_TEST( test_generate_ack_bits );
         RUN_TEST( test_packet_header );
-
         RUN_TEST( test_acks );
+        RUN_TEST( test_acks_packet_loss );
 
         // todo
         /*
-        RUN_TEST( test_acks_packet_loss );
         RUN_TEST( test_endpoint_regular_packets );
         RUN_TEST( test_endpoint_fragmented_packets );
         RUN_TEST( test_sequence_buffer_rollover );

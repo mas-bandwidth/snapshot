@@ -6,17 +6,17 @@ DONE
 
 	Bring back endpoint tests with updates for the new functions.
 
-TODO
-
 	test_acks is breaking. Acks aren't working. There's something not right in ack processing since the refactor.
 
 	Dig in...
 
-	-------------
+	Just missing some code in the refactor, fixed.
 
-	Standardize the generate/verify packets to the existing functions (move these functions into snapshot_packets.h/cpp?)
+	test_acks_packet_loss is working. Acks are done!
 
-	Make sure all endpoint tests pass.
+TODO
+
+	Bring across the remainder of endpoint tests
 
 	-------------
 
