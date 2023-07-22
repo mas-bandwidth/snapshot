@@ -4,9 +4,15 @@ DONE
 
 	Setup client so it processes payload packets from the server.
 
+	Bring back endpoint tests with updates for the new functions.
+
 TODO
 
-	Bring back endpoint tests with updates for the new functions.
+	test_acks is breaking. Acks aren't working. There's something not right in ack processing since the refactor.
+
+	Dig in...
+
+	-------------
 
 	Standardize the generate/verify packets to the existing functions (move these functions into snapshot_packets.h/cpp?)
 
