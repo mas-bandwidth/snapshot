@@ -3731,8 +3731,11 @@ void test_acks()
 
     for ( int i = 0; i < TEST_ACKS_NUM_ITERATIONS; ++i )
     {
-        uint8_t dummy_payload[8];
-        memset( dummy_payload, 0, sizeof( dummy_payload ) );
+        uint8_t payload_buffer[SNAPSHOT_PACKET_PREFIX_BYTES + 8 + SNAPSHOT_PACKET_POSTFIX_BYTES];
+
+        uint8_t * dummy_payload = payload_buffer + SNAPSHOT_PACKET_PREFIX_BYTES;
+
+        memset( dummy_payload, 0, 8 );
 
         // sender write packet
 
@@ -3865,8 +3868,11 @@ void test_acks_packet_loss()
 
     for ( int i = 0; i < TEST_ACKS_NUM_ITERATIONS; ++i )
     {
-        uint8_t dummy_payload[8];
-        memset( dummy_payload, 0, sizeof( dummy_payload ) );
+        uint8_t payload_buffer[SNAPSHOT_PACKET_PREFIX_BYTES + 8 + SNAPSHOT_PACKET_POSTFIX_BYTES];
+
+        uint8_t * dummy_payload = payload_buffer + SNAPSHOT_PACKET_PREFIX_BYTES;
+
+        memset( dummy_payload, 0, 8 );
 
         // sender write packet
 
