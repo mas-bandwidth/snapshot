@@ -301,6 +301,8 @@ void snapshot_server_start( struct snapshot_server_t * server, int max_clients )
     server->num_connected_clients = 0;
     server->challenge_sequence = 0;    
     snapshot_crypto_random_bytes( server->challenge_key, SNAPSHOT_KEY_BYTES );
+
+    server->counters[SNAPSHOT_SERVER_COUNTER_STARTS]++;
 }
 
 void snapshot_server_send_global_packet( snapshot_server_t * server, void * packet, struct snapshot_address_t * to, uint8_t * packet_key )
@@ -444,6 +446,8 @@ void snapshot_server_disconnect_client_internal( struct snapshot_server_t * serv
     server->num_connected_clients--;
 
     snapshot_assert( server->num_connected_clients >= 0 );
+
+    server->counters[SNAPSHOT_SERVER_COUNTER_CLIENT_DISCONNECTS]++;
 }
 
 void snapshot_server_disconnect_client( struct snapshot_server_t * server, int client_index )
@@ -505,6 +509,8 @@ void snapshot_server_stop( struct snapshot_server_t * server )
     snapshot_encryption_manager_reset( &server->encryption_manager );
 
     snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "server stopped" );
+
+    server->counters[SNAPSHOT_SERVER_COUNTER_STOPS]++;
 }
 
 int snapshot_server_find_client_index_by_id( struct snapshot_server_t * server, uint64_t client_id )
@@ -708,6 +714,8 @@ void snapshot_server_connect_client( struct snapshot_server_t * server,
     {
         server->config.connect_disconnect_callback( server->config.context, client_index, 1 );
     }
+
+    server->counters[SNAPSHOT_SERVER_COUNTER_CLIENT_CONNECTS]++;
 }
 
 void snapshot_server_process_connection_response_packet( struct snapshot_server_t * server, 
@@ -1274,6 +1282,8 @@ void snapshot_server_connect_loopback_client( struct snapshot_server_t * server,
     {
         server->config.connect_disconnect_callback( server->config.context, client_index, 1 );
     }
+
+    server->counters[SNAPSHOT_SERVER_COUNTER_CLIENT_LOOPBACK_CONNECTS]++;
 }
 
 void snapshot_server_disconnect_loopback_client( struct snapshot_server_t * server, int client_index )
@@ -1306,6 +1316,8 @@ void snapshot_server_disconnect_loopback_client( struct snapshot_server_t * serv
     server->num_connected_clients--;
 
     snapshot_assert( server->num_connected_clients >= 0 );
+
+    server->counters[SNAPSHOT_SERVER_COUNTER_CLIENT_LOOPBACK_DISCONNECTS]++;
 }
 
 void snapshot_server_send_passthrough_packet( struct snapshot_server_t * server, int client_index, const uint8_t * passthrough_data, int passthrough_bytes )

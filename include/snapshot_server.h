@@ -8,12 +8,25 @@
 
 #include "snapshot.h"
 
-#define SNAPSHOT_SERVER_FLAG_IGNORE_CONNECTION_REQUEST_PACKETS           1
-#define SNAPSHOT_SERVER_FLAG_IGNORE_CONNECTION_RESPONSE_PACKETS     (1<<1)
+#define SNAPSHOT_SERVER_FLAG_IGNORE_CONNECTION_REQUEST_PACKETS                       1
+#define SNAPSHOT_SERVER_FLAG_IGNORE_CONNECTION_RESPONSE_PACKETS                 (1<<1)
 
-#define SNAPSHOT_SERVER_COUNTER_PAYLOADS_SENT                            0
-#define SNAPSHOT_SERVER_COUNTER_PAYLOADS_RECEIVED                        1
-#define SNAPSHOT_SERVER_NUM_COUNTERS                                   256
+#define SNAPSHOT_SERVER_COUNTER_PAYLOADS_SENT                                        0
+#define SNAPSHOT_SERVER_COUNTER_PAYLOADS_RECEIVED                                    1
+#define SNAPSHOT_SERVER_COUNTER_STARTS                                               2
+#define SNAPSHOT_SERVER_COUNTER_STOPS                                                3
+#define SNAPSHOT_SERVER_COUNTER_CLIENT_CONNECTS                                      4
+#define SNAPSHOT_SERVER_COUNTER_CLIENT_DISCONNECTS                                   5
+#define SNAPSHOT_SERVER_COUNTER_CLIENT_LOOPBACK_CONNECTS                             6
+#define SNAPSHOT_SERVER_COUNTER_CLIENT_LOOPBACK_DISCONNECTS                          7
+
+// todo: packets sent
+
+// todo: packets received
+
+// todo: misc...
+
+#define SNAPSHOT_SERVER_NUM_COUNTERS                                               256
 
 struct snapshot_server_config_t
 {
