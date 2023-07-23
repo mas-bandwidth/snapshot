@@ -22,22 +22,24 @@
 #define SNAPSHOT_SERVER_COUNTER_CONNECTION_DENIED_PACKETS_SENT                       8
 #define SNAPSHOT_SERVER_COUNTER_CONNECTION_CHALLENGE_PACKETS_SENT                    9
 #define SNAPSHOT_SERVER_COUNTER_KEEP_ALIVE_PACKETS_SENT                             10
-
-// todo
 #define SNAPSHOT_SERVER_COUNTER_PAYLOAD_PACKETS_SENT                                11
 #define SNAPSHOT_SERVER_COUNTER_PASSTHROUGH_PACKETS_SENT                            12
 #define SNAPSHOT_SERVER_COUNTER_DISCONNECT_PACKETS_SENT                             13
-
 #define SNAPSHOT_SERVER_COUNTER_CONNECTION_REQUEST_PACKETS_RECEIVED                 14
 #define SNAPSHOT_SERVER_COUNTER_CONNECTION_RESPONSE_PACKETS_RECEIVED                15
 #define SNAPSHOT_SERVER_COUNTER_KEEP_ALIVE_PACKETS_RECEIVED                         16
 #define SNAPSHOT_SERVER_COUNTER_PAYLOAD_PACKETS_RECEIVED                            17
 #define SNAPSHOT_SERVER_COUNTER_PASSTHROUGH_PACKETS_RECEIVED                        18
 #define SNAPSHOT_SERVER_COUNTER_DISCONNECT_PACKETS_RECEIVED                         19
+#define SNAPSHOT_SERVER_COUNTER_PACKETS_PROCESSED                                   20
+#define SNAPSHOT_SERVER_COUNTER_PACKETS_RECEIVED                                    21
+#define SNAPSHOT_SERVER_COUNTER_PACKETS_RECEIVED_SIMULATOR                          22
+#define SNAPSHOT_SERVER_COUNTER_READ_PACKET_FAILURES                                23
+#define SNAPSHOT_SERVER_COUNTER_PACKETS_SENT                                        24
+#define SNAPSHOT_SERVER_COUNTER_PACKETS_SENT_LOOPBACK                               25
+#define SNAPSHOT_SERVER_COUNTER_PACKETS_SENT_SIMULATOR                              26
 
-// todo: misc...
-
-#define SNAPSHOT_SERVER_NUM_COUNTERS                                               256
+#define SNAPSHOT_SERVER_NUM_COUNTERS                                                27
 
 struct snapshot_server_config_t
 {

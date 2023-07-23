@@ -324,11 +324,13 @@ void snapshot_server_send_global_packet( snapshot_server_t * server, void * pack
     if ( server->config.network_simulator )
     {
         snapshot_network_simulator_send_packet( server->config.network_simulator, &server->address, to, packet_data, packet_bytes );
+        server->counters[SNAPSHOT_SERVER_COUNTER_PACKETS_SENT_SIMULATOR]++;
     }
     else
 #endif // #if SNAPSHOT_DEVELOPMENT
     {
         snapshot_platform_socket_send_packet( server->socket, to, packet_data, packet_bytes );
+        server->counters[SNAPSHOT_SERVER_COUNTER_PACKETS_SENT]++;
     }
 
     server->global_sequence++;
@@ -372,16 +374,19 @@ void snapshot_server_send_packet_to_client( struct snapshot_server_t * server, i
         if ( server->config.network_simulator )
         {
             snapshot_network_simulator_send_packet( server->config.network_simulator, &server->address, &server->client_address[client_index], packet_data, packet_bytes );
+            server->counters[SNAPSHOT_SERVER_COUNTER_PACKETS_SENT_SIMULATOR]++;
         }
         else
 #endif // #if SNAPSHOT_DEVELOPMENT
         {
             snapshot_platform_socket_send_packet( server->socket, &server->client_address[client_index], packet_data, packet_bytes );
+            server->counters[SNAPSHOT_SERVER_COUNTER_PACKETS_SENT]++;
         }
     }
     else
     {
         server->config.send_loopback_packet_callback( server->config.context, &server->address, packet_data, packet_bytes );
+        server->counters[SNAPSHOT_SERVER_COUNTER_PACKETS_SENT_LOOPBACK]++;
     }
 
     server->client_sequence[client_index]++;
@@ -419,6 +424,8 @@ void snapshot_server_disconnect_client_internal( struct snapshot_server_t * serv
             packet.packet_type = SNAPSHOT_DISCONNECT_PACKET;
 
             snapshot_server_send_packet_to_client( server, client_index, &packet );
+
+            server->counters[SNAPSHOT_SERVER_COUNTER_DISCONNECT_PACKETS_SENT]++;
         }
     }
 
@@ -848,8 +855,10 @@ bool snapshot_server_process_packet( struct snapshot_server_t * server, struct s
     if ( !server->running )
         return false;
 
-    if ( packet_bytes <= 1 )
+    if ( packet_bytes < 1 )
         return false;
+
+    server->counters[SNAPSHOT_SERVER_COUNTER_PACKETS_PROCESSED]++;
 
     uint64_t sequence;
 
@@ -891,7 +900,10 @@ bool snapshot_server_process_packet( struct snapshot_server_t * server, struct s
                                           ( client_index != -1 ) ? &server->client_replay_protection[client_index] : NULL );
 
     if ( !packet )
+    {
+        server->counters[SNAPSHOT_SERVER_COUNTER_READ_PACKET_FAILURES]++;
         return false;
+    }
 
     uint8_t packet_type = ( (uint8_t*) packet ) [0];
 
@@ -899,6 +911,8 @@ bool snapshot_server_process_packet( struct snapshot_server_t * server, struct s
     {
         case SNAPSHOT_CONNECTION_REQUEST_PACKET:
         {    
+            server->counters[SNAPSHOT_SERVER_COUNTER_CONNECTION_REQUEST_PACKETS_RECEIVED]++;
+
             if ( ( server->flags & SNAPSHOT_SERVER_FLAG_IGNORE_CONNECTION_REQUEST_PACKETS ) == 0 )
             {
                 char from_address_string[SNAPSHOT_MAX_ADDRESS_STRING_LENGTH];
@@ -911,6 +925,8 @@ bool snapshot_server_process_packet( struct snapshot_server_t * server, struct s
 
         case SNAPSHOT_CONNECTION_RESPONSE_PACKET:
         {    
+            server->counters[SNAPSHOT_SERVER_COUNTER_CONNECTION_RESPONSE_PACKETS_RECEIVED]++;
+
             if ( ( server->flags & SNAPSHOT_SERVER_FLAG_IGNORE_CONNECTION_RESPONSE_PACKETS ) == 0 )
             {
                 char from_address_string[SNAPSHOT_MAX_ADDRESS_STRING_LENGTH];
@@ -923,6 +939,8 @@ bool snapshot_server_process_packet( struct snapshot_server_t * server, struct s
 
         case SNAPSHOT_KEEP_ALIVE_PACKET:
         {
+            server->counters[SNAPSHOT_SERVER_COUNTER_KEEP_ALIVE_PACKETS_RECEIVED]++;
+
             if ( client_index != -1 )
             {
                 snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server received keep alive packet from client %d", client_index );
@@ -939,6 +957,8 @@ bool snapshot_server_process_packet( struct snapshot_server_t * server, struct s
 
         case SNAPSHOT_PAYLOAD_PACKET:
         {
+            server->counters[SNAPSHOT_SERVER_COUNTER_PAYLOAD_PACKETS_RECEIVED]++;
+
             if ( client_index != -1 )
             {
                 snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server received payload packet from client %d", client_index );
@@ -972,6 +992,8 @@ bool snapshot_server_process_packet( struct snapshot_server_t * server, struct s
 
         case SNAPSHOT_PASSTHROUGH_PACKET:
         {
+            server->counters[SNAPSHOT_SERVER_COUNTER_PASSTHROUGH_PACKETS_RECEIVED]++;
+
             if ( client_index != -1 )
             {
                 snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server received passthrough packet from client %d", client_index );
@@ -990,6 +1012,8 @@ bool snapshot_server_process_packet( struct snapshot_server_t * server, struct s
 
         case SNAPSHOT_DISCONNECT_PACKET:
         {
+            server->counters[SNAPSHOT_SERVER_COUNTER_DISCONNECT_PACKETS_RECEIVED]++;
+
             if ( client_index != -1 )
             {
                 snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server received disconnect packet from client %d", client_index );
@@ -1025,6 +1049,7 @@ void snapshot_server_receive_packets( struct snapshot_server_t * server )
         int i;
         for ( i = 0; i < num_packets_received; ++i )
         {
+            server->counters[SNAPSHOT_SERVER_COUNTER_PACKETS_RECEIVED_SIMULATOR]++;
             snapshot_server_process_packet( server, &server->sim_receive_from[i], server->sim_receive_packet_data[i], server->sim_receive_packet_bytes[i] );
             snapshot_destroy_packet( server->config.context, server->sim_receive_packet_data[i] );
         }
@@ -1050,6 +1075,8 @@ void snapshot_server_receive_packets( struct snapshot_server_t * server )
 
             if ( packet_bytes == 0 )
                 break;
+
+            server->counters[SNAPSHOT_SERVER_COUNTER_PACKETS_RECEIVED]++;
 
             snapshot_server_process_packet( server, &from, packet_data + SNAPSHOT_PACKET_PREFIX_BYTES, packet_bytes );
         }
@@ -1207,6 +1234,8 @@ void snapshot_server_send_payload_to_client( struct snapshot_server_t * server, 
             snapshot_payload_packet_t * packet = snapshot_wrap_payload_packet( packet_data[0], packet_bytes[0] );
 
             snapshot_server_send_packet_to_client( server, client_index, packet );
+
+            server->counters[SNAPSHOT_SERVER_COUNTER_PAYLOAD_PACKETS_SENT]++;
         }
         else
         {
@@ -1217,6 +1246,8 @@ void snapshot_server_send_payload_to_client( struct snapshot_server_t * server, 
                 snapshot_payload_packet_t * packet = snapshot_wrap_payload_packet( packet_data[i], packet_bytes[i] );
 
                 snapshot_server_send_packet_to_client( server, client_index, packet );
+
+                server->counters[SNAPSHOT_SERVER_COUNTER_PAYLOAD_PACKETS_SENT]++;
 
                 snapshot_destroy_packet( server->config.context, packet_data[i] );
             }
@@ -1344,6 +1375,8 @@ void snapshot_server_send_passthrough_packet( struct snapshot_server_t * server,
     memcpy( packet->passthrough_data, passthrough_data, passthrough_bytes );
 
     snapshot_server_send_packet_to_client( server, client_index, packet );
+
+    server->counters[SNAPSHOT_SERVER_COUNTER_PASSTHROUGH_PACKETS_SENT]++;
 }
 
 int snapshot_server_client_loopback( struct snapshot_server_t * server, int client_index )

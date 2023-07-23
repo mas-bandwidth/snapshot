@@ -2,21 +2,21 @@ DONE
 
 	Extend client counters to cover common situations
 
-TODO
-
 	Extend server counters to cover common situations
 
-	-------------
-
-	Setup custom allocator. I want to know that I'm not leaking any memory in tests, client or server.
-
-	-------------
-
-	Setup memory checking. I want to know that I'm not trashing any memory outside bounds.
+TODO
 
 	-------------
 
 	Soak test
+
+	-------------
+
+	Setup custom allocator. I want to know that I'm not leaking any memory in tests, client, server, loopback or soak test.
+
+	-------------
+
+	Setup memory checking. I want to know that I'm not trashing any memory outside bounds.
 
 	-------------
 
