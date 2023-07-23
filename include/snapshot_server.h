@@ -19,10 +19,21 @@
 #define SNAPSHOT_SERVER_COUNTER_CLIENT_DISCONNECTS                                   5
 #define SNAPSHOT_SERVER_COUNTER_CLIENT_LOOPBACK_CONNECTS                             6
 #define SNAPSHOT_SERVER_COUNTER_CLIENT_LOOPBACK_DISCONNECTS                          7
+#define SNAPSHOT_SERVER_COUNTER_CONNECTION_DENIED_PACKETS_SENT                       8
+#define SNAPSHOT_SERVER_COUNTER_CONNECTION_CHALLENGE_PACKETS_SENT                    9
+#define SNAPSHOT_SERVER_COUNTER_KEEP_ALIVE_PACKETS_SENT                             10
 
-// todo: packets sent
+// todo
+#define SNAPSHOT_SERVER_COUNTER_PAYLOAD_PACKETS_SENT                                11
+#define SNAPSHOT_SERVER_COUNTER_PASSTHROUGH_PACKETS_SENT                            12
+#define SNAPSHOT_SERVER_COUNTER_DISCONNECT_PACKETS_SENT                             13
 
-// todo: packets received
+#define SNAPSHOT_SERVER_COUNTER_CONNECTION_REQUEST_PACKETS_RECEIVED                 14
+#define SNAPSHOT_SERVER_COUNTER_CONNECTION_RESPONSE_PACKETS_RECEIVED                15
+#define SNAPSHOT_SERVER_COUNTER_KEEP_ALIVE_PACKETS_RECEIVED                         16
+#define SNAPSHOT_SERVER_COUNTER_PAYLOAD_PACKETS_RECEIVED                            17
+#define SNAPSHOT_SERVER_COUNTER_PASSTHROUGH_PACKETS_RECEIVED                        18
+#define SNAPSHOT_SERVER_COUNTER_DISCONNECT_PACKETS_RECEIVED                         19
 
 // todo: misc...
 

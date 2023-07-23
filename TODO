@@ -16,17 +16,7 @@ TODO
 
 	-------------
 
-
-
-
-
-
-
-
-
-
-
-
+	Soak test
 
 	-------------
 
@@ -39,14 +29,6 @@ TODO
 	-------------
 
 	Update to latest PS4/PS5 tooling
-
-	Update to latest XBox Series X and GDK tooling
-
-	Get series x testbed working
-
-	-------------
-
-	Setup additional PCs as build farm for sem
 
 	-------------
 
@@ -78,7 +60,15 @@ TODO
 
 
 
+	--------------
 
+	Update to latest XBox Series X and GDK tooling
+
+	Get series x testbed working
+
+	-------------
+
+	Setup additional PCs as build farm for sem
 
 	-------------
 

@@ -605,6 +605,8 @@ void snapshot_server_process_connection_request_packet( snapshot_server_t * serv
         
         snapshot_server_send_global_packet( server, &p, from, connect_token_private.server_to_client_key );
 
+        server->counters[SNAPSHOT_SERVER_COUNTER_CONNECTION_DENIED_PACKETS_SENT]++;
+
         return;
     }
 
@@ -644,6 +646,8 @@ void snapshot_server_process_connection_request_packet( snapshot_server_t * serv
     snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server sent connection challenge packet" );
 
     snapshot_server_send_global_packet( server, &challenge_packet, from, connect_token_private.server_to_client_key );
+
+    server->counters[SNAPSHOT_SERVER_COUNTER_CONNECTION_CHALLENGE_PACKETS_SENT]++;
 }
 
 int snapshot_server_find_free_client_index( struct snapshot_server_t * server )
@@ -707,6 +711,8 @@ void snapshot_server_connect_client( struct snapshot_server_t * server,
     packet.max_clients = server->max_clients;
 
     snapshot_server_send_packet_to_client( server, client_index, &packet );
+
+    server->counters[SNAPSHOT_SERVER_COUNTER_KEEP_ALIVE_PACKETS_SENT]++;
 
     server->client_last_internal_packet_send_time[client_index] = server->time;
 
@@ -1069,6 +1075,7 @@ void snapshot_server_send_packets( struct snapshot_server_t * server )
             packet.client_index = i;
             packet.max_clients = server->max_clients;
             snapshot_server_send_packet_to_client( server, i, &packet );
+            server->counters[SNAPSHOT_SERVER_COUNTER_KEEP_ALIVE_PACKETS_SENT]++;
             server->client_last_internal_packet_send_time[i] = server->time;
         }
     }
