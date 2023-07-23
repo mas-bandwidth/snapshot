@@ -80,6 +80,7 @@ struct snapshot_client_t
     int sim_receive_packet_bytes[SNAPSHOT_CLIENT_MAX_SIM_RECEIVE_PACKETS];
     struct snapshot_address_t sim_receive_from[SNAPSHOT_CLIENT_MAX_SIM_RECEIVE_PACKETS];
 #endif // #if SNAPSHOT_DEVELOPMENT
+    uint64_t counters[SNAPSHOT_CLIENT_NUM_COUNTERS];
 };
 
 struct snapshot_client_t * snapshot_client_create( const char * bind_address_string,
@@ -270,6 +271,8 @@ void snapshot_client_connect( struct snapshot_client_t * client, uint8_t * conne
 
     snapshot_client_disconnect( client );
 
+    client->counters[SNAPSHOT_CLIENT_COUNTER_CONNECT_CALLS]++;
+
     if ( snapshot_read_connect_token( connect_token, SNAPSHOT_CONNECT_TOKEN_BYTES, &client->connect_token ) != SNAPSHOT_OK )
     {
         snapshot_client_set_state( client, SNAPSHOT_CLIENT_STATE_INVALID_CONNECT_TOKEN );
@@ -303,6 +306,8 @@ int snapshot_client_process_payload( struct snapshot_client_t * client, uint8_t 
     if ( client->development_flags & SNAPSHOT_DEVELOPMENT_FLAG_VALIDATE_PAYLOAD )
     {    
         snapshot_verify_packet_data( payload_data, payload_bytes );
+
+        client->counters[SNAPSHOT_CLIENT_COUNTER_PAYLOADS_RECEIVED]++;
 
         return SNAPSHOT_OK;
     }
@@ -614,6 +619,8 @@ void snapshot_client_send_internal_packets( struct snapshot_client_t * client )
 
             snapshot_client_send_packet_to_server( client, &packet );
 
+            client->counters[SNAPSHOT_CLIENT_COUNTER_CONNECTION_REQUEST_PACKETS_SENT]++;
+
             client->last_internal_packet_send_time = client->time;
         }
         break;
@@ -632,6 +639,8 @@ void snapshot_client_send_internal_packets( struct snapshot_client_t * client )
 
             snapshot_client_send_packet_to_server( client, &packet );
 
+            client->counters[SNAPSHOT_CLIENT_COUNTER_CONNECTION_RESPONSE_PACKETS_SENT]++;
+
             client->last_internal_packet_send_time = client->time;
         }
         break;
@@ -649,6 +658,8 @@ void snapshot_client_send_internal_packets( struct snapshot_client_t * client )
             packet.max_clients = 0;
 
             snapshot_client_send_packet_to_server( client, &packet );
+
+            client->counters[SNAPSHOT_CLIENT_COUNTER_KEEP_ALIVE_PACKETS_SENT]++;
 
             client->last_internal_packet_send_time = client->time;
         }
@@ -793,6 +804,8 @@ void snapshot_client_send_payload( struct snapshot_client_t * client )
             snapshot_payload_packet_t * packet = snapshot_wrap_payload_packet( packet_data[0], packet_bytes[0] );
 
             snapshot_client_send_packet_to_server( client, packet );
+
+            client->counters[SNAPSHOT_CLIENT_COUNTER_PAYLOAD_PACKETS_SENT]++;
         }
         else
         {
@@ -804,11 +817,15 @@ void snapshot_client_send_payload( struct snapshot_client_t * client )
 
                 snapshot_client_send_packet_to_server( client, packet );
 
+                client->counters[SNAPSHOT_CLIENT_COUNTER_PAYLOAD_PACKETS_SENT]++;
+
                 snapshot_destroy_packet( client->config.context, packet_data[i] );
             }
         }
 
         snapshot_destroy_packet( client->config.context, payload_data );
+
+        client->counters[SNAPSHOT_CLIENT_COUNTER_PAYLOADS_SENT]++;
 
         return;
     }
@@ -837,6 +854,7 @@ void snapshot_client_disconnect( struct snapshot_client_t * client )
     snapshot_assert( client );
     snapshot_assert( !client->loopback );
     snapshot_client_disconnect_internal( client, SNAPSHOT_CLIENT_STATE_DISCONNECTED, 1 );
+    client->counters[SNAPSHOT_CLIENT_COUNTER_DISCONNECT_CALLS]++;
 }
 
 void snapshot_client_disconnect_internal( struct snapshot_client_t * client, int destination_state, int send_disconnect_packets )
@@ -867,6 +885,8 @@ void snapshot_client_disconnect_internal( struct snapshot_client_t * client, int
             packet.packet_type = SNAPSHOT_DISCONNECT_PACKET;
 
             snapshot_client_send_packet_to_server( client, &packet );
+
+            client->counters[SNAPSHOT_CLIENT_COUNTER_DISCONNECT_PACKETS_SENT]++;
 
             client->last_internal_packet_send_time = client->time;
         }
@@ -909,6 +929,7 @@ void snapshot_client_connect_loopback( struct snapshot_client_t * client, snapsh
     client->client_index = client_index;
     client->max_clients = max_clients;
     client->loopback = 1;
+    client->counters[SNAPSHOT_CLIENT_COUNTER_CONNECT_LOOPBACK_CALLS]++;
 }
 
 void snapshot_client_disconnect_loopback( struct snapshot_client_t * client )
@@ -917,6 +938,7 @@ void snapshot_client_disconnect_loopback( struct snapshot_client_t * client )
     snapshot_assert( client->loopback );
     snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client disconnected from server loopback in client slot %d", client->client_index );
     snapshot_client_reset_connection_data( client, SNAPSHOT_CLIENT_STATE_DISCONNECTED );
+    client->counters[SNAPSHOT_CLIENT_COUNTER_DISCONNECT_LOOPBACK_CALLS]++;
 }
 
 int snapshot_client_loopback( struct snapshot_client_t * client )
@@ -943,6 +965,8 @@ void snapshot_client_send_passthrough_packet( struct snapshot_client_t * client,
     packet->passthrough_bytes = passthrough_bytes;
     memcpy( packet->passthrough_data, passthrough_data, passthrough_bytes );
 
+    client->counters[SNAPSHOT_CLIENT_COUNTER_PASSTHROUGH_PACKETS_SENT]++;
+
     snapshot_client_send_packet_to_server( client, packet );
 }
 
@@ -961,3 +985,9 @@ void snapshot_client_set_development_flags( struct snapshot_client_t * client, u
 }
 
 #endif // #if SNAPSHOT_DEVELOPMENT
+
+const uint64_t * snapshot_client_counters( struct snapshot_client_t * client )
+{
+    snapshot_assert( client );
+    return client->counters;
+}

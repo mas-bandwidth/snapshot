@@ -8,8 +8,12 @@
 
 #include "snapshot.h"
 
-#define SNAPSHOT_SERVER_FLAG_IGNORE_CONNECTION_REQUEST_PACKETS       1
-#define SNAPSHOT_SERVER_FLAG_IGNORE_CONNECTION_RESPONSE_PACKETS      (1<<1)
+#define SNAPSHOT_SERVER_FLAG_IGNORE_CONNECTION_REQUEST_PACKETS           1
+#define SNAPSHOT_SERVER_FLAG_IGNORE_CONNECTION_RESPONSE_PACKETS     (1<<1)
+
+#define SNAPSHOT_SERVER_COUNTER_PAYLOADS_SENT                            0
+#define SNAPSHOT_SERVER_COUNTER_PAYLOADS_RECEIVED                        1
+#define SNAPSHOT_SERVER_NUM_COUNTERS                                   256
 
 struct snapshot_server_config_t
 {
@@ -69,5 +73,7 @@ void snapshot_server_set_flags( struct snapshot_server_t * server, uint64_t flag
 #if SNAPSHOT_DEVELOPMENT
 void snapshot_server_set_development_flags( struct snapshot_server_t * server, uint64_t flags );
 #endif // #if SNAPSHOT_DEVELOPMENT
+
+const uint64_t * snapshot_server_counters( struct snapshot_server_t * server );
 
 #endif // #ifndef SNAPSHOT_SERVER_H

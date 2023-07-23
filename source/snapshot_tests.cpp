@@ -4233,7 +4233,19 @@ void test_client_server_payload()
         time += delta_time;
     }
 
-    // todo: we should have some payload counter here to make sure payloads are actually being exchanged
+    // check client counters
+
+    const uint64_t * client_counters = snapshot_client_counters( client );
+
+    snapshot_check( client_counters[SNAPSHOT_CLIENT_COUNTER_PAYLOADS_SENT] > 0 );
+    snapshot_check( client_counters[SNAPSHOT_CLIENT_COUNTER_PAYLOADS_RECEIVED] > 0 );
+
+    // check server counters
+
+    const uint64_t * server_counters = snapshot_server_counters( server );
+
+    snapshot_check( server_counters[SNAPSHOT_SERVER_COUNTER_PAYLOADS_SENT] > 0 );
+    snapshot_check( server_counters[SNAPSHOT_SERVER_COUNTER_PAYLOADS_RECEIVED] > 0 );
 
     // clean up
 

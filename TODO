@@ -1,30 +1,20 @@
 DONE
 
-	Add back #define SNAPSHOT_DEVELOPMENT 1 into premake file
-
-	Wrap the tests with #if SNAPSHOT_DEVELOPMENT
-
-	Wrap the network simulator stuff with #if SNAPSHOT_DEVELOPMENT
-
-	Add some client and server development flags, wrapped with #if SNAPSHOT_DEVELOPMENT
-
-	First flag is DEVELOPMENT_FLAG_VALIDATE_PAYLOAD
-
-	Move generate_packet_data / validate_packet_data functions into snapshot_packets.h
-
-	Update tests to use new methods
-
-	Extend client and server to generate and send test payloads with the new generate_packet_data function, #if SNAPSHOT_DEVELOPMENT and the flag validate payload is set.
-
-	Payloads should be a range of sizes, from minimum (1 byte payload) to maximum size (with fragmentation and reassembly.)
-
-	Both client and server should validate payloads received, if the development flag is set.
-
 TODO
 
-	Extend client and server to have counters
+	Extend client counters to cover common situations
 
-	Extend payload test to check that both client and server are sending and receiving payloads
+	-------------
+	
+	Extend server counters to cover common situations
+
+	-------------
+
+	Setup custom allocator. I want to know that I'm not leaking any memory in tests, client or server.
+
+	-------------
+
+	Setup memory checking. I want to know that I'm not trashing any memory outside bounds.
 
 	-------------
 
@@ -40,20 +30,7 @@ TODO
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-	=========================
+	-------------
 
 	Download UE5.
 
@@ -68,8 +45,6 @@ TODO
 	Update to latest XBox Series X and GDK tooling
 
 	Get series x testbed working
-
-	Update to latest Nintendo Switch tooling
 
 	-------------
 

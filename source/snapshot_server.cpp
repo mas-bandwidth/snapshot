@@ -138,6 +138,7 @@ struct snapshot_server_t
     int sim_receive_packet_bytes[SNAPSHOT_SERVER_MAX_SIM_RECEIVE_PACKETS];
     struct snapshot_address_t sim_receive_from[SNAPSHOT_SERVER_MAX_SIM_RECEIVE_PACKETS];
 #endif // #if SNAPSHOT_DEVELOPMENT
+    uint64_t counters[SNAPSHOT_SERVER_NUM_COUNTERS];
 };
 
 struct snapshot_server_t * snapshot_server_create( const char * server_address_string, const struct snapshot_server_config_t * config, double time )
@@ -792,6 +793,8 @@ int snapshot_server_process_payload( struct snapshot_server_t * server, int clie
     {    
         snapshot_verify_packet_data( payload_data, payload_bytes );
 
+        server->counters[SNAPSHOT_SERVER_COUNTER_PAYLOADS_RECEIVED]++;
+
         return SNAPSHOT_OK;
     }
 
@@ -1206,6 +1209,8 @@ void snapshot_server_send_payload_to_client( struct snapshot_server_t * server, 
 
         snapshot_destroy_packet( server->config.context, payload_data );
 
+        server->counters[SNAPSHOT_SERVER_COUNTER_PAYLOADS_SENT]++;
+
         return;
     }
 #endif // #if SNAPSHOT_DEVELOPMENT
@@ -1352,3 +1357,9 @@ void snapshot_server_set_development_flags( struct snapshot_server_t * server, u
 }
 
 #endif // #if SNAPSHOT_DEVELOPMENT
+
+const uint64_t * snapshot_server_counters( struct snapshot_server_t * server )
+{
+    snapshot_assert( server );
+    return server->counters;
+}

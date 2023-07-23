@@ -8,16 +8,33 @@
 
 #include "snapshot.h"
 
-#define SNAPSHOT_CLIENT_STATE_CONNECT_TOKEN_EXPIRED              -6
-#define SNAPSHOT_CLIENT_STATE_INVALID_CONNECT_TOKEN              -5
-#define SNAPSHOT_CLIENT_STATE_CONNECTION_TIMED_OUT               -4
-#define SNAPSHOT_CLIENT_STATE_CONNECTION_RESPONSE_TIMED_OUT      -3
-#define SNAPSHOT_CLIENT_STATE_CONNECTION_REQUEST_TIMED_OUT       -2
-#define SNAPSHOT_CLIENT_STATE_CONNECTION_DENIED                  -1
-#define SNAPSHOT_CLIENT_STATE_DISCONNECTED                        0
-#define SNAPSHOT_CLIENT_STATE_SENDING_CONNECTION_REQUEST          1
-#define SNAPSHOT_CLIENT_STATE_SENDING_CONNECTION_RESPONSE         2
-#define SNAPSHOT_CLIENT_STATE_CONNECTED                           3
+#define SNAPSHOT_CLIENT_STATE_CONNECT_TOKEN_EXPIRED                 -6
+#define SNAPSHOT_CLIENT_STATE_INVALID_CONNECT_TOKEN                 -5
+#define SNAPSHOT_CLIENT_STATE_CONNECTION_TIMED_OUT                  -4
+#define SNAPSHOT_CLIENT_STATE_CONNECTION_RESPONSE_TIMED_OUT         -3
+#define SNAPSHOT_CLIENT_STATE_CONNECTION_REQUEST_TIMED_OUT          -2
+#define SNAPSHOT_CLIENT_STATE_CONNECTION_DENIED                     -1
+#define SNAPSHOT_CLIENT_STATE_DISCONNECTED                           0
+#define SNAPSHOT_CLIENT_STATE_SENDING_CONNECTION_REQUEST             1
+#define SNAPSHOT_CLIENT_STATE_SENDING_CONNECTION_RESPONSE            2
+#define SNAPSHOT_CLIENT_STATE_CONNECTED                              3
+
+#define SNAPSHOT_CLIENT_COUNTER_PAYLOADS_SENT                        0
+#define SNAPSHOT_CLIENT_COUNTER_PAYLOADS_RECEIVED                    1
+#define SNAPSHOT_CLIENT_COUNTER_CONNECT_CALLS                        2
+#define SNAPSHOT_CLIENT_COUNTER_DISCONNECT_CALLS                     3
+#define SNAPSHOT_CLIENT_COUNTER_CONNECT_LOOPBACK_CALLS               4
+#define SNAPSHOT_CLIENT_COUNTER_DISCONNECT_LOOPBACK_CALLS            5
+#define SNAPSHOT_CLIENT_COUNTER_CONNECTION_REQUEST_PACKETS_SENT      6
+#define SNAPSHOT_CLIENT_COUNTER_CONNECTION_RESPONSE_PACKETS_SENT     7
+#define SNAPSHOT_CLIENT_COUNTER_KEEP_ALIVE_PACKETS_SENT              8
+#define SNAPSHOT_CLIENT_COUNTER_PAYLOAD_PACKETS_SENT                 9
+#define SNAPSHOT_CLIENT_COUNTER_PASSTHROUGH_PACKETS_SENT            10
+#define SNAPSHOT_CLIENT_COUNTER_DISCONNECT_PACKETS_SENT             11
+
+// todo: packets received
+
+#define SNAPSHOT_CLIENT_NUM_COUNTERS                               256
 
 struct snapshot_client_config_t
 {
@@ -39,14 +56,6 @@ void snapshot_client_destroy( struct snapshot_client_t * client );
 void snapshot_client_connect( struct snapshot_client_t * client, uint8_t * connect_token );
 
 void snapshot_client_update( struct snapshot_client_t * client, double time );
-
-uint64_t snapshot_client_next_packet_sequence( struct snapshot_client_t * client );
-
-void snapshot_client_send_packet( struct snapshot_client_t * client, const uint8_t * packet_data, int packet_bytes );
-
-uint8_t * snapshot_client_receive_packet( struct snapshot_client_t * client, int * packet_bytes, uint64_t * packet_sequence );
-
-void snapshot_client_free_packet( struct snapshot_client_t * client, void * packet );
 
 void snapshot_client_disconnect( struct snapshot_client_t * client );
 
@@ -75,5 +84,7 @@ const char * snapshot_client_state_name( int client_state );
 #if SNAPSHOT_DEVELOPMENT
 void snapshot_client_set_development_flags( struct snapshot_client_t * client, uint64_t flags );
 #endif // #if SNAPSHOT_DEVELOPMENT
+
+const uint64_t * snapshot_client_counters( struct snapshot_client_t * client );
 
 #endif // #ifndef SNAPSHOT_CLIENT_H
