@@ -316,7 +316,7 @@ int snapshot_client_process_payload( struct snapshot_client_t * client, uint8_t 
 
     (void) client;
 
-    // todo: process the real payload
+    // todo: process real payload
 
     return SNAPSHOT_OK;
 }
@@ -340,6 +340,8 @@ bool snapshot_client_process_packet( struct snapshot_client_t * client, struct s
     snapshot_assert( packet_data );
     snapshot_assert( packet_bytes > 0 );
 
+    client->counters[SNAPSHOT_CLIENT_COUNTER_PACKETS_PROCESSED]++;
+
     uint64_t current_timestamp = (uint64_t) time( NULL );
 
     uint8_t out_packet_buffer[1024];
@@ -358,7 +360,10 @@ bool snapshot_client_process_packet( struct snapshot_client_t * client, struct s
                                           &client->replay_protection );
 
     if ( !packet )
+    {
+        client->counters[SNAPSHOT_CLIENT_COUNTER_READ_PACKET_FAILURES]++;
         return false;
+    }
 
     uint8_t packet_type = ( (uint8_t*) packet ) [0];
 
@@ -366,6 +371,8 @@ bool snapshot_client_process_packet( struct snapshot_client_t * client, struct s
     {
         case SNAPSHOT_CONNECTION_DENIED_PACKET:
         {
+            client->counters[SNAPSHOT_CLIENT_COUNTER_CONNECTION_DENIED_PACKETS_RECEIVED]++;
+
             if ( ( client->state == SNAPSHOT_CLIENT_STATE_SENDING_CONNECTION_REQUEST || 
                    client->state == SNAPSHOT_CLIENT_STATE_SENDING_CONNECTION_RESPONSE ) 
                                                 && 
@@ -381,6 +388,8 @@ bool snapshot_client_process_packet( struct snapshot_client_t * client, struct s
 
         case SNAPSHOT_CONNECTION_CHALLENGE_PACKET:
         {
+            client->counters[SNAPSHOT_CLIENT_COUNTER_CONNECTION_CHALLENGE_PACKETS_RECEIVED]++;
+
             if ( client->state == SNAPSHOT_CLIENT_STATE_SENDING_CONNECTION_REQUEST && snapshot_address_equal( from, &client->server_address ) )
             {
                 snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client received connection challenge packet from server" );
@@ -399,6 +408,8 @@ bool snapshot_client_process_packet( struct snapshot_client_t * client, struct s
 
         case SNAPSHOT_KEEP_ALIVE_PACKET:
         {
+            client->counters[SNAPSHOT_CLIENT_COUNTER_KEEP_ALIVE_PACKETS_RECEIVED]++;
+
             if ( snapshot_address_equal( from, &client->server_address ) )
             {
                 struct snapshot_keep_alive_packet_t * p = (struct snapshot_keep_alive_packet_t*) packet;
@@ -433,6 +444,8 @@ bool snapshot_client_process_packet( struct snapshot_client_t * client, struct s
 
         case SNAPSHOT_PAYLOAD_PACKET:
         {
+            client->counters[SNAPSHOT_CLIENT_COUNTER_PAYLOAD_PACKETS_RECEIVED]++;
+
             if ( client->state == SNAPSHOT_CLIENT_STATE_CONNECTED && snapshot_address_equal( from, &client->server_address ) )
             {
                 snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client received payload packet from server" );
@@ -470,6 +483,8 @@ bool snapshot_client_process_packet( struct snapshot_client_t * client, struct s
 
         case SNAPSHOT_PASSTHROUGH_PACKET:
         {
+            client->counters[SNAPSHOT_CLIENT_COUNTER_PASSTHROUGH_PACKETS_RECEIVED]++;
+
             if ( client->state == SNAPSHOT_CLIENT_STATE_CONNECTED && snapshot_address_equal( from, &client->server_address ) )
             {
                 snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client received passthrough packet from server" );
@@ -487,6 +502,8 @@ bool snapshot_client_process_packet( struct snapshot_client_t * client, struct s
 
         case SNAPSHOT_DISCONNECT_PACKET:
         {
+            client->counters[SNAPSHOT_CLIENT_COUNTER_DISCONNECT_PACKETS_RECEIVED]++;
+
             if ( client->state == SNAPSHOT_CLIENT_STATE_CONNECTED && snapshot_address_equal( from, &client->server_address ) )
             {
                 snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client received disconnect packet from server" );
@@ -533,6 +550,7 @@ void snapshot_client_receive_packets( struct snapshot_client_t * client )
             snapshot_client_process_packet( client, &client->sim_receive_from[i], client->sim_receive_packet_data[i], client->sim_receive_packet_bytes[i] );
             snapshot_destroy_packet( client->config.context, client->sim_receive_packet_data[i] );
             client->sim_receive_packet_data[i] = NULL;
+            client->counters[SNAPSHOT_CLIENT_COUNTER_PACKETS_RECEIVED_SIMULATOR]++;
         }
     }
     else
@@ -548,6 +566,8 @@ void snapshot_client_receive_packets( struct snapshot_client_t * client )
             int packet_bytes = snapshot_platform_socket_receive_packet( client->socket, &from, packet_data, SNAPSHOT_MAX_PACKET_BYTES );
             if ( packet_bytes == 0 )
                 break;
+
+            client->counters[SNAPSHOT_CLIENT_COUNTER_PACKETS_RECEIVED]++;
 
             snapshot_client_process_packet( client, &from, packet_data, packet_bytes );
         }
@@ -570,6 +590,7 @@ void snapshot_client_send_packet_to_server( struct snapshot_client_t * client, v
                                                    client->connect_token.protocol_id,
                                                    &packet_bytes );
 
+    snapshot_assert( packet_data );
     snapshot_assert( packet_bytes <= SNAPSHOT_MAX_PACKET_BYTES );
 
     if ( !client->loopback )
@@ -578,16 +599,19 @@ void snapshot_client_send_packet_to_server( struct snapshot_client_t * client, v
         if ( client->config.network_simulator )
         {
             snapshot_network_simulator_send_packet( client->config.network_simulator, &client->bind_address, &client->server_address, packet_data, packet_bytes );
+            client->counters[SNAPSHOT_CLIENT_COUNTER_PACKETS_SENT_SIMULATOR]++;
         }
         else
 #endif // #if SNAPSHOT_DEVELOPMENT
         {
             snapshot_platform_socket_send_packet( client->socket, &client->server_address, packet_data, packet_bytes );
+            client->counters[SNAPSHOT_CLIENT_COUNTER_PACKETS_SENT]++;
         }
     }
     else
     {
         client->config.send_loopback_packet_callback( client->config.context, &client->bind_address, packet_data, packet_bytes );
+        client->counters[SNAPSHOT_CLIENT_COUNTER_PACKETS_SENT_LOOPBACK]++;
     }
 }
 
