@@ -8,11 +8,9 @@ DONE
 
 	Extend soak test to do the thing with random payloads
 
-TODO
-
 	Setup malloc/free overrides and check for memory leaks in soak test.
 
-	-------------
+TODO
 
 	Implement printf override function, and use it in soak test.
 
@@ -22,15 +20,23 @@ TODO
 
 	-------------
 
+	Update to latest PS4/PS5 tooling
+
+	-------------
+
+	Verify unit tests run on PS5.
+
+	-------------
+
+	Verify PS5 client can connect to linux server.
+
+	-------------
+
 	Download UE5.
 
 	Setup a snapshot UE5 plugin based on the network next UE4 plugin.
 
 	Verify client and server can connect and operate in testbed.
-
-	-------------
-
-	Update to latest PS4/PS5 tooling
 
 	-------------
 

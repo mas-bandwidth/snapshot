@@ -126,7 +126,9 @@ int main( int argc, char ** argv )
         return 1;
     }
 
-    // todo: set snapshot malloc and free functions
+    Allocator allocator;
+
+    snapshot_allocator( malloc_function, free_function );
 
     double time = 0.0;
     double delta_time = 1.0 / 60.0;
@@ -152,6 +154,7 @@ int main( int argc, char ** argv )
 
                 struct snapshot_server_config_t server_config;
                 snapshot_default_server_config( &server_config );
+                server_config.context = &allocator;
                 server_config.max_clients = max_clients;
                 server_config.protocol_id = TEST_PROTOCOL_ID;
                 memcpy( &server_config.private_key, test_private_key, SNAPSHOT_KEY_BYTES );
@@ -200,6 +203,7 @@ int main( int argc, char ** argv )
 
                 struct snapshot_client_config_t client_config;
                 snapshot_default_client_config( &client_config );
+                client_config.context = &allocator;
                 client[i] = snapshot_client_create( "0.0.0.0", &client_config, time );
 
                 if ( !client[i] )

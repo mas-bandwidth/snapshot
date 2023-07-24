@@ -45,18 +45,39 @@ void snapshot_copy_string( char * dest, const char * source, size_t dest_size )
     }
 }
 
-void * snapshot_malloc( void * context, size_t bytes )
+inline void * snapshot_default_malloc_function( void * context, size_t bytes )
 {
     (void) context;
-    // todo: custom allocator
     return malloc( bytes );
+}
+
+inline void snapshot_default_free_function( void * context, void * p )
+{
+    (void) context;
+    free( p );
+}
+
+static void * (*snapshot_malloc_function)( void * context, size_t bytes ) = snapshot_default_malloc_function;
+static void (*snapshot_free_function)( void * context, void * p ) = snapshot_default_free_function;
+
+void snapshot_allocator( void * (*malloc_function)( void * context, size_t bytes ), void (*free_function)( void * context, void * p ) )
+{
+    snapshot_assert( malloc_function );
+    snapshot_assert( free_function );
+    snapshot_malloc_function = malloc_function;
+    snapshot_free_function = free_function;
+}
+
+void * snapshot_malloc( void * context, size_t bytes )
+{
+    snapshot_assert( snapshot_malloc_function );
+    return snapshot_malloc_function( context, bytes );
 }
 
 void snapshot_free( void * context, void * p )
 {
-    (void) context;
-    // todo: custom allocator
-    free(p);
+    snapshot_assert( snapshot_free_function );
+    return snapshot_free_function( context, p );
 }
 
 const char * snapshot_log_level_string( int level )

@@ -203,6 +203,8 @@ void snapshot_printf( const char * format, ... );
 
 void snapshot_printf( int level, const char * format, ... );
 
+void snapshot_allocator( void * (*malloc_function)( void * context, size_t bytes ), void (*free_function)( void * context, void * p ) );
+
 void * snapshot_malloc( void * context, size_t bytes );
 
 void snapshot_free( void * context, void * p );
