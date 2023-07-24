@@ -44,6 +44,7 @@
 struct snapshot_server_config_t
 {
     void * context;
+    int max_clients;
     uint64_t protocol_id;
     uint8_t private_key[SNAPSHOT_KEY_BYTES];
     struct snapshot_network_simulator_t * network_simulator;
@@ -58,15 +59,11 @@ struct snapshot_server_t * snapshot_server_create( const char * server_address, 
 
 void snapshot_server_destroy( struct snapshot_server_t * server );
 
-void snapshot_server_start( struct snapshot_server_t * server, int max_clients );
+void snapshot_server_update( struct snapshot_server_t * server, double time );
 
-void snapshot_server_stop( struct snapshot_server_t * server );
-
-int snapshot_server_running( struct snapshot_server_t * server );
+int snapshot_server_connected_clients( struct snapshot_server_t * server );
 
 int snapshot_server_max_clients( struct snapshot_server_t * server );
-
-void snapshot_server_update( struct snapshot_server_t * server, double time );
 
 bool snapshot_server_process_packet( struct snapshot_server_t * server, struct snapshot_address_t * from, uint8_t * packet_data, int packet_bytes );
 

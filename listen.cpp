@@ -92,8 +92,6 @@ int main( int argc, char ** argv )
 
     server_address.port = snapshot_server_port( server );
 
-    snapshot_server_start( server, SNAPSHOT_MAX_CLIENTS );
-
     // create a local client in slot 0
 
     struct snapshot_client_config_t client_config;

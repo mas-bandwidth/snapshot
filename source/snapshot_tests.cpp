@@ -1788,6 +1788,7 @@ void test_ipv4_client_server_connect()
 
     struct snapshot_server_config_t server_config;
     snapshot_default_server_config( &server_config );
+    server_config.max_clients = 1;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
 
@@ -1796,8 +1797,6 @@ void test_ipv4_client_server_connect()
     struct snapshot_server_t * server = snapshot_server_create( server_address, &server_config, time );
 
     snapshot_check( server );
-
-    snapshot_server_start( server, 1 );
 
     uint8_t connect_token[SNAPSHOT_CONNECT_TOKEN_BYTES];
 
@@ -1898,6 +1897,7 @@ void test_ipv4_client_server_passthrough()
     struct snapshot_server_config_t server_config;
     snapshot_default_server_config( &server_config );
     server_config.context = &passthrough_context;
+    server_config.max_clients = 1;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.process_passthrough_callback = server_process_passthrough_callback;
     memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
@@ -1907,8 +1907,6 @@ void test_ipv4_client_server_passthrough()
     struct snapshot_server_t * server = snapshot_server_create( server_address, &server_config, time );
 
     snapshot_check( server );
-
-    snapshot_server_start( server, 1 );
 
     uint8_t connect_token[SNAPSHOT_CONNECT_TOKEN_BYTES];
 
@@ -2021,6 +2019,7 @@ void test_ipv6_client_server_connect()
 
     struct snapshot_server_config_t server_config;
     snapshot_default_server_config( &server_config );
+    server_config.max_clients = 1;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
 
@@ -2029,8 +2028,6 @@ void test_ipv6_client_server_connect()
     struct snapshot_server_t * server = snapshot_server_create( "[::1]:40000", &server_config, time );
 
     snapshot_check( server );
-
-    snapshot_server_start( server, 1 );
 
     uint8_t connect_token[SNAPSHOT_CONNECT_TOKEN_BYTES];
 
@@ -2091,6 +2088,7 @@ void test_ipv6_client_server_passthrough()
     struct snapshot_server_config_t server_config;
     snapshot_default_server_config( &server_config );
     server_config.context = &passthrough_context;
+    server_config.max_clients = 1;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.process_passthrough_callback = server_process_passthrough_callback;
     memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
@@ -2100,8 +2098,6 @@ void test_ipv6_client_server_passthrough()
     struct snapshot_server_t * server = snapshot_server_create( server_address, &server_config, time );
 
     snapshot_check( server );
-
-    snapshot_server_start( server, 1 );
 
     uint8_t connect_token[SNAPSHOT_CONNECT_TOKEN_BYTES];
 
@@ -2200,6 +2196,7 @@ void test_client_server_loopback()
 
     struct snapshot_server_config_t server_config;
     snapshot_default_server_config( &server_config );
+    server_config.max_clients = 2;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.context = &loopback_context;
     server_config.send_loopback_packet_callback = server_send_loopback_packet_callback;
@@ -2215,8 +2212,6 @@ void test_client_server_loopback()
     snapshot_check( server );
 
     int max_clients = 2;
-
-    snapshot_server_start( server, max_clients );
 
     loopback_context.server = server;
 
@@ -2329,6 +2324,7 @@ void test_client_server_network_simulator()
 
     struct snapshot_server_config_t server_config;
     snapshot_default_server_config( &server_config );
+    server_config.max_clients = 1;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.network_simulator = network_simulator;
     memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
@@ -2338,8 +2334,6 @@ void test_client_server_network_simulator()
     struct snapshot_server_t * server = snapshot_server_create( server_address, &server_config, time );
 
     snapshot_check( server );
-
-    snapshot_server_start( server, 1 );
 
     uint8_t connect_token[SNAPSHOT_CONNECT_TOKEN_BYTES];
 
@@ -2403,6 +2397,7 @@ void test_client_server_keep_alive()
 
     struct snapshot_server_config_t server_config;
     snapshot_default_server_config( &server_config );
+    server_config.max_clients = 1;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.network_simulator = network_simulator;
     memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
@@ -2410,8 +2405,6 @@ void test_client_server_keep_alive()
     struct snapshot_server_t * server = snapshot_server_create( "127.0.0.1:40000", &server_config, time );
 
     snapshot_check( server );
-
-    snapshot_server_start( server, 1 );
 
     const char * server_address = "127.0.0.1:40000";
 
@@ -2495,21 +2488,20 @@ void test_client_server_multiple_clients()
     double time = 0.0;
     double delta_time = 1.0 / 10.0;
 
-    struct snapshot_server_config_t server_config;
-    snapshot_default_server_config( &server_config );
-    server_config.protocol_id = TEST_PROTOCOL_ID;
-    server_config.network_simulator = network_simulator;
-    memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
-
-    struct snapshot_server_t * server = snapshot_server_create( "127.0.0.1:40000", &server_config, time );
-
-    snapshot_check( server );
-
     for ( int i = 0; i < NUM_START_STOP_ITERATIONS; i++ )
     {
-        // start the server with max # of clients for this iteration
+        // create the server with max # of clients for this iteration
 
-        snapshot_server_start( server, max_clients[i] );
+        struct snapshot_server_config_t server_config;
+        snapshot_default_server_config( &server_config );
+        server_config.max_clients = max_clients[i];
+        server_config.protocol_id = TEST_PROTOCOL_ID;
+        server_config.network_simulator = network_simulator;
+        memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
+
+        struct snapshot_server_t * server = snapshot_server_create( "127.0.0.1:40000", &server_config, time );
+
+        snapshot_check( server );
 
         // create # of client objects for this iteration and connect to server
 
@@ -2598,10 +2590,8 @@ void test_client_server_multiple_clients()
 
         free( client );
 
-        snapshot_server_stop( server );
+        snapshot_server_destroy( server );
     }
-
-    snapshot_server_destroy( server );
 
     snapshot_network_simulator_destroy( network_simulator );
 }
@@ -2628,6 +2618,7 @@ void test_client_server_multiple_servers()
 
     struct snapshot_server_config_t server_config;
     snapshot_default_server_config( &server_config );
+    server_config.max_clients = 1;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.network_simulator = network_simulator;
     memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
@@ -2635,8 +2626,6 @@ void test_client_server_multiple_servers()
     struct snapshot_server_t * server = snapshot_server_create( "127.0.0.1:40000", &server_config, time );
 
     snapshot_check( server );
-
-    snapshot_server_start( server, 1 );
 
     const char * server_address[] = { "10.10.10.10:1000", "100.100.100.100:50000", "127.0.0.1:40000" };
 
@@ -2767,6 +2756,7 @@ void test_client_error_connection_timed_out()
 
     struct snapshot_server_config_t server_config;
     snapshot_default_server_config( &server_config );
+    server_config.max_clients = 1;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.network_simulator = network_simulator;
     memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
@@ -2774,8 +2764,6 @@ void test_client_error_connection_timed_out()
     struct snapshot_server_t * server = snapshot_server_create( "127.0.0.1:40000", &server_config, time );
 
     snapshot_check( server );
-
-    snapshot_server_start( server, 1 );
 
     const char * server_address = "127.0.0.1:40000";
 
@@ -2858,6 +2846,7 @@ void test_client_error_connection_response_timeout()
 
     struct snapshot_server_config_t server_config;
     snapshot_default_server_config( &server_config );
+    server_config.max_clients = 1;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.network_simulator = network_simulator;
     memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
@@ -2867,8 +2856,6 @@ void test_client_error_connection_response_timeout()
     snapshot_check( server );
 
     snapshot_server_set_flags( server, SNAPSHOT_SERVER_FLAG_IGNORE_CONNECTION_RESPONSE_PACKETS );
-
-    snapshot_server_start( server, 1 );
 
     const char * server_address = "127.0.0.1:40000";
 
@@ -2932,6 +2919,7 @@ void test_client_error_connection_request_timeout()
 
     struct snapshot_server_config_t server_config;
     snapshot_default_server_config( &server_config );
+    server_config.max_clients = 1;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.network_simulator = network_simulator;
     memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
@@ -2941,8 +2929,6 @@ void test_client_error_connection_request_timeout()
     snapshot_check( server );
 
     snapshot_server_set_flags( server, SNAPSHOT_SERVER_FLAG_IGNORE_CONNECTION_REQUEST_PACKETS );
-
-    snapshot_server_start( server, 1 );
 
     const char * server_address = "[::1]:40000";
 
@@ -3008,6 +2994,7 @@ void test_client_error_connection_denied()
 
     struct snapshot_server_config_t server_config;
     snapshot_default_server_config( &server_config );
+    server_config.max_clients = 1;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.network_simulator = network_simulator;
     memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
@@ -3015,8 +3002,6 @@ void test_client_error_connection_denied()
     struct snapshot_server_t * server = snapshot_server_create( "127.0.0.1:40000", &server_config, time );
 
     snapshot_check( server );
-
-    snapshot_server_start( server, 1 );
 
     uint8_t connect_token[SNAPSHOT_CONNECT_TOKEN_BYTES];
 
@@ -3129,6 +3114,7 @@ void test_client_side_disconnect()
 
     struct snapshot_server_config_t server_config;
     snapshot_default_server_config( &server_config );
+    server_config.max_clients = 1;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.network_simulator = network_simulator;
     memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
@@ -3136,8 +3122,6 @@ void test_client_side_disconnect()
     struct snapshot_server_t * server = snapshot_server_create( "127.0.0.1:40000", &server_config, time );
 
     snapshot_check( server );
-
-    snapshot_server_start( server, 1 );
 
     const char * server_address = "127.0.0.1:40000";
 
@@ -3227,6 +3211,7 @@ void test_server_side_disconnect()
 
     struct snapshot_server_config_t server_config;
     snapshot_default_server_config( &server_config );
+    server_config.max_clients = 1;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.network_simulator = network_simulator;
     memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
@@ -3234,8 +3219,6 @@ void test_server_side_disconnect()
     struct snapshot_server_t * server = snapshot_server_create( "127.0.0.1:40000", &server_config, time );
 
     snapshot_check( server );
-
-    snapshot_server_start( server, 1 );
 
     const char * server_address = "127.0.0.1:40000";
 
@@ -3326,6 +3309,7 @@ void test_client_reconnect()
 
     struct snapshot_server_config_t server_config;
     snapshot_default_server_config( &server_config );
+    server_config.max_clients = 1;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.network_simulator = network_simulator;
     memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
@@ -3333,8 +3317,6 @@ void test_client_reconnect()
     struct snapshot_server_t * server = snapshot_server_create( "127.0.0.1:40000", &server_config, time );
 
     snapshot_check( server );
-
-    snapshot_server_start( server, 1 );
 
     const char * server_address = "127.0.0.1:40000";
 
@@ -3461,6 +3443,7 @@ void test_disable_timeout()
 
     struct snapshot_server_config_t server_config;
     snapshot_default_server_config( &server_config );
+    server_config.max_clients = 1;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.network_simulator = network_simulator;
     memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
@@ -3468,8 +3451,6 @@ void test_disable_timeout()
     struct snapshot_server_t * server = snapshot_server_create( "127.0.0.1:40000", &server_config, time );
 
     snapshot_check( server );
-
-    snapshot_server_start( server, 1 );
 
     const char * server_address = "127.0.0.1:40000";
 
@@ -4176,6 +4157,7 @@ void test_client_server_payload()
 
     struct snapshot_server_config_t server_config;
     snapshot_default_server_config( &server_config );
+    server_config.max_clients = 1;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     memcpy( &server_config.private_key, private_key, SNAPSHOT_KEY_BYTES );
 
@@ -4184,8 +4166,6 @@ void test_client_server_payload()
     struct snapshot_server_t * server = snapshot_server_create( server_address, &server_config, time );
 
     snapshot_check( server );
-
-    snapshot_server_start( server, 1 );
 
     uint8_t connect_token[SNAPSHOT_CONNECT_TOKEN_BYTES];
 

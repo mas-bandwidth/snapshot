@@ -6,13 +6,7 @@ DONE
 
 TODO
 
-	-------------
-
 	Soak test
-
-	-------------
-
-	Setup custom allocator. I want to know that I'm not leaking any memory in tests, client, server, loopback or soak test.
 
 	-------------
 

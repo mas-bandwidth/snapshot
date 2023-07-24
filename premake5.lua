@@ -116,3 +116,15 @@ project "listen"
 		links { "pthread" }
 	filter "system:macosx"
 		linkoptions { "-framework SystemConfiguration -framework CoreFoundation" }
+
+project "soak"
+	kind "ConsoleApp"
+	links { "snapshot", "sodium" }
+	files { "soak.cpp" }
+	includedirs { "include", "source" }
+	filter "system:windows"
+		disablewarnings { "4324" }
+	filter "system:not windows"
+		links { "pthread" }
+	filter "system:macosx"
+		linkoptions { "-framework SystemConfiguration -framework CoreFoundation" }

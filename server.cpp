@@ -56,8 +56,6 @@ int main( int argc, char ** argv )
         return 1;
     }
 
-    snapshot_server_start( server, SNAPSHOT_MAX_CLIENTS );
-
     signal( SIGINT, interrupt_handler );
 
     while ( !quit )

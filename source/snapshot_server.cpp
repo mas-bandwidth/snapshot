@@ -25,10 +25,13 @@ void snapshot_default_server_config( struct snapshot_server_config_t * config )
 {
     snapshot_assert( config );
     config->context = NULL;
-    config->network_simulator = NULL;
+    config->max_clients = SNAPSHOT_MAX_CLIENTS;
     config->connect_disconnect_callback = NULL;
     config->send_loopback_packet_callback = NULL;
     config->process_passthrough_callback = NULL;
+#if SNAPSHOT_DEVELOPMENT
+    config->network_simulator = NULL;
+#endif // #if SNAPSHOT_DEVELOPMENT
 };
 
 // ------------------------------------------------------------------------------------------
@@ -110,7 +113,6 @@ struct snapshot_server_t
     struct snapshot_address_t address;
     uint64_t flags;
     double time;
-    int running;
     int max_clients;
     int num_connected_clients;
     uint64_t global_sequence;
@@ -205,11 +207,7 @@ struct snapshot_server_t * snapshot_server_create( const char * server_address_s
     server->config = *config;
     server->socket = socket;
     server->address = server_address;
-    server->flags = 0;
     server->time = time;
-    server->running = 0;
-    server->max_clients = 0;
-    server->num_connected_clients = 0;
     server->global_sequence = 1ULL << 63;
 
     memset( server->client_connected, 0, sizeof( server->client_connected ) );
@@ -260,14 +258,18 @@ struct snapshot_server_t * snapshot_server_create( const char * server_address_s
         }
     }
 
+    server->max_clients = config->max_clients;
+    server->num_connected_clients = 0;
+    server->challenge_sequence = 0;    
+
+    snapshot_crypto_random_bytes( server->challenge_key, SNAPSHOT_KEY_BYTES );
+
     return server;
 }
 
 void snapshot_server_destroy( struct snapshot_server_t * server )
 {
     snapshot_assert( server );
-
-    snapshot_server_stop( server );
 
     for ( int i = 0; i < SNAPSHOT_MAX_CLIENTS; i++ )
     {
@@ -283,26 +285,6 @@ void snapshot_server_destroy( struct snapshot_server_t * server )
     }
 
     snapshot_free( server->config.context, server );
-}
-
-void snapshot_server_start( struct snapshot_server_t * server, int max_clients )
-{
-    snapshot_assert( server );
-    snapshot_assert( max_clients > 0 );
-    snapshot_assert( max_clients <= SNAPSHOT_MAX_CLIENTS );
-
-    if ( server->running )
-        snapshot_server_stop( server );
-
-    snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "server started with %d client slots", max_clients );
-
-    server->running = 1;
-    server->max_clients = max_clients;
-    server->num_connected_clients = 0;
-    server->challenge_sequence = 0;    
-    snapshot_crypto_random_bytes( server->challenge_key, SNAPSHOT_KEY_BYTES );
-
-    server->counters[SNAPSHOT_SERVER_COUNTER_STARTS]++;
 }
 
 void snapshot_server_send_global_packet( snapshot_server_t * server, void * packet, struct snapshot_address_t * to, uint8_t * packet_key )
@@ -395,7 +377,6 @@ void snapshot_server_send_packet_to_client( struct snapshot_server_t * server, i
 void snapshot_server_disconnect_client_internal( struct snapshot_server_t * server, int client_index, int send_disconnect_packets )
 {
     snapshot_assert( server );
-    snapshot_assert( server->running );
     snapshot_assert( client_index >= 0 );
     snapshot_assert( client_index < server->max_clients );
     snapshot_assert( server->client_connected[client_index] );
@@ -461,9 +442,6 @@ void snapshot_server_disconnect_client( struct snapshot_server_t * server, int c
 {
     snapshot_assert( server );
 
-    if ( !server->running )
-        return;
-
     snapshot_assert( client_index >= 0 );
     snapshot_assert( client_index < server->max_clients );
     snapshot_assert( server->client_loopback[client_index] == 0 );
@@ -481,9 +459,6 @@ void snapshot_server_disconnect_all_clients( struct snapshot_server_t * server )
 {
     snapshot_assert( server );
 
-    if ( !server->running )
-        return;
-
     int i;
     for ( i = 0; i < server->max_clients; ++i )
     {
@@ -492,32 +467,6 @@ void snapshot_server_disconnect_all_clients( struct snapshot_server_t * server )
             snapshot_server_disconnect_client_internal( server, i, 1 );
         }
     }
-}
-
-void snapshot_server_stop( struct snapshot_server_t * server )
-{
-    snapshot_assert( server );
-
-    if ( !server->running )
-        return;
-
-    snapshot_server_disconnect_all_clients( server );
-
-    server->running = 0;
-    server->max_clients = 0;
-    server->num_connected_clients = 0;
-
-    server->global_sequence = 0;
-    server->challenge_sequence = 0;
-    memset( server->challenge_key, 0, SNAPSHOT_KEY_BYTES );
-
-    snapshot_connect_token_entries_reset( server->connect_token_entries );
-
-    snapshot_encryption_manager_reset( &server->encryption_manager );
-
-    snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "server stopped" );
-
-    server->counters[SNAPSHOT_SERVER_COUNTER_STOPS]++;
 }
 
 int snapshot_server_find_client_index_by_id( struct snapshot_server_t * server, uint64_t client_id )
@@ -680,7 +629,6 @@ void snapshot_server_connect_client( struct snapshot_server_t * server,
                                      void * user_data )
 {
     snapshot_assert( server );
-    snapshot_assert( server->running );
     snapshot_assert( client_index >= 0 );
     snapshot_assert( client_index < server->max_clients );
     snapshot_assert( address );
@@ -851,9 +799,6 @@ bool snapshot_server_process_packet( struct snapshot_server_t * server, struct s
     snapshot_assert( packet_data );
     snapshot_assert( packet_bytes > 0 );
     snapshot_assert( packet_bytes <= SNAPSHOT_MAX_PACKET_BYTES );
-
-    if ( !server->running )
-        return false;
 
     if ( packet_bytes < 1 )
         return false;
@@ -1087,9 +1032,6 @@ void snapshot_server_send_packets( struct snapshot_server_t * server )
 {
     snapshot_assert( server );
 
-    if ( !server->running )
-        return;
-
     int i;
     for ( i = 0; i < server->max_clients; ++i )
     {
@@ -1112,9 +1054,6 @@ void snapshot_server_check_for_timeouts( struct snapshot_server_t * server )
 {
     snapshot_assert( server );
 
-    if ( !server->running )
-        return;
-
     int i;
     for ( i = 0; i < server->max_clients; ++i )
     {
@@ -1131,9 +1070,6 @@ int snapshot_server_client_connected( struct snapshot_server_t * server, int cli
 {
     snapshot_assert( server );
 
-    if ( !server->running )
-        return 0;
-
     if ( client_index < 0 || client_index >= server->max_clients )
         return 0;
 
@@ -1144,9 +1080,6 @@ uint64_t snapshot_server_client_id( struct snapshot_server_t * server, int clien
 {
     snapshot_assert( server );
 
-    if ( !server->running )
-        return 0;
-
     if ( client_index < 0 || client_index >= server->max_clients )
         return 0;
 
@@ -1156,9 +1089,6 @@ uint64_t snapshot_server_client_id( struct snapshot_server_t * server, int clien
 struct snapshot_address_t * snapshot_server_client_address( struct snapshot_server_t * server, int client_index )
 {
     snapshot_assert( server );
-
-    if (!server->running)
-        return NULL;
 
     if (client_index < 0 || client_index >= server->max_clients)
         return NULL;
@@ -1189,10 +1119,9 @@ void * snapshot_server_client_user_data( struct snapshot_server_t * server, int 
     return server->client_user_data[client_index];
 }
 
-int snapshot_server_running( struct snapshot_server_t * server )
+int snapshot_server_connected_clients( struct snapshot_server_t * server )
 {
-    snapshot_assert( server );
-    return server->running;
+    return server->num_connected_clients;
 }
 
 int snapshot_server_max_clients( struct snapshot_server_t * server )
@@ -1288,7 +1217,6 @@ void snapshot_server_connect_loopback_client( struct snapshot_server_t * server,
     snapshot_assert( server );
     snapshot_assert( client_index >= 0 );
     snapshot_assert( client_index < server->max_clients );
-    snapshot_assert( server->running );
     snapshot_assert( !server->client_connected[client_index] );
 
     server->num_connected_clients++;
@@ -1329,7 +1257,6 @@ void snapshot_server_disconnect_loopback_client( struct snapshot_server_t * serv
     snapshot_assert( server );
     snapshot_assert( client_index >= 0 );
     snapshot_assert( client_index < server->max_clients );
-    snapshot_assert( server->running );
     snapshot_assert( server->client_connected[client_index] );
     snapshot_assert( server->client_loopback[client_index] );
 
@@ -1382,7 +1309,6 @@ void snapshot_server_send_passthrough_packet( struct snapshot_server_t * server,
 int snapshot_server_client_loopback( struct snapshot_server_t * server, int client_index )
 {
     snapshot_assert( server );
-    snapshot_assert( server->running );
     snapshot_assert( client_index >= 0 );
     snapshot_assert( client_index < server->max_clients );
     return server->client_loopback[client_index];

@@ -134,7 +134,7 @@ struct snapshot_client_t * snapshot_client_create( const char * bind_address_str
     }
 
 #if SNAPSHOT_DEVELOPMENT
-    if ( !config->network_simulator )
+    if ( config->network_simulator )
     {
         snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client started on port %d (network simulator)", bind_address.port );
     }
@@ -947,7 +947,7 @@ void snapshot_client_connect_loopback( struct snapshot_client_t * client, snapsh
     snapshot_assert( client );
     snapshot_assert( server_address );
     snapshot_assert( client->state <= SNAPSHOT_CLIENT_STATE_DISCONNECTED );
-    snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connected to server via loopback in client slot %d", client_index );
+    snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connected to server via loopback in slot %d", client_index );
     client->state = SNAPSHOT_CLIENT_STATE_CONNECTED;
     client->server_address = *server_address;
     client->client_index = client_index;
@@ -960,7 +960,7 @@ void snapshot_client_disconnect_loopback( struct snapshot_client_t * client )
 {
     snapshot_assert( client );
     snapshot_assert( client->loopback );
-    snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client disconnected from server loopback in client slot %d", client->client_index );
+    snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client disconnected from server loopback in slot %d", client->client_index );
     snapshot_client_reset_connection_data( client, SNAPSHOT_CLIENT_STATE_DISCONNECTED );
     client->counters[SNAPSHOT_CLIENT_COUNTER_DISCONNECT_LOOPBACK_CALLS]++;
 }
