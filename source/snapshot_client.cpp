@@ -284,7 +284,14 @@ void snapshot_client_connect( struct snapshot_client_t * client, uint8_t * conne
 
     char server_address_string[SNAPSHOT_MAX_ADDRESS_STRING_LENGTH];
 
-    snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connecting to server %s [%d/%d]", snapshot_address_to_string( &client->server_address, server_address_string ), client->connect_server_index + 1, client->connect_token.num_server_addresses );
+    if ( client->connect_token.num_server_addresses > 1 )
+    {
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connecting to server %s [%d/%d]", snapshot_address_to_string( &client->server_address, server_address_string ), client->connect_server_index + 1, client->connect_token.num_server_addresses );
+    }
+    else
+    {
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connecting to server %s", snapshot_address_to_string( &client->server_address, server_address_string ) );
+    }
 
     memcpy( client->read_packet_key, client->connect_token.server_to_client_key, SNAPSHOT_KEY_BYTES );
     memcpy( client->write_packet_key, client->connect_token.client_to_server_key, SNAPSHOT_KEY_BYTES );
