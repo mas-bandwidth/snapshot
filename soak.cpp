@@ -114,6 +114,17 @@ static void log_function( int level, const char * format, ... )
 
 // -------------------------------------------------------------------
 
+#include <assert.h>
+
+static void assert_function( const char * condition, const char * function, const char * file, int line )
+{
+    snapshot_printf( "assert failed: ( %s ), function %s, file %s, line %d\n", condition, function, file, line );
+    fflush( stdout );
+    assert( false );
+}
+
+// -------------------------------------------------------------------
+
 #define TEST_PROTOCOL_ID 0x1122334455667788
 #define CONNECT_TOKEN_EXPIRY 30
 #define CONNECT_TOKEN_TIMEOUT 5
@@ -153,6 +164,8 @@ int main( int argc, char ** argv )
     snapshot_allocator( malloc_function, free_function );
 
     snapshot_log_function( log_function );
+
+    snapshot_assert_function( assert_function );
 
     double time = 0.0;
     double delta_time = 1.0 / 60.0;

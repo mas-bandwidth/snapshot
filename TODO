@@ -14,13 +14,9 @@ DONE
 
 	Fix bug in memory alloc/free prints (print after itor destroyed).
 
-TODO
-
-	-------------
-
 	Implement assert override function, and use it in soak test.
 
-	-------------
+TODO
 
 	Update to latest PS4/PS5 tooling
 

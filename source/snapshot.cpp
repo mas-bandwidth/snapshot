@@ -155,3 +155,31 @@ void snapshot_printf( int level, const char * format, ... )
     log_function( level, "%s", buffer );
     va_end( args );
 }
+
+static void default_assert_function( const char * condition, const char * function, const char * file, int line )
+{
+    snapshot_printf( "assert failed: ( %s ), function %s, file %s, line %d\n", condition, function, file, line );
+    fflush( stdout );
+    #if defined(_MSC_VER)
+        __debugbreak();
+    #elif defined(__ORBIS__)
+        __builtin_trap();
+    #elif defined(__PROSPERO__)
+        __builtin_trap();
+    #elif defined(__clang__)
+        __builtin_debugtrap();
+    #elif defined(__GNUC__)
+        __builtin_trap();
+    #elif defined(linux) || defined(__linux) || defined(__linux__) || defined(__APPLE__)
+        raise(SIGTRAP);
+    #else
+        #error "asserts not supported on this platform!"
+    #endif
+}
+
+void (*snapshot_assert_function_pointer)( const char * condition, const char * function, const char * file, int line ) = default_assert_function;
+
+void snapshot_assert_function( void (*function)( const char * condition, const char * function, const char * file, int line ) )
+{
+    snapshot_assert_function_pointer = function;
+}

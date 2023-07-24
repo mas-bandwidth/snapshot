@@ -191,12 +191,6 @@ void snapshot_term();
 
 // -----------------------------------------
 
-#ifndef NDEBUG
-#define SNAPSHOT_ASSERTS 1
-#endif
-
-#define snapshot_assert assert
-
 void snapshot_quiet( bool value );
 
 void snapshot_log_level( int level );
@@ -209,11 +203,46 @@ void snapshot_printf( const char * format, ... );
 
 void snapshot_printf( int level, const char * format, ... );
 
+// -----------------------------------------
+
 void snapshot_allocator( void * (*malloc_function)( void * context, size_t bytes ), void (*free_function)( void * context, void * p ) );
 
 void * snapshot_malloc( void * context, size_t bytes );
 
 void snapshot_free( void * context, void * p );
+
+// -----------------------------------------
+
+#ifndef NDEBUG
+#define SNAPSHOT_ASSERTS 1
+#endif
+
+extern void (*snapshot_assert_function_pointer)( const char * condition, const char * function, const char * file, int line );
+
+#ifndef NEXT_ASSERTS
+    #ifdef NDEBUG
+        #define NEXT_ASSERTS 0
+    #else
+        #define NEXT_ASSERTS 1
+    #endif
+#endif
+
+#if NEXT_ASSERTS
+#define snapshot_assert( condition )                                                            \
+do                                                                                              \
+{                                                                                               \
+    if ( !(condition) )                                                                         \
+    {                                                                                           \
+        snapshot_assert_function_pointer( #condition, __FUNCTION__, __FILE__, __LINE__ );       \
+    }                                                                                           \
+} while(0)
+#else
+#define snapshot_assert( ignore ) ((void)0)
+#endif
+
+void snapshot_assert_function( void (*function)( const char * condition, const char * function, const char * file, int line ) );
+
+// -----------------------------------------
 
 void snapshot_copy_string( char * dest, const char * source, size_t dest_size );
 
