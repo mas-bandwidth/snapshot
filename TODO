@@ -10,7 +10,7 @@ TODO
 
 	-------------
 
-	Setup memory checking. I want to know that I'm not trashing any memory outside bounds.
+	Fuzz test
 
 	-------------
 

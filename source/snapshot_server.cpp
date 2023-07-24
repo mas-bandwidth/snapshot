@@ -195,13 +195,15 @@ struct snapshot_server_t * snapshot_server_create( const char * server_address_s
 
     memset( server, 0, sizeof(snapshot_server_t) );
 
-    if ( !config->network_simulator )
+#if SNAPSHOT_DEVELOPMENT
+    if ( config->network_simulator )
     {
-        snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "server listening on %s", server_address_string );
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "server listening on %s with %d client slots (network simulator)", server_address_string, config->max_clients );
     }
     else
+#endif // #if SNAPSHOT_DEVELOPMENT
     {
-        snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "server listening on %s (network simulator)", server_address_string );
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "server listening on %s with %d client slots", server_address_string, config->max_clients );
     }
 
     server->config = *config;
