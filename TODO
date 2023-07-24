@@ -6,15 +6,9 @@ DONE
 
 	Soak test
 
-TODO
-
 	Extend soak test to do the thing with random payloads
 
-	-------------
-
-	Add fuzz testing to soak test
-
-	-------------
+TODO
 
 	Setup malloc/free overrides and check for memory leaks in soak test.
 
@@ -37,6 +31,10 @@ TODO
 	-------------
 
 	Update to latest PS4/PS5 tooling
+
+	-------------
+
+	Verify PS5 client can connect to PC server in UE5.
 
 	-------------
 
