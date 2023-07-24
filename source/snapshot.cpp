@@ -97,9 +97,10 @@ const char * snapshot_log_level_string( int level )
 }
 
 static bool log_quiet;
+
 static int log_level = SNAPSHOT_LOG_LEVEL_INFO;
 
-static void log_function( int level, const char * format, ... )
+static void default_log_function( int level, const char * format, ... )
 {
     va_list args;
     va_start( args, format );
@@ -110,7 +111,6 @@ static void log_function( int level, const char * format, ... )
         if ( !log_quiet )
         {
             const char * level_string = snapshot_log_level_string( level );
-            // todo: custom log function
             printf( "%.6f: %s: %s\n", snapshot_platform_time(), level_string, buffer );
         }
     }
@@ -120,6 +120,13 @@ static void log_function( int level, const char * format, ... )
     }
     va_end( args );
     fflush( stdout );
+}
+
+static void (*log_function)( int level, const char * format, ... ) = default_log_function;
+
+void snapshot_log_function( void (*function)( int level, const char * format, ... ) )
+{
+    log_function = function;
 }
 
 void snapshot_quiet( bool value )

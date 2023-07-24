@@ -38,9 +38,14 @@ public:
 
     ~Allocator()
     {
+        printf( "checking for memory leaks...\n" );
         if ( num_allocations > 0 )
         {
             printf( "leaked %d allocations\n", (int) num_allocations );
+        }
+        else
+        {
+            printf( "no memory leaks found.\n" );
         }
         snapshot_assert( num_allocations == 0 );
         snapshot_assert( entries.size() == 0 );
@@ -64,11 +69,9 @@ public:
         snapshot_assert( num_allocations > 0 );
         std::map<void*, AllocatorEntry*>::iterator itor = entries.find( pointer );
         snapshot_assert( itor != entries.end() );
+        // printf( "free %d bytes\n", (int)itor->second->bytes );
         entries.erase( itor );
         num_allocations--;
-        /*
-        printf( "free %d bytes\n", (int)itor->second->bytes );
-        */
         free( pointer );
     }
 };
@@ -77,9 +80,7 @@ void * malloc_function( void * context, size_t bytes )
 {
     snapshot_assert( context );
     Allocator * allocator = (Allocator*) context;
-    /*
-    printf( "allocated %d bytes\n", (int)bytes ); fflush( stdout );
-    */
+    // printf( "allocated %d bytes\n", (int)bytes ); fflush( stdout );
     return allocator->Alloc( bytes );
 }
 
@@ -88,6 +89,27 @@ void free_function( void * context, void * p )
     snapshot_assert( context );
     Allocator * allocator = (Allocator*) context;
     return allocator->Free( p );
+}
+
+// -------------------------------------------------------------------
+
+static void log_function( int level, const char * format, ... )
+{
+    va_list args;
+    va_start( args, format );
+    char buffer[1024];
+    vsnprintf( buffer, sizeof( buffer ), format, args );
+    if ( level != SNAPSHOT_LOG_LEVEL_NONE )
+    {
+        const char * level_string = snapshot_log_level_string( level );
+        printf( "%.6f: %s: %s\n", snapshot_platform_time(), level_string, buffer );
+    }
+    else
+    {
+        printf( "%s\n", buffer );
+    }
+    va_end( args );
+    fflush( stdout );
 }
 
 // -------------------------------------------------------------------
@@ -129,6 +151,8 @@ int main( int argc, char ** argv )
     Allocator allocator;
 
     snapshot_allocator( malloc_function, free_function );
+
+    snapshot_log_function( log_function );
 
     double time = 0.0;
     double delta_time = 1.0 / 60.0;

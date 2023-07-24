@@ -10,9 +10,11 @@ DONE
 
 	Setup malloc/free overrides and check for memory leaks in soak test.
 
-TODO
-
 	Implement printf override function, and use it in soak test.
+
+	Fix bug in memory alloc/free prints (print after itor destroyed).
+
+TODO
 
 	-------------
 
@@ -28,7 +30,7 @@ TODO
 
 	-------------
 
-	Verify PS5 client can connect to linux server.
+	Verify PS5 client connects to linux server.
 
 	-------------
 
@@ -46,7 +48,7 @@ TODO
 
 	*** FIRST MILESTONE: SnapshotNetDriver in UE5, working on PC and PS5 ***
 
-
+	-------------
 
 
 
