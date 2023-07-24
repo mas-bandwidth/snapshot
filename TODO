@@ -16,7 +16,13 @@ DONE
 
 	Implement assert override function, and use it in soak test.
 
+	Setup VPN on linode
+
+	Email Mike Richardson to get devnet access back with new VPN IP.
+
 TODO
+
+	Blocked on devnet access...
 
 	Update to latest PS4/PS5 tooling
 
