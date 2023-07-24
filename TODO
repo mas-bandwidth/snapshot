@@ -4,13 +4,27 @@ DONE
 
 	Extend server counters to cover common situations
 
+	Soak test
+
 TODO
 
-	Soak test
+	Extend soak test to do the thing with random payloads
 
 	-------------
 
-	Fuzz test
+	Add fuzz testing to soak test
+
+	-------------
+
+	Setup malloc/free overrides and check for memory leaks in soak test.
+
+	-------------
+
+	Implement printf override function, and use it in soak test.
+
+	-------------
+
+	Implement assert override function, and use it in soak test.
 
 	-------------
 
