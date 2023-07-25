@@ -3,10 +3,6 @@
     Commercial licensing under different terms is available. Please email licensing@mas-bandwidth.com for details.
 */
 
-#include <stdio.h>
-#include <string.h>
-#include <signal.h>
-#include <inttypes.h>
 #include "snapshot.h"
 #include "snapshot_crypto.h"
 #include "snapshot_client.h"
@@ -15,6 +11,11 @@
 #include "snapshot_platform.h"
 #include "snapshot_connect_token.h"
 
+#include <stdio.h>
+#include <stdarg.h>
+#include <string.h>
+#include <signal.h>
+#include <inttypes.h>
 #include <map>
 
 // -------------------------------------------------------------------
