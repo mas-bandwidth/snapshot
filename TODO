@@ -20,9 +20,39 @@ DONE
 
 	Email Mike Richardson to get devnet access back with new VPN IP.
 
+	Clone and sync UE5 via github
+
+	Get setup with UE5, build the engine and the editor and run it.
+
+	Upgrade the network next test project and see if it works with UE 5.2
+
+	It does. And the Network Next UE4 plugin just works as well.
+
 TODO
 
+	Setup a snapshot UE5 plugin based on the network next UE plugin.
+
+	Verify client and server can connect and operate in a simple testbed.
+
+	-------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+	========================================
+
 	Blocked on devnet access...
+
+	-------------
 
 	Update to latest PS4/PS5 tooling
 
@@ -33,14 +63,6 @@ TODO
 	-------------
 
 	Verify PS5 client connects to linux server.
-
-	-------------
-
-	Download UE5.
-
-	Setup a snapshot UE5 plugin based on the network next UE4 plugin.
-
-	Verify client and server can connect and operate in testbed.
 
 	-------------
 
