@@ -23,13 +23,13 @@ void snapshot_network_simulator_reset( struct snapshot_network_simulator_t * net
 void snapshot_network_simulator_destroy( struct snapshot_network_simulator_t * network_simulator );
 
 void snapshot_network_simulator_send_packet( struct snapshot_network_simulator_t * network_simulator, 
-                                             struct snapshot_address_t * from, 
-                                             struct snapshot_address_t * to, 
+                                             const struct snapshot_address_t * from, 
+                                             const struct snapshot_address_t * to, 
                                              uint8_t * packet_data, 
                                              int packet_bytes );
 
 int snapshot_network_simulator_receive_packets( struct snapshot_network_simulator_t * network_simulator, 
-                                                struct snapshot_address_t * to, 
+                                                const struct snapshot_address_t * to, 
                                                 int max_packets, 
                                                 uint8_t ** packet_data, 
                                                 int * packet_bytes, 

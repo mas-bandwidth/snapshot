@@ -51,7 +51,7 @@ struct snapshot_client_config_t
 {
     void * context;
     void (*state_change_callback)(void*,int,int);
-    void (*send_loopback_packet_callback)(void*,struct snapshot_address_t*,uint8_t*,int);
+    void (*send_loopback_packet_callback)(void*,const struct snapshot_address_t*,uint8_t*,int);
     void (*process_passthrough_callback)(void*,const uint8_t*,int);
 #if SNAPSHOT_DEVELOPMENT
     struct snapshot_network_simulator_t * network_simulator;
@@ -80,7 +80,7 @@ void snapshot_client_connect_loopback( struct snapshot_client_t * client, struct
 
 void snapshot_client_disconnect_loopback( struct snapshot_client_t * client );
 
-bool snapshot_client_process_packet( struct snapshot_client_t * client, struct snapshot_address_t * from, uint8_t * packet_data, int packet_bytes );
+bool snapshot_client_process_packet( struct snapshot_client_t * client, const struct snapshot_address_t * from, uint8_t * packet_data, int packet_bytes );
 
 int snapshot_client_loopback( struct snapshot_client_t * client );
 

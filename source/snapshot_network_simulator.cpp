@@ -114,8 +114,8 @@ float snapshot_random_float( float a, float b )
 }
 
 void snapshot_network_simulator_queue_packet( struct snapshot_network_simulator_t * network_simulator, 
-                                              struct snapshot_address_t * from, 
-                                              struct snapshot_address_t * to, 
+                                              const struct snapshot_address_t * from, 
+                                              const struct snapshot_address_t * to, 
                                               uint8_t * packet_data, 
                                               int packet_bytes, 
                                               float delay )
@@ -137,8 +137,8 @@ void snapshot_network_simulator_queue_packet( struct snapshot_network_simulator_
 }
 
 void snapshot_network_simulator_send_packet( struct snapshot_network_simulator_t * network_simulator, 
-                                             struct snapshot_address_t * from, 
-                                             struct snapshot_address_t * to, 
+                                             const struct snapshot_address_t * from, 
+                                             const struct snapshot_address_t * to, 
                                              uint8_t * packet_data, 
                                              int packet_bytes )
 {
@@ -174,7 +174,7 @@ void snapshot_network_simulator_send_packet( struct snapshot_network_simulator_t
 }
 
 int snapshot_network_simulator_receive_packets( struct snapshot_network_simulator_t * network_simulator, 
-                                                struct snapshot_address_t * to, 
+                                                const struct snapshot_address_t * to, 
                                                 int max_packets, 
                                                 uint8_t ** packet_data, 
                                                 int * packet_bytes, 

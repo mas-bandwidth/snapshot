@@ -341,7 +341,7 @@ void snapshot_client_process_passthrough( struct snapshot_client_t * client, uin
     }
 }
 
-bool snapshot_client_process_packet( struct snapshot_client_t * client, struct snapshot_address_t * from, uint8_t * packet_data, int packet_bytes )
+bool snapshot_client_process_packet( struct snapshot_client_t * client, const struct snapshot_address_t * from, uint8_t * packet_data, int packet_bytes )
 {
     snapshot_assert( client );
     snapshot_assert( packet_data );

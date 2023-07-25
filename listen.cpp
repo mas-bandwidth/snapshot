@@ -35,13 +35,13 @@ struct loopback_context_t
     struct snapshot_server_t * server;
 };
 
-void client_send_loopback_packet_callback( void * context, snapshot_address_t * from, uint8_t * packet_data, int packet_bytes )
+void client_send_loopback_packet_callback( void * context, const snapshot_address_t * from, uint8_t * packet_data, int packet_bytes )
 {
     loopback_context_t * loopback_context = (loopback_context_t*) context;
     snapshot_server_process_packet( loopback_context->server, from, packet_data, packet_bytes );
 }
 
-void server_send_loopback_packet_callback( void * context, snapshot_address_t * from, uint8_t * packet_data, int packet_bytes )
+void server_send_loopback_packet_callback( void * context, const snapshot_address_t * from, uint8_t * packet_data, int packet_bytes )
 {
     loopback_context_t * loopback_context = (loopback_context_t*) context;
     snapshot_client_process_packet( loopback_context->client, from, packet_data, packet_bytes );

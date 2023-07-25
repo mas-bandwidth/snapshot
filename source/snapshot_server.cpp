@@ -55,7 +55,7 @@ void snapshot_connect_token_entries_reset( struct snapshot_connect_token_entry_t
 }
 
 int snapshot_connect_token_entries_find_or_add( struct snapshot_connect_token_entry_t * connect_token_entries, 
-                                                struct snapshot_address_t * address, 
+                                                const struct snapshot_address_t * address, 
                                                 uint8_t * mac, 
                                                 double time )
 {
@@ -289,7 +289,7 @@ void snapshot_server_destroy( struct snapshot_server_t * server )
     snapshot_free( server->config.context, server );
 }
 
-void snapshot_server_send_global_packet( snapshot_server_t * server, void * packet, struct snapshot_address_t * to, uint8_t * packet_key )
+void snapshot_server_send_global_packet( snapshot_server_t * server, void * packet, const struct snapshot_address_t * to, uint8_t * packet_key )
 {
     snapshot_assert( server );
     snapshot_assert( packet );
@@ -485,7 +485,7 @@ int snapshot_server_find_client_index_by_id( struct snapshot_server_t * server, 
     return -1;
 }
 
-int snapshot_server_find_client_index_by_address( struct snapshot_server_t * server, struct snapshot_address_t * address )
+int snapshot_server_find_client_index_by_address( struct snapshot_server_t * server, const struct snapshot_address_t * address )
 {
     snapshot_assert( server );
     snapshot_assert( address );
@@ -504,7 +504,7 @@ int snapshot_server_find_client_index_by_address( struct snapshot_server_t * ser
 }
 
 void snapshot_server_process_connection_request_packet( snapshot_server_t * server, 
-                                                        struct snapshot_address_t * from, 
+                                                        const struct snapshot_address_t * from, 
                                                         struct snapshot_connection_request_packet_t * packet )
 {
     snapshot_assert( server );
@@ -624,7 +624,7 @@ int snapshot_server_find_free_client_index( struct snapshot_server_t * server )
 
 void snapshot_server_connect_client( struct snapshot_server_t * server, 
                                      int client_index, 
-                                     struct snapshot_address_t * address, 
+                                     const struct snapshot_address_t * address, 
                                      uint64_t client_id, 
                                      int encryption_index,
                                      int timeout_seconds, 
@@ -682,7 +682,7 @@ void snapshot_server_connect_client( struct snapshot_server_t * server,
 }
 
 void snapshot_server_process_connection_response_packet( struct snapshot_server_t * server, 
-                                                         struct snapshot_address_t * from, 
+                                                         const struct snapshot_address_t * from, 
                                                          struct snapshot_connection_response_packet_t * packet, 
                                                          int encryption_index )
 {
@@ -779,9 +779,10 @@ int snapshot_server_process_payload( struct snapshot_server_t * server, int clie
     return SNAPSHOT_OK;
 }
 
-void snapshot_server_process_passthrough( struct snapshot_server_t * server, int client_index, uint8_t * passthrough_data, int passthrough_bytes )
+void snapshot_server_process_passthrough( struct snapshot_server_t * server, const snapshot_address_t * client_address, int client_index, uint8_t * passthrough_data, int passthrough_bytes )
 {
     snapshot_assert( server );
+    snapshot_assert( client_address );
     snapshot_assert( client_index >= 0 );
     snapshot_assert( client_index < server->max_clients );
     snapshot_assert( passthrough_data );
@@ -790,11 +791,11 @@ void snapshot_server_process_passthrough( struct snapshot_server_t * server, int
 
     if ( server->config.process_passthrough_callback != NULL )
     {
-        server->config.process_passthrough_callback( server->config.context, client_index, passthrough_data, passthrough_bytes );
+        server->config.process_passthrough_callback( server->config.context, client_address, client_index, passthrough_data, passthrough_bytes );
     }
 }
 
-bool snapshot_server_process_packet( struct snapshot_server_t * server, struct snapshot_address_t * from, uint8_t * packet_data, int packet_bytes )
+bool snapshot_server_process_packet( struct snapshot_server_t * server, const struct snapshot_address_t * from, uint8_t * packet_data, int packet_bytes )
 {
     snapshot_assert( server );
     snapshot_assert( from );
@@ -951,7 +952,7 @@ bool snapshot_server_process_packet( struct snapshot_server_t * server, struct s
                     server->client_confirmed[client_index] = 1;
                 }
                 struct snapshot_passthrough_packet_t * passthrough_packet = (snapshot_passthrough_packet_t*) packet;
-                snapshot_server_process_passthrough( server, client_index, passthrough_packet->passthrough_data, passthrough_packet->passthrough_bytes );
+                snapshot_server_process_passthrough( server, &server->client_address[client_index], client_index, passthrough_packet->passthrough_data, passthrough_packet->passthrough_bytes );
                 return true;
             }
         }

@@ -49,8 +49,8 @@ struct snapshot_server_config_t
     uint8_t private_key[SNAPSHOT_KEY_BYTES];
     struct snapshot_network_simulator_t * network_simulator;
     void (*connect_disconnect_callback)(void*,int,int);
-    void (*send_loopback_packet_callback)(void*,struct snapshot_address_t*,uint8_t*,int);
-    void (*process_passthrough_callback)(void*,int,const uint8_t*,int);
+    void (*send_loopback_packet_callback)(void*,const struct snapshot_address_t*,uint8_t*,int);
+    void (*process_passthrough_callback)(void*,const struct snapshot_address_t*,int,const uint8_t*,int);
 };
 
 void snapshot_default_server_config( struct snapshot_server_config_t * config );
@@ -65,7 +65,7 @@ int snapshot_server_connected_clients( struct snapshot_server_t * server );
 
 int snapshot_server_max_clients( struct snapshot_server_t * server );
 
-bool snapshot_server_process_packet( struct snapshot_server_t * server, struct snapshot_address_t * from, uint8_t * packet_data, int packet_bytes );
+bool snapshot_server_process_packet( struct snapshot_server_t * server, const struct snapshot_address_t * from, uint8_t * packet_data, int packet_bytes );
 
 int snapshot_server_client_connected( struct snapshot_server_t * server, int client_index );
 
@@ -84,6 +84,8 @@ void * snapshot_server_client_user_data( struct snapshot_server_t * server, int 
 void snapshot_server_connect_loopback_client( struct snapshot_server_t * server, int client_index, uint64_t client_id, const uint8_t * user_data );
 
 void snapshot_server_disconnect_loopback_client( struct snapshot_server_t * server, int client_index );
+
+int snapshot_server_find_client_index_by_address( struct snapshot_server_t * server, const struct snapshot_address_t * address );
 
 void snapshot_server_send_passthrough_packet( struct snapshot_server_t * server, int client_index, const uint8_t * passthrough_data, int passthrough_bytes );
 

@@ -1864,8 +1864,9 @@ void client_process_passthrough_callback( void * context, const uint8_t * passth
     passthrough_context->num_passthrough_packets_received_on_client++; 
 }
 
-void server_process_passthrough_callback( void * context, int client_index, const uint8_t * passthrough_data, int passthrough_bytes )
+void server_process_passthrough_callback( void * context, const snapshot_address_t * client_address, int client_index, const uint8_t * passthrough_data, int passthrough_bytes )
 {
+    (void) client_address;
     (void) client_index;
     verify_passthrough_packet( passthrough_data, passthrough_bytes );
     passthrough_context_t * passthrough_context = (passthrough_context_t*) context;
@@ -2171,13 +2172,13 @@ struct loopback_context_t
     struct snapshot_server_t * server;
 };
 
-void client_send_loopback_packet_callback( void * context, snapshot_address_t * from, uint8_t * packet_data, int packet_bytes )
+void client_send_loopback_packet_callback( void * context, const snapshot_address_t * from, uint8_t * packet_data, int packet_bytes )
 {
     loopback_context_t * loopback_context = (loopback_context_t*) context;
     snapshot_server_process_packet( loopback_context->server, from, packet_data, packet_bytes );
 }
 
-void server_send_loopback_packet_callback( void * context, snapshot_address_t * from, uint8_t * packet_data, int packet_bytes )
+void server_send_loopback_packet_callback( void * context, const snapshot_address_t * from, uint8_t * packet_data, int packet_bytes )
 {
     loopback_context_t * loopback_context = (loopback_context_t*) context;
     snapshot_client_process_packet( loopback_context->client, from, packet_data, packet_bytes );
@@ -3844,8 +3845,8 @@ void test_acks_packet_loss()
     snapshot_endpoint_default_config( &sender_config );
     snapshot_endpoint_default_config( &receiver_config );
 
-    snapshot_copy_string( sender_config.name, "sender", sizeof(sender_config.name) );
-    snapshot_copy_string( receiver_config.name, "receiver", sizeof(receiver_config.name) );
+    strncpy( sender_config.name, "sender", sizeof(sender_config.name) );
+    strncpy( receiver_config.name, "receiver", sizeof(receiver_config.name) );
 
     snapshot_endpoint_t * sender = snapshot_endpoint_create( &sender_config, time );
     snapshot_endpoint_t * receiver = snapshot_endpoint_create( &receiver_config, time );
@@ -3991,8 +3992,8 @@ void test_endpoint_payload()
     snapshot_endpoint_default_config( &sender_config );
     snapshot_endpoint_default_config( &receiver_config );
 
-    snapshot_copy_string( sender_config.name, "sender", sizeof(sender_config.name) );
-    snapshot_copy_string( receiver_config.name, "receiver", sizeof(receiver_config.name) );
+    strncpy( sender_config.name, "sender", sizeof(sender_config.name) );
+    strncpy( receiver_config.name, "receiver", sizeof(receiver_config.name) );
 
     snapshot_endpoint_t * sender = snapshot_endpoint_create( &sender_config, time );
     snapshot_endpoint_t * receiver = snapshot_endpoint_create( &receiver_config, time );

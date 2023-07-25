@@ -28,18 +28,18 @@ void snapshot_encryption_manager_reset( struct snapshot_encryption_manager_t * e
 int snapshot_encryption_manager_entry_expired( struct snapshot_encryption_manager_t * encryption_manager, int index, double time );
 
 int snapshot_encryption_manager_add_encryption_mapping( struct snapshot_encryption_manager_t * encryption_manager, 
-                                                        struct snapshot_address_t * address, 
+                                                        const struct snapshot_address_t * address, 
                                                         uint8_t * send_key, 
                                                         uint8_t * receive_key, 
                                                         double time, 
                                                         double expire_time,
                                                         int timeout );
 
-int snapshot_encryption_manager_remove_encryption_mapping( struct snapshot_encryption_manager_t * encryption_manager, struct snapshot_address_t * address, double time );
+int snapshot_encryption_manager_remove_encryption_mapping( struct snapshot_encryption_manager_t * encryption_manager, const struct snapshot_address_t * address, double time );
 
-int snapshot_encryption_manager_find_encryption_mapping( struct snapshot_encryption_manager_t * encryption_manager, struct snapshot_address_t * address, double time );
+int snapshot_encryption_manager_find_encryption_mapping( struct snapshot_encryption_manager_t * encryption_manager, const struct snapshot_address_t * address, double time );
 
-int snapshot_encryption_manager_touch( struct snapshot_encryption_manager_t * encryption_manager, int index, struct snapshot_address_t * address, double time );
+int snapshot_encryption_manager_touch( struct snapshot_encryption_manager_t * encryption_manager, int index, const struct snapshot_address_t * address, double time );
 
 void snapshot_encryption_manager_set_expire_time( struct snapshot_encryption_manager_t * encryption_manager, int index, double expire_time );
 

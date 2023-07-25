@@ -34,7 +34,7 @@ int snapshot_encryption_manager_entry_expired( struct snapshot_encryption_manage
 }
 
 int snapshot_encryption_manager_add_encryption_mapping( struct snapshot_encryption_manager_t * encryption_manager, 
-                                                        struct snapshot_address_t * address, 
+                                                        const struct snapshot_address_t * address, 
                                                         uint8_t * send_key, 
                                                         uint8_t * receive_key, 
                                                         double time, 
@@ -75,7 +75,7 @@ int snapshot_encryption_manager_add_encryption_mapping( struct snapshot_encrypti
     return 0;
 }
 
-int snapshot_encryption_manager_remove_encryption_mapping( struct snapshot_encryption_manager_t * encryption_manager, struct snapshot_address_t * address, double time )
+int snapshot_encryption_manager_remove_encryption_mapping( struct snapshot_encryption_manager_t * encryption_manager, const struct snapshot_address_t * address, double time )
 {
     snapshot_assert( encryption_manager );
     snapshot_assert( address );
@@ -113,7 +113,7 @@ int snapshot_encryption_manager_remove_encryption_mapping( struct snapshot_encry
     return 0;
 }
 
-int snapshot_encryption_manager_find_encryption_mapping( struct snapshot_encryption_manager_t * encryption_manager, struct snapshot_address_t * address, double time )
+int snapshot_encryption_manager_find_encryption_mapping( struct snapshot_encryption_manager_t * encryption_manager, const struct snapshot_address_t * address, double time )
 {
     int i;
     for ( i = 0; i < encryption_manager->num_encryption_mappings; ++i )
@@ -127,7 +127,7 @@ int snapshot_encryption_manager_find_encryption_mapping( struct snapshot_encrypt
     return -1;
 }
 
-int snapshot_encryption_manager_touch( struct snapshot_encryption_manager_t * encryption_manager, int index, struct snapshot_address_t * address, double time )
+int snapshot_encryption_manager_touch( struct snapshot_encryption_manager_t * encryption_manager, int index, const struct snapshot_address_t * address, double time )
 {
     snapshot_assert( index >= 0 );
     snapshot_assert( index < encryption_manager->num_encryption_mappings );
