@@ -1,21 +1,5 @@
 DONE
 
-	Extend client counters to cover common situations
-
-	Extend server counters to cover common situations
-
-	Soak test
-
-	Extend soak test to do the thing with random payloads
-
-	Setup malloc/free overrides and check for memory leaks in soak test.
-
-	Implement printf override function, and use it in soak test.
-
-	Fix bug in memory alloc/free prints (print after itor destroyed).
-
-	Implement assert override function, and use it in soak test.
-
 	Setup VPN on linode
 
 	Email Mike Richardson to get devnet access back with new VPN IP.
@@ -28,20 +12,27 @@ DONE
 
 	It does. And the Network Next UE4 plugin just works as well (!!!)
 
-TODO
-
 	Setup a snapshot UE5 plugin based on the network next UE plugin.
 
-	Verify snapshot client and server connect and operate in a simple testbed.
+	Verify snapshot plugin loads and prints logs.
+
+TODO
+
+	Finish hooking up client and server packets in snapshot plugin.
+
+	Verify snapshot net driver works in test program.
 
 	-------------
 
+	Create a cleaner test program "UnrealTest" "TestFPS" or whatever from the "FPS Sample"
 
+	Work on the plugin in this test program from now on...
 
+	-------------
 
+	Update snapshot plugin logo png from N to something else.
 
-
-
+	-------------
 
 
 
