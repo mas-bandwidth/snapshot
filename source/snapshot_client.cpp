@@ -175,7 +175,7 @@ struct snapshot_client_t * snapshot_client_create( const char * bind_address_str
 
     snapshot_endpoint_config_t endpoint_config;
     snapshot_endpoint_default_config( &endpoint_config );
-    strncpy( endpoint_config.name, "client", sizeof(endpoint_config.name) );
+    snapshot_copy_string( endpoint_config.name, "client", sizeof(endpoint_config.name) );
     endpoint_config.context = config->context;
     
     client->endpoint = snapshot_endpoint_create( &endpoint_config, time );

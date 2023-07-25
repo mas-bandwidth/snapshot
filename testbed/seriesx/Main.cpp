@@ -83,7 +83,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR lp
 
     next_config_t config;
     next_default_config(&config);
-    strncpy_s(config.customer_public_key, customer_public_key, sizeof(config.customer_public_key) - 1);
+    snapshot_copy_string(config.customer_public_key, customer_public_key, sizeof(config.customer_public_key) - 1);
 
     next_log_function( xbox_printf );
 

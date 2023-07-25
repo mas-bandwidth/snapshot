@@ -1098,15 +1098,6 @@ struct snapshot_address_t * snapshot_server_client_address( struct snapshot_serv
     return &server->client_address[client_index];
 }
 
-uint64_t snapshot_server_next_packet_sequence( struct snapshot_server_t * server, int client_index )
-{
-    snapshot_assert( client_index >= 0 );
-    snapshot_assert( client_index < server->max_clients );
-    if ( !server->client_connected[client_index] )
-        return 0;
-    return server->client_sequence[client_index];    
-}
-
 int snapshot_server_num_connected_clients( struct snapshot_server_t * server )
 {
     snapshot_assert( server );

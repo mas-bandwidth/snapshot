@@ -219,15 +219,15 @@ void snapshot_free( void * context, void * p );
 
 extern void (*snapshot_assert_function_pointer)( const char * condition, const char * function, const char * file, int line );
 
-#ifndef NEXT_ASSERTS
+#ifndef SNAPSHOT_ASSERTS
     #ifdef NDEBUG
-        #define NEXT_ASSERTS 0
+        #define SNAPSHOT_ASSERTS 0
     #else
-        #define NEXT_ASSERTS 1
+        #define SNAPSHOT_ASSERTS 1
     #endif
 #endif
 
-#if NEXT_ASSERTS
+#if SNAPSHOT_ASSERTS
 #define snapshot_assert( condition )                                                            \
 do                                                                                              \
 {                                                                                               \

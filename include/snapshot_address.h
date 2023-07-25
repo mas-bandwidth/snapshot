@@ -8,12 +8,15 @@
 
 #include "snapshot.h"
 
+#ifndef SNAPSHOT_ADDRESS_ALREADY_DEFINED
+#define SNAPSHOT_ADDRESS_ALREADY_DEFINED
 struct snapshot_address_t
 {
     union { uint8_t ipv4[4]; uint16_t ipv6[8]; } data;
     uint16_t port;
     uint8_t type;
 };
+#endif 
 
 int snapshot_address_parse( struct snapshot_address_t * address, const char * address_string );
 

@@ -26,13 +26,13 @@ DONE
 
 	Upgrade the network next test project and see if it works with UE 5.2
 
-	It does. And the Network Next UE4 plugin just works as well.
+	It does. And the Network Next UE4 plugin just works as well (!!!)
 
 TODO
 
 	Setup a snapshot UE5 plugin based on the network next UE plugin.
 
-	Verify client and server can connect and operate in a simple testbed.
+	Verify snapshot client and server connect and operate in a simple testbed.
 
 	-------------
 

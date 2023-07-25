@@ -439,7 +439,7 @@ struct TestObject
         for ( int i = 0; i < (int) sizeof( data.bytes ); i++ )
             data.bytes[i] = ( i * 37 ) % 255;
 
-        strcpy( data.string, "hello world!" );
+        snapshot_copy_string( data.string, "hello world!", sizeof(data.string) );
 
         memset( &data.address_a, 0, sizeof(snapshot_address_t) );
 
@@ -746,7 +746,7 @@ void test_platform_socket()
         snapshot_platform_socket_destroy( socket );
     }
 
-#if NEXT_PLATFORM_HAS_IPV6
+#if SNAPSHOT_PLATFORM_HAS_IPV6
 
     // non-blocking socket (ipv6)
     {
@@ -754,7 +754,7 @@ void test_platform_socket()
         snapshot_address_t local_address;
         snapshot_address_parse( &bind_address, "[::]" );
         snapshot_address_parse( &local_address, "[::1]" );
-        snapshot_platform_socket_t * socket = snapshot_platform_socket_create( NULL, &bind_address, NEXT_PLATFORM_SOCKET_NON_BLOCKING, 0, 64*1024, 64*1024, true );
+        snapshot_platform_socket_t * socket = snapshot_platform_socket_create( NULL, &bind_address, SNAPSHOT_PLATFORM_SOCKET_NON_BLOCKING, 0, 64*1024, 64*1024 );
         local_address.port = bind_address.port;
         snapshot_check( socket );
         uint8_t packet[256];
@@ -774,7 +774,7 @@ void test_platform_socket()
         snapshot_address_t local_address;
         snapshot_address_parse( &bind_address, "[::]" );
         snapshot_address_parse( &local_address, "[::1]" );
-        snapshot_platform_socket_t * socket = snapshot_platform_socket_create( NULL, &bind_address, NEXT_PLATFORM_SOCKET_BLOCKING, 0.01f, 64*1024, 64*1024, true );
+        snapshot_platform_socket_t * socket = snapshot_platform_socket_create( NULL, &bind_address, SNAPSHOT_PLATFORM_SOCKET_BLOCKING, 0.01f, 64*1024, 64*1024 );
         local_address.port = bind_address.port;
         snapshot_check( socket );
         uint8_t packet[256];
@@ -794,7 +794,7 @@ void test_platform_socket()
         snapshot_address_t local_address;
         snapshot_address_parse( &bind_address, "[::]" );
         snapshot_address_parse( &local_address, "[::1]" );
-        snapshot_platform_socket_t * socket = snapshot_platform_socket_create( NULL, &bind_address, NEXT_PLATFORM_SOCKET_BLOCKING, -1.0f, 64*1024, 64*1024, true );
+        snapshot_platform_socket_t * socket = snapshot_platform_socket_create( NULL, &bind_address, SNAPSHOT_PLATFORM_SOCKET_BLOCKING, -1.0f, 64*1024, 64*1024 );
         local_address.port = bind_address.port;
         snapshot_check( socket );
         uint8_t packet[256];
@@ -3705,8 +3705,8 @@ void test_acks()
     snapshot_endpoint_default_config( &sender_config );
     snapshot_endpoint_default_config( &receiver_config );
 
-    strncpy( sender_config.name, "sender", sizeof(sender_config.name) );
-    strncpy( receiver_config.name, "receiver", sizeof(receiver_config.name) );
+    snapshot_copy_string( sender_config.name, "sender", sizeof(sender_config.name) );
+    snapshot_copy_string( receiver_config.name, "receiver", sizeof(receiver_config.name) );
 
     snapshot_endpoint_t * sender = snapshot_endpoint_create( &sender_config, time );
     snapshot_endpoint_t * receiver = snapshot_endpoint_create( &receiver_config, time );
@@ -3844,8 +3844,8 @@ void test_acks_packet_loss()
     snapshot_endpoint_default_config( &sender_config );
     snapshot_endpoint_default_config( &receiver_config );
 
-    strncpy( sender_config.name, "sender", sizeof(sender_config.name) );
-    strncpy( receiver_config.name, "receiver", sizeof(receiver_config.name) );
+    snapshot_copy_string( sender_config.name, "sender", sizeof(sender_config.name) );
+    snapshot_copy_string( receiver_config.name, "receiver", sizeof(receiver_config.name) );
 
     snapshot_endpoint_t * sender = snapshot_endpoint_create( &sender_config, time );
     snapshot_endpoint_t * receiver = snapshot_endpoint_create( &receiver_config, time );
@@ -3991,8 +3991,8 @@ void test_endpoint_payload()
     snapshot_endpoint_default_config( &sender_config );
     snapshot_endpoint_default_config( &receiver_config );
 
-    strncpy( sender_config.name, "sender", sizeof(sender_config.name) );
-    strncpy( receiver_config.name, "receiver", sizeof(receiver_config.name) );
+    snapshot_copy_string( sender_config.name, "sender", sizeof(sender_config.name) );
+    snapshot_copy_string( receiver_config.name, "receiver", sizeof(receiver_config.name) );
 
     snapshot_endpoint_t * sender = snapshot_endpoint_create( &sender_config, time );
     snapshot_endpoint_t * receiver = snapshot_endpoint_create( &receiver_config, time );
