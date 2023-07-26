@@ -270,7 +270,7 @@ struct snapshot_server_t * snapshot_server_create( const char * server_address_s
 
     if ( server_address.type == SNAPSHOT_ADDRESS_IPV4 && server_address.data.ipv4[0] == 0 && server_address.data.ipv4[1] == 0 && server_address.data.ipv4[2] == 0 && server_address.data.ipv4[3] == 0 )
     {
-        snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "allowing any address to connect (ipv4)" );
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "server allowing any address to connect (ipv4)" );
         server->allow_any_address = true;
     }
 
@@ -280,7 +280,7 @@ struct snapshot_server_t * snapshot_server_create( const char * server_address_s
         memset( zero, 0, sizeof(zero) );
         if ( memcmp( server_address.data.ipv6, zero, 16 ) == 0 )
         {
-            snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "allowing any address to connect (ipv6)" );
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "server allowing any address to connect (ipv6)" );
             server->allow_any_address = true;
         }
     }
