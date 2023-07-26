@@ -40,19 +40,17 @@
 
 #endif // !defined(SNAPSHOT_DEVELOPMENT)
 
-#define SNAPSHOT_CONNECT_TOKEN_BYTES                           2048
+#define SNAPSHOT_CONNECT_TOKEN_BYTES                           1024
 #define SNAPSHOT_KEY_BYTES                                       32
 #define SNAPSHOT_MAC_BYTES                                       16
 #define SNAPSHOT_USER_DATA_BYTES                                256
-#define SNAPSHOT_MAX_SERVERS_PER_CONNECT                         32
+#define SNAPSHOT_MAX_SERVERS_PER_CONNECT                         16
 
 #define SNAPSHOT_CONNECT_TOKEN_NONCE_BYTES                       24
-#define SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES                   1024
+#define SNAPSHOT_CONNECT_TOKEN_PRIVATE_BYTES                    512
 
 #define SNAPSHOT_VERSION_INFO ( (uint8_t*) "SNAPSHOT" )
 #define SNAPSHOT_VERSION_INFO_BYTES                               9
-
-#define SNAPSHOT_MAX_SERVERS_PER_CONNECT                         32
 
 #define SNAPSHOT_BOOL                                           int
 #define SNAPSHOT_TRUE                                             1

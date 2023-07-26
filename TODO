@@ -36,11 +36,7 @@ DONE
 
 	Bring across base64 functions.
 
-TODO
-
 	Implement command line for passing in the private key as base 64.
-
-	-------------
 
 	What will the "real" client connect codepath look like, eg. connect by connect token?
 
@@ -48,9 +44,15 @@ TODO
 
 	Implement this: "snapshot://..."
 
+TODO
+
 	-------------
 
 	Fix the FSocket thing with TSharedPtr. Use the steam sockets as an example of what to do.
+
+	-------------
+
+	Work out how to pass the connect token data from the SnapshotNetDriver::InitConnect into the socket (?)
 
 	-------------
 
