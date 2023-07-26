@@ -14,13 +14,13 @@
 #include "snapshot_connect_token.h"
 
 #define TEST_PROTOCOL_ID 0x1122334455667788
-#define CONNECT_TOKEN_EXPIRY 30
-#define CONNECT_TOKEN_TIMEOUT 5
+#define TEST_CONNECT_TOKEN_EXPIRY 30
+#define TEST_CONNECT_TOKEN_TIMEOUT 5
 
-static uint8_t private_key[SNAPSHOT_KEY_BYTES] = { 0x60, 0x6a, 0xbe, 0x6e, 0xc9, 0x19, 0x10, 0xea, 
-                                                   0x9a, 0x65, 0x62, 0xf6, 0x6f, 0x2b, 0x30, 0xe4, 
-                                                   0x43, 0x71, 0xd6, 0x2c, 0xd1, 0x99, 0x27, 0x26,
-                                                   0x6b, 0x3c, 0x60, 0xf4, 0xb7, 0x15, 0xab, 0xa1 };
+static uint8_t test_private_key[SNAPSHOT_KEY_BYTES] = { 0x60, 0x6a, 0xbe, 0x6e, 0xc9, 0x19, 0x10, 0xea, 
+                                                        0x9a, 0x65, 0x62, 0xf6, 0x6f, 0x2b, 0x30, 0xe4, 
+                                                        0x43, 0x71, 0xd6, 0x2c, 0xd1, 0x99, 0x27, 0x26,
+                                                        0x6b, 0x3c, 0x60, 0xf4, 0xb7, 0x15, 0xab, 0xa1 };
 
 static volatile int quit = 0;
 
@@ -64,7 +64,7 @@ int main( int argc, char ** argv )
 
     uint8_t connect_token[SNAPSHOT_CONNECT_TOKEN_BYTES];
 
-    if ( snapshot_generate_connect_token( 1, &server_address, CONNECT_TOKEN_EXPIRY, CONNECT_TOKEN_TIMEOUT, client_id, TEST_PROTOCOL_ID, private_key, user_data, connect_token ) != SNAPSHOT_OK )
+    if ( snapshot_generate_connect_token( 1, &server_address, TEST_CONNECT_TOKEN_EXPIRY, TEST_CONNECT_TOKEN_TIMEOUT, client_id, TEST_PROTOCOL_ID, test_private_key, user_data, connect_token ) != SNAPSHOT_OK )
     {
         snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to generate connect token" );
         return 1;

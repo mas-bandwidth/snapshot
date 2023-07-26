@@ -62,7 +62,7 @@ int main( int argc, char ** argv )
 
     // start the listen server
 
-    const char * server_address_string = "127.0.0.1:40000";
+    const char * server_address_string = "0.0.0.0:40000";
     if ( argc == 2 )
         server_address_string = argv[1];
 
