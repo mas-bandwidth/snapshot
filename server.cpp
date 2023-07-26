@@ -39,7 +39,7 @@ int main( int argc, char ** argv )
 
     snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "[server]" );
 
-    const char * server_address = "127.0.0.1:40000";
+    const char * server_address = "0.0.0.0:40000"; //"127.0.0.1:40000";
     if ( argc == 2 )
         server_address = argv[1];
 

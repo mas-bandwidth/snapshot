@@ -16,23 +16,53 @@ DONE
 
 	Verify snapshot plugin loads and prints logs.
 
-TODO
-
 	Finish hooking up client and server packets in snapshot plugin.
 
 	Verify snapshot net driver works in test program.
 
-	-------------
+	Create a cleaner test program "SnapshotTest" program.
 
-	Create a cleaner test program "UnrealTest" "TestFPS" or whatever from the "FPS Sample"
+	Add the FPS sample to github, with a quality .gitignore that drops all binaries, intermediate etc.
 
-	Work on the plugin in this test program from now on...
-
-	-------------
+	Work on the plugin in this test program from now on... integrated.
 
 	Update snapshot plugin logo png from N to something else.
 
+TODO
+
+	Pass in the server public address via command line, using multiplay code as an example.
+
+	If server public address is ommitted, set it to 0.0.0.0 which means, accept any valid connect token.
+
+	This will enable a zero configuration default that can be used inside unreal for internal dev play sans. matchmaker as needed.
+
 	-------------
+
+	What will the "real" client connect codepath look like, eg. connect by connect token?
+
+	Pass in connect token via base64 URL on server connect?
+
+	Implement this: "snapshot://..."
+
+	-------------
+
+	Implement overrides in the net driver for the private key.
+
+	-------------
+
+	Fix the FSocket thing with TSharedPtr. Use the steam sockets as an example of what to do.
+
+	-------------
+
+	Build a linux dedicated server version of the SnapshotTest
+
+	-------------
+
+	Verify that I can host a linux dedicated server version of the FPS example in google cloud, and connect to it from windows client.
+
+	-------------
+
+
 
 
 
@@ -57,7 +87,7 @@ TODO
 
 	-------------
 
-	Verify PS5 client can connect to PC server in UE5.
+	Verify PS5 client can connect to dedicated linux server in UE5.
 
 	-------------
 

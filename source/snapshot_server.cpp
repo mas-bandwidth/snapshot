@@ -111,6 +111,7 @@ struct snapshot_server_t
     struct snapshot_server_config_t config;
     struct snapshot_platform_socket_t * socket;
     struct snapshot_address_t address;
+    bool allow_any_address;
     uint64_t flags;
     double time;
     int max_clients;
@@ -154,6 +155,7 @@ struct snapshot_server_t * snapshot_server_create( const char * server_address_s
         snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to parse server public address" );
         return NULL;
     }
+
 
     struct snapshot_platform_socket_t * socket = NULL;
 
@@ -265,6 +267,23 @@ struct snapshot_server_t * snapshot_server_create( const char * server_address_s
     server->challenge_sequence = 0;    
 
     snapshot_crypto_random_bytes( server->challenge_key, SNAPSHOT_KEY_BYTES );
+
+    if ( server_address.type == SNAPSHOT_ADDRESS_IPV4 && server_address.data.ipv4[0] == 0 && server_address.data.ipv4[1] == 0 && server_address.data.ipv4[2] == 0 && server_address.data.ipv4[3] == 0 )
+    {
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "allowing any address to connect (ipv4)" );
+        server->allow_any_address = true;
+    }
+
+    if ( server_address.type == SNAPSHOT_ADDRESS_IPV6 )
+    {
+        uint8_t zero[16];
+        memset( zero, 0, sizeof(zero) );
+        if ( memcmp( server_address.data.ipv6, zero, 16 ) == 0 )
+        {
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "allowing any address to connect (ipv6)" );
+            server->allow_any_address = true;
+        }
+    }
 
     return server;
 }
@@ -518,19 +537,21 @@ void snapshot_server_process_connection_request_packet( snapshot_server_t * serv
         return;
     }
 
-    int found_server_address = 0;
-    int i;
-    for ( i = 0; i < connect_token_private.num_server_addresses; ++i )
+    if ( !server->allow_any_address )
     {
-        if ( snapshot_address_equal( &server->address, &connect_token_private.server_addresses[i] ) )
+        int found_server_address = 0;
+        for ( int i = 0; i < connect_token_private.num_server_addresses; i++ )
         {
-            found_server_address = 1;
+            if ( snapshot_address_equal( &server->address, &connect_token_private.server_addresses[i] ) )
+            {
+                found_server_address = 1;
+            }
         }
-    }
-    if ( !found_server_address )
-    {   
-        snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server ignored connection request. server address not in connect token whitelist" );
-        return;
+        if ( !found_server_address )
+        {
+            snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server ignored connection request. server address not in connect token whitelist" );
+            return;
+        }
     }
 
     if ( snapshot_server_find_client_index_by_address( server, from ) != -1 )
