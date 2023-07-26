@@ -34,6 +34,8 @@ DONE
 
 	This enables a zero configuration default that can be used inside unreal for internal dev play sans. matchmaker as needed.
 
+	Bring across base64 functions.
+
 TODO
 
 	Implement command line for passing in the private key as base 64.

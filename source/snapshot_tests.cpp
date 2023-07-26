@@ -26,6 +26,7 @@
 #include "snapshot_sequence_buffer.h"
 #include "snapshot_packet_header.h"
 #include "snapshot_endpoint.h"
+#include "snapshot_base64.h"
 
 #include <math.h>
 #include <stdio.h>
@@ -4235,6 +4236,17 @@ void test_client_server_payload()
     snapshot_client_destroy( client );
 }
 
+void test_base64()
+{
+    const char * input = "a test string. let's see if it works properly";
+    char encoded[1024];
+    char decoded[1024];
+    snapshot_check( snapshot_base64_encode_string( input, encoded, sizeof(encoded) ) > 0 );
+    snapshot_check( snapshot_base64_decode_string( encoded, decoded, sizeof(decoded) ) > 0 );
+    snapshot_check( strcmp( decoded, input ) == 0 );
+    snapshot_check( snapshot_base64_decode_string( encoded, decoded, 10 ) == 0 );
+}
+
 #define RUN_TEST( test_function )                                           \
     do                                                                      \
     {                                                                       \
@@ -4315,6 +4327,7 @@ void snapshot_run_tests()
         RUN_TEST( test_acks_packet_loss );
         RUN_TEST( test_endpoint_payload );
         RUN_TEST( test_client_server_payload );
+        RUN_TEST( test_base64 );
     }
 
     printf( "\nAll tests pass.\n\n" );
