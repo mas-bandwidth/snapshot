@@ -28,13 +28,15 @@ DONE
 
 	Update snapshot plugin logo png from N to something else.
 
+	Pass in the server public address via command line.
+
+	If server public address is ommitted, set it to 0.0.0.0 which means, accept any valid connect token with any server address.
+
+	This enables a zero configuration default that can be used inside unreal for internal dev play sans. matchmaker as needed.
+
 TODO
 
-	Pass in the server public address via command line, using multiplay code as an example.
-
-	If server public address is ommitted, set it to 0.0.0.0 which means, accept any valid connect token.
-
-	This will enable a zero configuration default that can be used inside unreal for internal dev play sans. matchmaker as needed.
+	Implement command line for passing in the private key as base 64.
 
 	-------------
 
@@ -43,10 +45,6 @@ TODO
 	Pass in connect token via base64 URL on server connect?
 
 	Implement this: "snapshot://..."
-
-	-------------
-
-	Implement overrides in the net driver for the private key.
 
 	-------------
 
