@@ -39,13 +39,7 @@ const char * snapshot_client_state_name( int client_state )
 void snapshot_default_client_config( struct snapshot_client_config_t * config )
 {
     snapshot_assert( config );
-    config->context = NULL;
-    config->state_change_callback = NULL;
-    config->send_loopback_packet_callback = NULL;
-    config->process_passthrough_callback = NULL;
-#if SNAPSHOT_DEVELOPMENT
-    config->network_simulator = NULL;
-#endif // #if SNAPSHOT_DEVELOPMENT
+    memset( config, 0, sizeof( snapshot_client_config_t ) );
 };
 
 struct snapshot_client_t
