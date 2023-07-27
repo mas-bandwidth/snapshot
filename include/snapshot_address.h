@@ -22,6 +22,8 @@ int snapshot_address_parse( struct snapshot_address_t * address, const char * ad
 
 const char * snapshot_address_to_string( const struct snapshot_address_t * address, char * buffer );
 
+const char * snapshot_address_to_string_without_port( const struct snapshot_address_t * address, char * buffer );
+
 SNAPSHOT_BOOL snapshot_address_equal( const struct snapshot_address_t * a, const struct snapshot_address_t * b );
 
 void snapshot_address_anonymize( struct snapshot_address_t * address );

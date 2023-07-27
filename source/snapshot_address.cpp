@@ -169,6 +169,44 @@ const char * snapshot_address_to_string( const snapshot_address_t * address, cha
     }
 }
 
+const char * snapshot_address_to_string_without_port( const snapshot_address_t * address, char * buffer )
+{
+    snapshot_assert( buffer );
+
+    if ( address->type == SNAPSHOT_ADDRESS_IPV6 )
+    {
+#if defined(WINVER) && WINVER <= 0x0502
+        // ipv6 not supported
+        buffer[0] = '\0';
+        return buffer;
+#else
+        uint16_t ipv6_network_order[8];
+        for ( int i = 0; i < 8; ++i )
+            ipv6_network_order[i] = snapshot_platform_htons( address->data.ipv6[i] );
+        char address_string[SNAPSHOT_MAX_ADDRESS_STRING_LENGTH];
+        snapshot_platform_inet_ntop6( ipv6_network_order, address_string, sizeof( address_string ) );
+        snapshot_copy_string( buffer, address_string, SNAPSHOT_MAX_ADDRESS_STRING_LENGTH );
+        return buffer;
+#endif
+    }
+    else if ( address->type == SNAPSHOT_ADDRESS_IPV4 )
+    {
+        snprintf( buffer,
+                  SNAPSHOT_MAX_ADDRESS_STRING_LENGTH,
+                  "%d.%d.%d.%d",
+                  address->data.ipv4[0],
+                  address->data.ipv4[1],
+                  address->data.ipv4[2],
+                  address->data.ipv4[3] );
+        return buffer;
+    }
+    else
+    {
+        snprintf( buffer, SNAPSHOT_MAX_ADDRESS_STRING_LENGTH, "%s", "NONE" );
+        return buffer;
+    }
+}
+
 SNAPSHOT_BOOL snapshot_address_equal( const snapshot_address_t * a, const snapshot_address_t * b )
 {
     snapshot_assert( a );
