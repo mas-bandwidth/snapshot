@@ -2,6 +2,8 @@ DONE
 
 	Fix the FSocket thing with TSharedPtr. Use the steam sockets as an example of what to do.
 
+	Test semaphore subscription is active
+
 TODO
 
 	Hook up various callbacks inside Unreal for client and server, tracking state changes and printing, tracking connect/disconnect etc.
@@ -25,7 +27,6 @@ TODO
 	Verify PS5 client runs and connects to windows server.
 
 	-------------
-
 
 	Build a linux dedicated server version of the SnapshotTest
 
