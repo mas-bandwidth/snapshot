@@ -1,77 +1,14 @@
 DONE
 
-	Setup VPN on linode
-
-	Email Mike Richardson to get devnet access back with new VPN IP.
-
-	Clone and sync UE5 via github
-
-	Get setup with UE5, build the engine and the editor and run it.
-
-	Upgrade the network next test project and see if it works with UE 5.2
-
-	It does. And the Network Next UE4 plugin just works as well (!!!)
-
-	Setup a snapshot UE5 plugin based on the network next UE plugin.
-
-	Verify snapshot plugin loads and prints logs.
-
-	Finish hooking up client and server packets in snapshot plugin.
-
-	Verify snapshot net driver works in test program.
-
-	Create a cleaner test program "SnapshotTest" program.
-
-	Add the FPS sample to github, with a quality .gitignore that drops all binaries, intermediate etc.
-
-	Work on the plugin in this test program from now on... integrated.
-
-	Update snapshot plugin logo png from N to something else.
-
-	Pass in the server public address via command line.
-
-	If server public address is ommitted, set it to 0.0.0.0 which means, accept any valid connect token with any server address.
-
-	This enables a zero configuration default that can be used inside unreal for internal dev play sans. matchmaker as needed.
-
-	Bring across base64 functions.
-
-	Implement command line for passing in the private key as base 64.
-
-	What will the "real" client connect codepath look like, eg. connect by connect token?
-
-	Pass in connect token via base64 URL on server connect?
-
-	Implement this: "snapshot://..."
+	Fix the FSocket thing with TSharedPtr. Use the steam sockets as an example of what to do.
 
 TODO
 
-	-------------
+	Hook up various callbacks inside Unreal for client and server, tracking state changes and printing, tracking connect/disconnect etc.
 
-	Fix the FSocket thing with TSharedPtr. Use the steam sockets as an example of what to do.
-
-	-------------
-
-	Work out how to pass the connect token data from the SnapshotNetDriver::InitConnect into the socket (?)
+	*** PAUSING HERE ***
 
 	-------------
-
-	Build a linux dedicated server version of the SnapshotTest
-
-	-------------
-
-	Verify that I can host a linux dedicated server version of the FPS example in google cloud, and connect to it from windows client.
-
-	-------------
-
-
-
-
-
-
-
-
-	========================================
 
 	Blocked on devnet access...
 
@@ -85,7 +22,16 @@ TODO
 
 	-------------
 
-	Verify PS5 client connects to linux server.
+	Verify PS5 client runs and connects to windows server.
+
+	-------------
+
+
+	Build a linux dedicated server version of the SnapshotTest
+
+	-------------
+
+	Verify that I can host a linux dedicated server version of the FPS example in google cloud, and connect to it from windows client.
 
 	-------------
 
@@ -129,15 +75,38 @@ TODO
 
 	-------------
 
+	Verify series x client in UE4 can connect to linux dedicated server in google cloud.
+
+	-------------
+
+	Remove xboxone target. It's non GDK and no longer supported by microsoft.
+
+	-------------
+
 	Setup additional PCs as build farm for sem
 
 	-------------
 
-	Now think what are the essential other things?
 
-	A reliable-ordered channel with messages, bidirectional between client and server. For sure.
+
+
+
+
+
+
+
+
+
+
+
+
+	-------------
+
+	A reliable-ordered channel with messages, bidirectional between client and server.
 
 	The same command channel with in-line large blocks of data sent down (eg. snapshot baselines...)
+
+	Large snapshot block sent, and if snapshot is too large, it gets thrown inline down the resynchronizing reliable-ordered channel.
 
 	Unreliable messages stuck at the back of the packets (when there is room) for sound effects, visual fx etc...
 
@@ -158,19 +127,5 @@ TODO
 	Decompress snapshot deltas on client.
 
 	Drive object creates and deletes.
-
-	---------------------------
-
-	Slothy input:
-
-		1. Uncompressed snapshots probably won't work, players are remote working not LAN
-
-		2. Concerns around disruptive integration, how exactly does it integrate?
-
-		3. How do we tell when object properties have changed? <----- call function when changed?
-
-		4. Separation of client/server instances of engine objects seems like a heavy lift
-
-		5. How do UE5 objects work?
 
 	---------------------------
