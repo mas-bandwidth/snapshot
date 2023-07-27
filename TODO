@@ -4,9 +4,9 @@ DONE
 
 	Test semaphore subscription is active
 
-TODO
-
 	Hook up various callbacks inside Unreal for client and server, tracking state changes and printing, tracking connect/disconnect etc.
+
+TODO
 
 	*** PAUSING HERE ***
 
