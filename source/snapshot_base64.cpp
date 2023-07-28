@@ -5,7 +5,7 @@
 
 #include "snapshot_base64.h"
 
-#include <stdlib.h>
+#include <string.h>
 
 static const unsigned char base64_table_encode[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
