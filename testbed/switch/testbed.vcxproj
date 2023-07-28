@@ -262,7 +262,7 @@
     <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>false</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
-    <NintendoSdkRoot>C:\Nintendo\Switch\NintendoSDK</NintendoSdkRoot>
+    <NintendoSdkRoot>C:\Nintendo\Snapshot\NintendoSDK</NintendoSdkRoot>
     <NintendoSdkSpec>NX</NintendoSdkSpec>
     <NintendoSdkBuildType>Debug</NintendoSdkBuildType>
   </PropertyGroup>
@@ -272,7 +272,7 @@
     <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>false</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
-    <NintendoSdkRoot>C:\Nintendo\Switch\NintendoSDK</NintendoSdkRoot>
+    <NintendoSdkRoot>C:\Nintendo\Snapshot\NintendoSDK</NintendoSdkRoot>
     <NintendoSdkSpec>NX</NintendoSdkSpec>
     <NintendoSdkBuildType>Debug</NintendoSdkBuildType>
   </PropertyGroup>
