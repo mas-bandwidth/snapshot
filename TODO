@@ -6,6 +6,8 @@ DONE
 
 	Hook up various callbacks inside Unreal for client and server, tracking state changes and printing, tracking connect/disconnect etc.
 
+	Update to latest Nintendo Switch tooling.
+
 TODO
 
 	*** PAUSING HERE ***
