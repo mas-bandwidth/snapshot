@@ -16,6 +16,7 @@
 #include <string.h>
 #include <signal.h>
 #include <inttypes.h>
+#include <stdlib.h>
 #include <map>
 
 // -------------------------------------------------------------------
