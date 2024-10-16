@@ -679,7 +679,7 @@ Snapshot incorporates portions of the Network Next SDK
 
 The Network Next SDK is licensed under the BSD 3-Clause license:
 
-    Network Next SDK. Copyright © 2017 - 2023 Network Next, Inc.
+    Network Next SDK. Copyright © 2017 - 2024 Network Next, Inc.
 
     Redistribution and use in source and binary forms, with or without 
     modification, are permitted provided that the following conditions 
@@ -733,11 +733,11 @@ libsodium is licensed as follows:
 
 ---------------------------------------------------------------------------
 
-Snapshot incorporates portions of netcode (github.com/networkprotocol/netcode)
+Snapshot incorporates portions of netcode (github.com/mas-bandwidth/netcode)
 
 netcode is licensed under the BSD 3-Clause license:
 
-    netcode. Copyright © 2017 - 2023 Mas Bandwidth LLC
+    netcode. Copyright © 2017 - 2024 Más Bandwidth LLC
 
     Redistribution and use in source and binary forms, with or without 
     modification, are permitted provided that the following conditions 
@@ -768,11 +768,11 @@ netcode is licensed under the BSD 3-Clause license:
 
 ---------------------------------------------------------------------------
 
-Snapshot incorporates portions of reliable (github.com/networkprotocol/reliable)
+Snapshot incorporates portions of reliable (github.com/mas-bandwidth/reliable)
 
 reliable is licensed under the BSD 3-Clause license:
 
-  reliable. Copyright © 2017 - 2023, Mas Bandwidth LLC
+  reliable. Copyright © 2017 - 2024, Más Bandwidth LLC
 
   Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 
