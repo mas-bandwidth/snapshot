@@ -13,51 +13,10 @@
 
 #include "snapshot.h"
 
+// todo: convert to C style
+
 namespace snapshot
 {
-    /**
-        Calculates the population count of an unsigned 32 bit integer at compile time.
-        See "Hacker's Delight" and http://www.hackersdelight.org/hdcodetxt/popArrayHS.c.txt
-     */
-
-    template <uint32_t x> struct PopCount
-    {
-        enum {   a = x - ( ( x >> 1 )       & 0x55555555 ),
-                 b =   ( ( ( a >> 2 )       & 0x33333333 ) + ( a & 0x33333333 ) ),
-                 c =   ( ( ( b >> 4 ) + b ) & 0x0f0f0f0f ),
-                 d =   c + ( c >> 8 ),
-                 e =   d + ( d >> 16 ),
-
-            result = e & 0x0000003f
-        };
-    };
-
-    /**
-        Calculates the log 2 of an unsigned 32 bit integer at compile time.
-     */
-
-    template <uint32_t x> struct Log2
-    {
-        enum {   a = x | ( x >> 1 ),
-                 b = a | ( a >> 2 ),
-                 c = b | ( b >> 4 ),
-                 d = c | ( c >> 8 ),
-                 e = d | ( d >> 16 ),
-                 f = e >> 1,
-
-            result = PopCount<f>::result
-        };
-    };
-
-    /**
-        Calculates the number of bits required to serialize an integer value in [min,max] at compile time.
-     */
-
-    template <int64_t min, int64_t max> struct BitsRequired
-    {
-        static const uint32_t result = ( min == max ) ? 0 : ( Log2<uint32_t(max-min)>::result + 1 );
-    };
-
     /**
         Calculates the population count of an unsigned 32 bit integer.
         The population count is the number of bits in the integer set to 1.

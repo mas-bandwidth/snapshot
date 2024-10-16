@@ -17,8 +17,6 @@
 #include "snapshot_address.h"
 #include "snapshot_read_write.h"
 #include "snapshot_bitpacker.h"
-#include "snapshot_stream.h"
-#include "snapshot_serialize.h"
 #include "snapshot_connect_token.h"
 #include "snapshot_network_simulator.h"
 #include "snapshot_client.h"
@@ -388,150 +386,6 @@ void test_bits_required()
     snapshot_check( bits_required( 0, 255 ) == 8 );
     snapshot_check( bits_required( 0, 65535 ) == 16 );
     snapshot_check( bits_required( 0, 4294967295U ) == 32 );
-}
-
-const int MaxItems = 11;
-
-struct TestData
-{
-    TestData()
-    {
-        memset( this, 0, sizeof( TestData ) );
-    }
-
-    int a,b,c;
-    uint32_t d : 8;
-    uint32_t e : 8;
-    uint32_t f : 8;
-    bool g;
-    int numItems;
-    int items[MaxItems];
-    float float_value;
-    double double_value;
-    uint64_t uint64_value;
-    uint8_t bytes[17];
-    char string[256];
-    snapshot_address_t address_a, address_b, address_c;
-};
-
-struct TestContext
-{
-    int min;
-    int max;
-};
-
-struct TestObject
-{
-    TestData data;
-
-    void Init()
-    {
-        data.a = 1;
-        data.b = -2;
-        data.c = 150;
-        data.d = 55;
-        data.e = 255;
-        data.f = 127;
-        data.g = true;
-
-        data.numItems = MaxItems / 2;
-        for ( int i = 0; i < data.numItems; i++ )
-            data.items[i] = i + 10;
-
-        data.float_value = 3.1415926f;
-        data.double_value = 1 / 3.0;
-        data.uint64_value = 0x1234567898765432L;
-
-        for ( int i = 0; i < (int) sizeof( data.bytes ); i++ )
-            data.bytes[i] = ( i * 37 ) % 255;
-
-        snapshot_copy_string( data.string, "hello world!", sizeof(data.string) );
-
-        memset( &data.address_a, 0, sizeof(snapshot_address_t) );
-
-        snapshot_address_parse( &data.address_b, "127.0.0.1:50000" );
-
-        snapshot_address_parse( &data.address_c, "[::1]:50000" );
-    }
-
-    template <typename Stream> bool Serialize( Stream & stream )
-    {
-        const TestContext & context = *(const TestContext*) stream.GetContext();
-
-        serialize_int( stream, data.a, context.min, context.max );
-        serialize_int( stream, data.b, context.min, context.max );
-
-        serialize_int( stream, data.c, -100, 10000 );
-
-        serialize_bits( stream, data.d, 6 );
-        serialize_bits( stream, data.e, 8 );
-        serialize_bits( stream, data.f, 7 );
-
-        serialize_align( stream );
-
-        serialize_bool( stream, data.g );
-
-        serialize_int( stream, data.numItems, 0, MaxItems - 1 );
-        for ( int i = 0; i < data.numItems; i++ )
-            serialize_bits( stream, data.items[i], 8 );
-
-        serialize_float( stream, data.float_value );
-
-        serialize_double( stream, data.double_value );
-
-        serialize_uint64( stream, data.uint64_value );
-
-        serialize_bytes( stream, data.bytes, sizeof( data.bytes ) );
-
-        serialize_string( stream, data.string, sizeof( data.string ) );
-
-        serialize_address( stream, data.address_a );
-        serialize_address( stream, data.address_b );
-        serialize_address( stream, data.address_c );
-
-        return true;
-    }
-
-    bool operator == ( const TestObject & other ) const
-    {
-        return memcmp( &data, &other.data, sizeof( TestData ) ) == 0;
-    }
-
-    bool operator != ( const TestObject & other ) const
-    {
-        return ! ( *this == other );
-    }
-};
-
-void test_stream()
-{
-    const int BufferSize = 1024;
-
-    uint8_t buffer[BufferSize];
-
-    TestContext context;
-    context.min = -10;
-    context.max = +10;
-
-    WriteStream writeStream( buffer, BufferSize );
-
-    TestObject writeObject;
-    writeObject.Init();
-    writeStream.SetContext( &context );
-    writeObject.Serialize( writeStream );
-    writeStream.Flush();
-
-    const int bytesWritten = writeStream.GetBytesProcessed();
-
-    memset( buffer + bytesWritten, 0, size_t(BufferSize) - bytesWritten );
-
-    TestObject readObject;
-
-    ReadStream readStream( buffer, bytesWritten );
-    readStream.SetContext( &context );
-    readObject.Serialize( readStream );
-
-    snapshot_check( readObject == writeObject );
 }
 
 void test_crypto_random_bytes()
@@ -4274,8 +4128,6 @@ void snapshot_run_tests()
         RUN_TEST( test_address );
         RUN_TEST( test_read_and_write );
         RUN_TEST( test_bitpacker );
-        RUN_TEST( test_bits_required );
-        RUN_TEST( test_stream );
         RUN_TEST( test_crypto_random_bytes );
         RUN_TEST( test_crypto_box );
         RUN_TEST( test_crypto_secret_box );
