@@ -1,6 +1,11 @@
 /*
-    Snapshot Copyright © 2024 Más Bandwidth LLC. This source code is licensed under GPL version 3 or any later version.
-    Commercial licensing under different terms is available. Please email licensing@mas-bandwidth.com for details.
+    Snapshot 
+
+    Copyright © 2024 Más Bandwidth LLC. 
+
+    This source code is licensed under GPL version 3 or any later version.
+
+    Commercial licensing under different terms is available. Email licensing@mas-bandwidth.com for details.
 */
 
 #include <stdio.h>
@@ -15,7 +20,7 @@
 
 #define TEST_PROTOCOL_ID 0x1122334455667788
 #define TEST_CONNECT_TOKEN_EXPIRY 30
-#define TEST_CONNECT_TOKEN_TIMEOUT 5
+#define TEST_CONNECT_TOKEN_TIMEOUT 10
 
 static uint8_t test_private_key[SNAPSHOT_KEY_BYTES] = { 0x60, 0x6a, 0xbe, 0x6e, 0xc9, 0x19, 0x10, 0xea, 
                                                         0x9a, 0x65, 0x62, 0xf6, 0x6f, 0x2b, 0x30, 0xe4, 

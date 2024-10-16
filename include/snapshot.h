@@ -64,8 +64,6 @@
 #define SNAPSHOT_OK                                               0
 #define SNAPSHOT_ERROR                                           -1
 
-#define SNAPSHOT_MTU                                           1300
-
 #define SNAPSHOT_LOG_LEVEL_NONE                                   0
 #define SNAPSHOT_LOG_LEVEL_ERROR                                  1
 #define SNAPSHOT_LOG_LEVEL_INFO                                   2
