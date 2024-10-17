@@ -4113,6 +4113,11 @@ void test_base64()
     snapshot_check( snapshot_base64_decode_string( encoded, decoded, 10 ) == 0 );
 }
 
+void test_schema()
+{
+    // todo
+}
+
 #define RUN_TEST( test_function )                                           \
     do                                                                      \
     {                                                                       \
@@ -4201,6 +4206,7 @@ void snapshot_run_tests()
         RUN_TEST( test_endpoint_payload );
         RUN_TEST( test_client_server_payload );
         RUN_TEST( test_base64 );
+        RUN_TEST( test_schema );
     }
 
     printf( "\nAll tests pass.\n\n" );
