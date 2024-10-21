@@ -76,7 +76,7 @@ inline void snapshot_write_bytes( uint8_t ** p, const uint8_t * byte_array, int 
     }
 }
 
-inline void snapshot_write_address( uint8_t ** buffer, const snapshot_address_t * address )
+inline void snapshot_write_address( uint8_t ** buffer, const struct snapshot_address_t * address )
 {
     snapshot_assert( buffer );
     snapshot_assert( *buffer );
@@ -178,9 +178,9 @@ inline void snapshot_read_bytes( const uint8_t ** p, uint8_t * byte_array, int n
     }
 }
 
-inline void snapshot_read_address( const uint8_t ** buffer, snapshot_address_t * address )
+inline void snapshot_read_address( const uint8_t ** buffer, struct snapshot_address_t * address )
 {
-    memset( address, 0, sizeof(snapshot_address_t) );
+    memset( address, 0, sizeof(struct snapshot_address_t) );
 
     address->type = snapshot_read_uint8( buffer );
 

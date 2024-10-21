@@ -66,7 +66,7 @@ int snapshot_base64_encode_data( const uint8_t * input, size_t input_length, cha
 
     output[output_length] = '\0';
 
-    return int( output_length );
+    return (int) output_length;
 }
 
 static const int base64_table_decode[256] =
@@ -98,30 +98,29 @@ int snapshot_base64_decode_data( const char * input, uint8_t * output, size_t ou
 
     for ( size_t i = 0, j = 0; i < L; i += 4 )
     {
-        int n = base64_table_decode[int( input[i] )] << 18 | base64_table_decode[int( input[i + 1] )] << 12 | base64_table_decode[int( input[i + 2] )] << 6 | base64_table_decode[int( input[i + 3] )];
-        output[j++] = uint8_t( n >> 16 );
-        output[j++] = uint8_t( n >> 8 & 0xFF );
-        output[j++] = uint8_t( n & 0xFF );
+        int n = base64_table_decode[(int)input[i]] << 18 | base64_table_decode[(int)input[i+1]] << 12 | base64_table_decode[(int)input[i+2]] << 6 | base64_table_decode[(int)input[i+3]];
+        output[j++] = (uint8_t) ( n >> 16 );
+        output[j++] = (uint8_t) ( n >> 8 & 0xFF );
+        output[j++] = (uint8_t) ( n & 0xFF );
     }
 
     if ( pad )
     {
-        int n = base64_table_decode[int( input[L] )] << 18 | base64_table_decode[int( input[L + 1] )] << 12;
-        output[output_length - 1] = uint8_t( n >> 16 );
-
-        if (input_length > L + 2 && input[L + 2] != '=')
+        int n = base64_table_decode[(int)input[L]] << 18 | base64_table_decode[(int)input[L+1]] << 12;
+        output[output_length - 1] = (uint8_t) ( n >> 16 );
+        if ( input_length > L + 2 && input[L+2] != '=' )
         {
-            n |= base64_table_decode[int( input[L + 2] )] << 6;
+            n |= base64_table_decode[(int)input[L+2]] << 6;
             output_length += 1;
             if ( output_length > output_size )
             {
                 return 0;
             }
-            output[output_length - 1] = uint8_t( n >> 8 & 0xFF );
+            output[output_length - 1] = (uint8_t) ( n >> 8 & 0xFF );
         }
     }
 
-    return int( output_length );
+    return (int) output_length;
 }
 
 int snapshot_base64_encode_string( const char * input, char * output, size_t output_size )

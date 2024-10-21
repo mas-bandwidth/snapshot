@@ -50,25 +50,25 @@ int snapshot_platform_inet_pton6( const char * address_string, uint16_t * addres
 
 int snapshot_platform_inet_ntop6( const uint16_t * address, char * address_string, size_t address_string_size );
 
-int snapshot_platform_hostname_resolve( const char * hostname, const char * port, snapshot_address_t * address );
+int snapshot_platform_hostname_resolve( const char * hostname, const char * port, struct snapshot_address_t * address );
 
 // ----------------------------------------------------------------
 
-snapshot_platform_socket_t * snapshot_platform_socket_create( void * context, snapshot_address_t * address, int socket_type, float timeout_seconds, int send_buffer_size, int receive_buffer_size );
+struct snapshot_platform_socket_t * snapshot_platform_socket_create( void * context, struct snapshot_address_t * address, int socket_type, float timeout_seconds, int send_buffer_size, int receive_buffer_size );
 
-void snapshot_platform_socket_destroy( snapshot_platform_socket_t * socket );
+void snapshot_platform_socket_destroy( struct snapshot_platform_socket_t * socket );
 
-void snapshot_platform_socket_send_packet( snapshot_platform_socket_t * socket, const snapshot_address_t * to, const void * packet_data, int packet_bytes );
+void snapshot_platform_socket_send_packet( struct snapshot_platform_socket_t * socket, const struct snapshot_address_t * to, const void * packet_data, int packet_bytes );
 
-int snapshot_platform_socket_receive_packet( snapshot_platform_socket_t * socket, snapshot_address_t * from, void * packet_data, int max_packet_size );
+int snapshot_platform_socket_receive_packet( struct snapshot_platform_socket_t * socket, struct snapshot_address_t * from, void * packet_data, int max_packet_size );
 
 // ----------------------------------------------------------------
 
-snapshot_platform_thread_t * snapshot_platform_thread_create( void * context, snapshot_platform_thread_func_t func, void * arg );
+struct snapshot_platform_thread_t * snapshot_platform_thread_create( void * context, snapshot_platform_thread_func_t func, void * arg );
 
-void snapshot_platform_thread_join( snapshot_platform_thread_t * thread );
+void snapshot_platform_thread_join( struct snapshot_platform_thread_t * thread );
 
-void snapshot_platform_thread_destroy( snapshot_platform_thread_t * thread );
+void snapshot_platform_thread_destroy( struct snapshot_platform_thread_t * thread );
 
 // ----------------------------------------------------------------
 

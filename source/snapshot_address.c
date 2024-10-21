@@ -15,7 +15,7 @@
 
 #define SNAPSHOT_ADDRESS_BUFFER_SAFETY 32
 
-int snapshot_address_parse( snapshot_address_t * address, const char * address_string_in )
+int snapshot_address_parse( struct snapshot_address_t * address, const char * address_string_in )
 {
     snapshot_assert( address );
     snapshot_assert( address_string_in );
@@ -26,7 +26,7 @@ int snapshot_address_parse( snapshot_address_t * address, const char * address_s
     if ( !address_string_in )
         return SNAPSHOT_ERROR;
 
-    memset( address, 0, sizeof( snapshot_address_t ) );
+    memset( address, 0, sizeof( struct snapshot_address_t ) );
 
     // first try to parse the string as an IPv6 address:
     // 1. if the first character is '[' then it's probably an ipv6 in form "[addr6]:portnum"
@@ -111,7 +111,7 @@ int snapshot_address_parse( snapshot_address_t * address, const char * address_s
     return SNAPSHOT_ERROR;
 }
 
-const char * snapshot_address_to_string( const snapshot_address_t * address, char * buffer )
+const char * snapshot_address_to_string( const struct snapshot_address_t * address, char * buffer )
 {
     snapshot_assert( buffer );
 
@@ -174,7 +174,7 @@ const char * snapshot_address_to_string( const snapshot_address_t * address, cha
     }
 }
 
-const char * snapshot_address_to_string_without_port( const snapshot_address_t * address, char * buffer )
+const char * snapshot_address_to_string_without_port( const struct snapshot_address_t * address, char * buffer )
 {
     snapshot_assert( buffer );
 
@@ -212,7 +212,7 @@ const char * snapshot_address_to_string_without_port( const snapshot_address_t *
     }
 }
 
-SNAPSHOT_BOOL snapshot_address_equal( const snapshot_address_t * a, const snapshot_address_t * b )
+SNAPSHOT_BOOL snapshot_address_equal( const struct snapshot_address_t * a, const struct snapshot_address_t * b )
 {
     snapshot_assert( a );
     snapshot_assert( b );
@@ -246,7 +246,7 @@ SNAPSHOT_BOOL snapshot_address_equal( const snapshot_address_t * a, const snapsh
     return SNAPSHOT_TRUE;
 }
 
-void snapshot_address_anonymize( snapshot_address_t * address )
+void snapshot_address_anonymize( struct snapshot_address_t * address )
 {
     snapshot_assert( address );
     if ( address->type == SNAPSHOT_ADDRESS_IPV4 )

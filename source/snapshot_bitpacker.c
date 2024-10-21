@@ -32,9 +32,9 @@ void snapshot_write_bits( struct snapshot_bit_writer_t * writer, uint32_t value,
     snapshot_assert( bits > 0 );
     snapshot_assert( bits <= 32 );
     snapshot_assert( writer->bits_written + bits <= writer->num_bits );
-    snapshot_assert( uint64_t( value ) <= ( ( 1ULL << bits ) - 1 ) );
+    snapshot_assert( (uint64_t)value <= ( ( 1ULL << bits ) - 1 ) );
 
-    writer->scratch |= uint64_t( value ) << writer->scratch_bits;
+    writer->scratch |= (uint64_t)value << writer->scratch_bits;
 
     writer->scratch_bits += bits;
 
@@ -42,9 +42,9 @@ void snapshot_write_bits( struct snapshot_bit_writer_t * writer, uint32_t value,
     {
         snapshot_assert( writer->word_index < writer->num_words );
 #if SNAPSHOT_LITTLE_ENDIAN
-        writer->data[writer->word_index] = uint32_t( writer->scratch & 0xFFFFFFFF );
+        writer->data[writer->word_index] = (uint32_t) ( writer->scratch & 0xFFFFFFFF );
 #else // #if SNAPSHOT_LITTLE_ENDIAN
-        writer->data[writer->word_index] = bswap_uint32( uint32_t( writer->scratch & 0xFFFFFFFF ) );
+        writer->data[writer->word_index] = bswap_uint32( (uint32_t) ( writer->scratch & 0xFFFFFFFF ) );
 #endif // #if SNAPSHOT_LITTLE_ENDIAN
         writer->scratch >>= 32;
         writer->scratch_bits -= 32;
@@ -89,7 +89,7 @@ void snapshot_write_bytes( struct snapshot_bit_writer_t * writer, const uint8_t 
     if ( num_words > 0 )
     {
         snapshot_assert( ( writer->bits_written % 32 ) == 0 );
-        memcpy( &writer->data[writer->word_index], data + head_bytes, size_t(num_words) * 4 );
+        memcpy( &writer->data[writer->word_index], data + head_bytes, num_words * 4 );
         writer->bits_written += num_words * 32;
         writer->word_index += num_words;
         writer->scratch = 0;
@@ -116,9 +116,9 @@ void snapshot_flush_bits( struct snapshot_bit_writer_t * writer )
         snapshot_assert( writer->scratch_bits <= 32 );
         snapshot_assert( writer->word_index < writer->num_words );
 #if SNAPSHOT_LITTLE_ENDIAN
-        writer->data[writer->word_index] = uint32_t( writer->scratch & 0xFFFFFFFF );
+        writer->data[writer->word_index] = (uint32_t) ( writer->scratch & 0xFFFFFFFF );
 #else // #if SNAPSHOT_LITTLE_ENDIAN
-       writer->data[writer->word_index] = bswap_uint32( uint32_t( writer->scratch & 0xFFFFFFFF ) );
+       writer->data[writer->word_index] = bswap_uint32( (uint32_t) ( writer->scratch & 0xFFFFFFFF ) );
 #endif // #if SNAPSHOT_LITTLE_ENDIAN
         writer->scratch >>= 32;
         writer->scratch_bits = 0;
@@ -156,7 +156,7 @@ void snapshot_bit_reader_init( struct snapshot_bit_reader_t * reader, void * dat
     reader->word_index = 0;
 }
 
-bool snapshot_would_read_past_end( struct snapshot_bit_reader_t * reader, int bits )
+SNAPSHOT_BOOL snapshot_would_read_past_end( struct snapshot_bit_reader_t * reader, int bits )
 {
     snapshot_assert( reader );
     return reader->bits_read + bits > reader->num_bits;
@@ -177,9 +177,9 @@ uint32_t snapshot_read_bits( struct snapshot_bit_reader_t * reader, int bits )
     {
         snapshot_assert( reader->word_index < reader->num_words );
 #if SNAPSHOT_LITTLE_ENDIAN
-        reader->scratch |= uint64_t( reader->data[reader->word_index] ) << reader->scratch_bits;
+        reader->scratch |= (uint64_t) ( reader->data[reader->word_index] ) << reader->scratch_bits;
 #else // #if SNAPSHOT_LITTLE_ENDIAN
-        reader->scratch |= uint64_t( bswap_uint32( reader->data[reader->word_index] ) ) << reader->scratch_bits;
+        reader->scratch |= (uint64_t) ( bswap_uint32( reader->data[reader->word_index] ) ) << reader->scratch_bits;
 #endif // #if SNAPSHOT_LITTLE_ENDIAN
         reader->scratch_bits += 32;
         reader->word_index++;
@@ -187,7 +187,7 @@ uint32_t snapshot_read_bits( struct snapshot_bit_reader_t * reader, int bits )
 
     snapshot_assert( reader->scratch_bits >= bits );
 
-    const uint32_t output = reader->scratch & ( (uint64_t(1)<<bits) - 1 );
+    const uint32_t output = reader->scratch & ( ( ( (uint64_t)1 ) << bits ) - 1 );
 
     reader->scratch >>= bits;
     reader->scratch_bits -= bits;
@@ -195,7 +195,7 @@ uint32_t snapshot_read_bits( struct snapshot_bit_reader_t * reader, int bits )
     return output;
 }
 
-bool snapshot_read_align( struct snapshot_bit_reader_t * reader )
+SNAPSHOT_BOOL snapshot_read_align( struct snapshot_bit_reader_t * reader )
 {
     snapshot_assert( reader );
     int remainder_bits = reader->bits_read % 8;
@@ -205,10 +205,10 @@ bool snapshot_read_align( struct snapshot_bit_reader_t * reader )
         snapshot_assert( reader->bits_read % 8 == 0 );
         if ( value != 0 )
         {
-            return false;
+            return SNAPSHOT_FALSE;
         }
     }
-    return true;
+    return SNAPSHOT_TRUE;
 }
 
 int snapshot_get_read_align_bits( struct snapshot_bit_reader_t * reader )
@@ -238,7 +238,7 @@ void snapshot_read_bytes( struct snapshot_bit_reader_t * reader, uint8_t * data,
     if ( num_words > 0 )
     {
         snapshot_assert( ( reader->bits_read % 32 ) == 0 );
-        memcpy( data + head_bytes, &reader->data[reader->word_index], size_t(num_words) * 4 );
+        memcpy( data + head_bytes, &reader->data[reader->word_index], num_words * 4 );
         reader->bits_read += num_words * 32;
         reader->word_index += num_words;
         reader->scratch_bits = 0;

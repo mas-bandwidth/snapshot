@@ -29,7 +29,6 @@ project "snapshot"
 		"include/*.h",
 		"source/*.h",
 		"source/*.c",
-		"source/*.cpp",
 	}
 	includedirs { "include", "sodium" }
 	filter "system:windows"
@@ -72,7 +71,7 @@ project "sodium"
 project "test"
 	kind "ConsoleApp"
 	links { "snapshot", "sodium" }
-	files { "test.cpp" }
+	files { "test.c" }
 	includedirs { "include", "source" }
 	filter "system:windows"
 		disablewarnings { "4324" }
@@ -84,7 +83,7 @@ project "test"
 project "client"
 	kind "ConsoleApp"
 	links { "snapshot", "sodium" }
-	files { "client.cpp" }
+	files { "client.c" }
 	includedirs { "include", "source" }
 	filter "system:windows"
 		disablewarnings { "4324" }
@@ -96,7 +95,7 @@ project "client"
 project "server"
 	kind "ConsoleApp"
 	links { "snapshot", "sodium" }
-	files { "server.cpp" }
+	files { "server.c" }
 	includedirs { "include", "source" }
 	filter "system:windows"
 		disablewarnings { "4324" }
@@ -108,7 +107,7 @@ project "server"
 project "listen"
 	kind "ConsoleApp"
 	links { "snapshot", "sodium" }
-	files { "listen.cpp" }
+	files { "listen.c" }
 	includedirs { "include", "source" }
 	filter "system:windows"
 		disablewarnings { "4324" }
@@ -120,7 +119,7 @@ project "listen"
 project "soak"
 	kind "ConsoleApp"
 	links { "snapshot", "sodium" }
-	files { "soak.cpp" }
+	files { "soak.c" }
 	includedirs { "include", "source" }
 	filter "system:windows"
 		disablewarnings { "4324" }

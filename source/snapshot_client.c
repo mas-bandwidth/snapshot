@@ -44,7 +44,7 @@ const char * snapshot_client_state_name( int client_state )
 void snapshot_default_client_config( struct snapshot_client_config_t * config )
 {
     snapshot_assert( config );
-    memset( config, 0, sizeof( snapshot_client_config_t ) );
+    memset( config, 0, sizeof( struct snapshot_client_config_t ) );
 };
 
 struct snapshot_client_t
@@ -121,7 +121,7 @@ struct snapshot_client_t * snapshot_client_create( const char * bind_address_str
 
     struct snapshot_client_t * client = (struct snapshot_client_t*) snapshot_malloc( config->context, sizeof( struct snapshot_client_t ) );
 
-    memset( client, 0, sizeof(snapshot_client_t) );
+    memset( client, 0, sizeof(struct snapshot_client_t) );
 
     if ( !client )
     {
@@ -172,7 +172,7 @@ struct snapshot_client_t * snapshot_client_create( const char * bind_address_str
     client->allowed_packets[SNAPSHOT_PASSTHROUGH_PACKET] = 1;
     client->allowed_packets[SNAPSHOT_DISCONNECT_PACKET] = 1;
 
-    snapshot_endpoint_config_t endpoint_config;
+    struct snapshot_endpoint_config_t endpoint_config;
     snapshot_endpoint_default_config( &endpoint_config );
     snapshot_copy_string( endpoint_config.name, "client", sizeof(endpoint_config.name) );
     endpoint_config.context = config->context;
@@ -340,7 +340,7 @@ void snapshot_client_process_passthrough( struct snapshot_client_t * client, uin
     }
 }
 
-bool snapshot_client_process_packet( struct snapshot_client_t * client, const struct snapshot_address_t * from, uint8_t * packet_data, int packet_bytes )
+SNAPSHOT_BOOL snapshot_client_process_packet( struct snapshot_client_t * client, const struct snapshot_address_t * from, uint8_t * packet_data, int packet_bytes )
 {
     snapshot_assert( client );
     snapshot_assert( packet_data );

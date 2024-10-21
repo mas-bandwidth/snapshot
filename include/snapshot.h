@@ -192,15 +192,13 @@ void snapshot_term();
 
 // -----------------------------------------
 
-void snapshot_quiet( bool value );
+void snapshot_quiet( SNAPSHOT_BOOL value );
 
 void snapshot_log_level( int level );
 
 const char * snapshot_log_level_string( int level );
 
 void snapshot_log_function( void (*function)( int level, const char * format, ... ) );
-
-void snapshot_printf( const char * format, ... );
 
 void snapshot_printf( int level, const char * format, ... );
 

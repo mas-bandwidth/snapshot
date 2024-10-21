@@ -40,7 +40,7 @@ struct snapshot_platform_thread_t
 
 struct snapshot_platform_mutex_t
 {
-    bool ok;
+    SNAPSHOT_BOOL ok;
     pthread_mutex_t handle;
 };
 

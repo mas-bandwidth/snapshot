@@ -101,7 +101,7 @@ const char * snapshot_log_level_string( int level )
         return "???";
 }
 
-static bool log_quiet;
+static SNAPSHOT_BOOL log_quiet;
 
 static int log_level = SNAPSHOT_LOG_LEVEL_INFO;
 
@@ -134,19 +134,9 @@ void snapshot_log_function( void (*function)( int level, const char * format, ..
     log_function = function;
 }
 
-void snapshot_quiet( bool value )
+void snapshot_quiet( SNAPSHOT_BOOL value )
 {
     log_quiet = value;
-}
-
-void snapshot_printf( const char * format, ... )
-{
-    va_list args;
-    va_start( args, format );
-    char buffer[1024];
-    vsnprintf( buffer, sizeof(buffer), format, args );
-    log_function( SNAPSHOT_LOG_LEVEL_NONE, "%s", buffer );
-    va_end( args );
 }
 
 void snapshot_printf( int level, const char * format, ... )
@@ -163,7 +153,7 @@ void snapshot_printf( int level, const char * format, ... )
 
 static void default_assert_function( const char * condition, const char * function, const char * file, int line )
 {
-    snapshot_printf( "assert failed: ( %s ), function %s, file %s, line %d\n", condition, function, file, line );
+    snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "assert failed: ( %s ), function %s, file %s, line %d\n", condition, function, file, line );
     fflush( stdout );
     #if defined(_MSC_VER)
         __debugbreak();

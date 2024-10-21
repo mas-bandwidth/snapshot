@@ -52,6 +52,8 @@
 
 #define SNAPSHOT_CLIENT_NUM_COUNTERS                                    25
 
+struct snapshot_address_t;
+
 struct snapshot_client_config_t
 {
     void * context;
@@ -85,7 +87,7 @@ void snapshot_client_connect_loopback( struct snapshot_client_t * client, struct
 
 void snapshot_client_disconnect_loopback( struct snapshot_client_t * client );
 
-bool snapshot_client_process_packet( struct snapshot_client_t * client, const struct snapshot_address_t * from, uint8_t * packet_data, int packet_bytes );
+SNAPSHOT_BOOL snapshot_client_process_packet( struct snapshot_client_t * client, const struct snapshot_address_t * from, uint8_t * packet_data, int packet_bytes );
 
 int snapshot_client_loopback( struct snapshot_client_t * client );
 

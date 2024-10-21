@@ -124,11 +124,11 @@ void * snapshot_read_packet( uint8_t * buffer,
 
 #include "stdlib.h"
 
-inline void snapshot_generate_packet_data( uint8_t * packet_data, int & packet_bytes, int max_size )
+inline void snapshot_generate_packet_data( uint8_t * packet_data, int * packet_bytes, int max_size )
 {
-    packet_bytes = 1 + rand() % ( max_size - 1 );
-    const int start = packet_bytes % 256;
-    for ( int i = 0; i < packet_bytes; i++ )
+    *packet_bytes = 1 + rand() % ( max_size - 1 );
+    const int start = *packet_bytes % 256;
+    for ( int i = 0; i < *packet_bytes; i++ )
     {
         packet_data[i] = (uint8_t) ( start + i ) % 256;
     }
