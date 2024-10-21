@@ -577,7 +577,7 @@ void snapshot_endpoint_process_packet( struct snapshot_endpoint_t * endpoint, ui
     }
 }
 
-void snapshot_endpoint_mark_payload_processed( snapshot_endpoint_t * endpoint, uint16_t sequence, uint16_t ack, uint32_t ack_bits, int payload_bytes )
+void snapshot_endpoint_mark_payload_processed( struct snapshot_endpoint_t * endpoint, uint16_t sequence, uint16_t ack, uint32_t ack_bits, int payload_bytes )
 {
     snapshot_assert( endpoint );
 

@@ -15,6 +15,8 @@
 
 #if SNAPSHOT_DEVELOPMENT
 
+struct snapshot_address_t;
+
 struct snapshot_network_simulator_t * snapshot_network_simulator_create( void * context );
 
 void snapshot_network_simulator_set( struct snapshot_network_simulator_t * network_simulator, 

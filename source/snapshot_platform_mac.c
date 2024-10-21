@@ -72,7 +72,7 @@ uint16_t snapshot_platform_htons( uint16_t in )
 
 int snapshot_platform_inet_pton4( const char * address_string, uint32_t * address_out )
 {
-    sockaddr_in sockaddr4;
+    struct sockaddr_in sockaddr4;
     bool success = inet_pton( AF_INET, address_string, &sockaddr4.sin_addr ) == 1;
     *address_out = sockaddr4.sin_addr.s_addr;
     return success ? SNAPSHOT_OK : SNAPSHOT_ERROR;
@@ -85,23 +85,23 @@ int snapshot_platform_inet_pton6( const char * address_string, uint16_t * addres
 
 int snapshot_platform_inet_ntop6( const uint16_t * address, char * address_string, size_t address_string_size )
 {
-    return inet_ntop( AF_INET6, (void*)address, address_string, socklen_t( address_string_size ) ) == NULL ? SNAPSHOT_ERROR : SNAPSHOT_OK;
+    return inet_ntop( AF_INET6, (void*)address, address_string, (socklen_t) address_string_size ) == NULL ? SNAPSHOT_ERROR : SNAPSHOT_OK;
 }
 
 // ---------------------------------------------------
 
-int snapshot_platform_hostname_resolve( const char * hostname, const char * port, snapshot_address_t * address )
+int snapshot_platform_hostname_resolve( const char * hostname, const char * port, struct snapshot_address_t * address )
 {
-    addrinfo hints;
+    struct addrinfo hints;
     memset( &hints, 0, sizeof(hints) );
-    addrinfo * result;
+    struct addrinfo * result;
     if ( getaddrinfo( hostname, port, &hints, &result ) == 0 )
     {
         if ( result )
         {
             if ( result->ai_addr->sa_family == AF_INET6 )
             {
-                sockaddr_in6 * addr_ipv6 = (sockaddr_in6 *)( result->ai_addr );
+                struct sockaddr_in6 * addr_ipv6 = (struct sockaddr_in6 *)( result->ai_addr );
                 address->type = SNAPSHOT_ADDRESS_IPV6;
                 for ( int i = 0; i < 8; ++i )
                 {
@@ -113,7 +113,7 @@ int snapshot_platform_hostname_resolve( const char * hostname, const char * port
             }
             else if ( result->ai_addr->sa_family == AF_INET )
             {
-                sockaddr_in * addr_ipv4 = (sockaddr_in *)( result->ai_addr );
+                struct sockaddr_in * addr_ipv4 = (struct sockaddr_in *)( result->ai_addr );
                 address->type = SNAPSHOT_ADDRESS_IPV4;
                 address->data.ipv4[0] = (uint8_t) ( ( addr_ipv4->sin_addr.s_addr & 0x000000FF ) );
                 address->data.ipv4[1] = (uint8_t) ( ( addr_ipv4->sin_addr.s_addr & 0x0000FF00 ) >> 8 );
@@ -155,27 +155,27 @@ void snapshot_platform_sleep( double time )
 
 // ---------------------------------------------------
 
-void snapshot_platform_socket_destroy( snapshot_platform_socket_t * socket );
+void snapshot_platform_socket_destroy( struct snapshot_platform_socket_t * socket );
 
-snapshot_platform_socket_t * snapshot_platform_socket_create( void * context, snapshot_address_t * address, int socket_type, float timeout_seconds, int send_buffer_size, int receive_buffer_size )
+struct snapshot_platform_socket_t * snapshot_platform_socket_create( void * context, struct snapshot_address_t * address, int socket_type, float timeout_seconds, int send_buffer_size, int receive_buffer_size )
 {
     snapshot_assert( address );
     snapshot_assert( address->type != SNAPSHOT_ADDRESS_NONE );
 
-    snapshot_platform_socket_t * socket = (snapshot_platform_socket_t*) snapshot_malloc( context, sizeof( snapshot_platform_socket_t ) );
+    struct snapshot_platform_socket_t * s = (struct snapshot_platform_socket_t*) snapshot_malloc( context, sizeof( struct snapshot_platform_socket_t ) );
 
-    snapshot_assert( socket );
+    snapshot_assert( s );
 
-    socket->context = context;
+    s->context = context;
 
     // create socket
 
-    socket->handle = ::socket( ( address->type == SNAPSHOT_ADDRESS_IPV6 ) ? AF_INET6 : AF_INET, SOCK_DGRAM, IPPROTO_UDP );
+    s->handle = socket( ( address->type == SNAPSHOT_ADDRESS_IPV6 ) ? AF_INET6 : AF_INET, SOCK_DGRAM, IPPROTO_UDP );
 
-    if ( socket->handle < 0 )
+    if ( s->handle < 0 )
     {
         snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to create socket" );
-        snapshot_free( context, socket );
+        snapshot_free( context, s );
         return NULL;
     }
 
@@ -184,26 +184,27 @@ snapshot_platform_socket_t * snapshot_platform_socket_create( void * context, sn
     if ( address->type == SNAPSHOT_ADDRESS_IPV6 )
     {
         int yes = 1;
-        if ( setsockopt( socket->handle, IPPROTO_IPV6, IPV6_V6ONLY, (char*)( &yes ), sizeof( yes ) ) != 0 )
+        if ( setsockopt( s->handle, IPPROTO_IPV6, IPV6_V6ONLY, (char*)( &yes ), sizeof( yes ) ) != 0 )
         {
             snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to set socket ipv6 only" );
-            snapshot_platform_socket_destroy( socket );
+            snapshot_platform_socket_destroy( s );
             return NULL;
         }
     }
 
     // increase socket send and receive buffer sizes
 
-    if ( setsockopt( socket->handle, SOL_SOCKET, SO_SNDBUF, (char*)( &send_buffer_size ), sizeof( int ) ) != 0 )
+    if ( setsockopt( s->handle, SOL_SOCKET, SO_SNDBUF, (char*)( &send_buffer_size ), sizeof( int ) ) != 0 )
     {
         snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to set socket send buffer size" );
+        snapshot_platform_socket_destroy( s );
         return NULL;
     }
 
-    if ( setsockopt( socket->handle, SOL_SOCKET, SO_RCVBUF, (char*)( &receive_buffer_size ), sizeof( int ) ) != 0 )
+    if ( setsockopt( s->handle, SOL_SOCKET, SO_RCVBUF, (char*)( &receive_buffer_size ), sizeof( int ) ) != 0 )
     {
         snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to set socket receive buffer size" );
-        snapshot_platform_socket_destroy( socket );
+        snapshot_platform_socket_destroy( s );
         return NULL;
     }
 
@@ -211,8 +212,8 @@ snapshot_platform_socket_t * snapshot_platform_socket_create( void * context, sn
 
     if ( address->type == SNAPSHOT_ADDRESS_IPV6 )
     {
-        sockaddr_in6 socket_address;
-        memset( &socket_address, 0, sizeof( sockaddr_in6 ) );
+        struct sockaddr_in6 socket_address;
+        memset( &socket_address, 0, sizeof( struct sockaddr_in6 ) );
         socket_address.sin6_family = AF_INET6;
         for ( int i = 0; i < 8; ++i )
         {
@@ -220,17 +221,17 @@ snapshot_platform_socket_t * snapshot_platform_socket_create( void * context, sn
         }
         socket_address.sin6_port = snapshot_platform_htons( address->port );
 
-        if ( bind( socket->handle, (sockaddr*) &socket_address, sizeof( socket_address ) ) < 0 )
+        if ( bind( s->handle, (struct sockaddr*) &socket_address, sizeof( socket_address ) ) < 0 )
         {
             snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to bind socket (ipv6)" );
-            snapshot_platform_socket_destroy( socket );
+            snapshot_platform_socket_destroy( s );
             return NULL;
         }
     }
     else
     {
-        sockaddr_in socket_address;
-        memset( &socket_address, 0, sizeof( socket_address ) );
+        struct sockaddr_in socket_address;
+        memset( &socket_address, 0, sizeof(socket_address) );
         socket_address.sin_family = AF_INET;
         socket_address.sin_addr.s_addr = ( ( (uint32_t) address->data.ipv4[0] ) )      | 
                                          ( ( (uint32_t) address->data.ipv4[1] ) << 8 )  | 
@@ -238,10 +239,10 @@ snapshot_platform_socket_t * snapshot_platform_socket_create( void * context, sn
                                          ( ( (uint32_t) address->data.ipv4[3] ) << 24 );
         socket_address.sin_port = snapshot_platform_htons( address->port );
 
-        if ( bind( socket->handle, (sockaddr*) &socket_address, sizeof( socket_address ) ) < 0 )
+        if ( bind( s->handle, (struct sockaddr*) &socket_address, sizeof( socket_address ) ) < 0 )
         {
             snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to bind socket (ipv4)" );
-            snapshot_platform_socket_destroy( socket );
+            snapshot_platform_socket_destroy( s );
             return NULL;
         }
     }
@@ -252,24 +253,24 @@ snapshot_platform_socket_t * snapshot_platform_socket_create( void * context, sn
     {
         if ( address->type == SNAPSHOT_ADDRESS_IPV6 )
         {
-            sockaddr_in6 sin;
+            struct sockaddr_in6 sin;
             socklen_t len = sizeof( sin );
-            if ( getsockname( socket->handle, (sockaddr*)( &sin ), &len ) == -1 )
+            if ( getsockname( s->handle, (struct sockaddr*)( &sin ), &len ) == -1 )
             {
                 snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to get socket port (ipv6)" );
-                snapshot_platform_socket_destroy( socket );
+                snapshot_platform_socket_destroy( s );
                 return NULL;
             }
             address->port = snapshot_platform_ntohs( sin.sin6_port );
         }
         else
         {
-            sockaddr_in sin;
+            struct sockaddr_in sin;
             socklen_t len = sizeof( sin );
-            if ( getsockname( socket->handle, (sockaddr*)( &sin ), &len ) == -1 )
+            if ( getsockname( s->handle, (struct sockaddr*)( &sin ), &len ) == -1 )
             {
                 snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to get socket port (ipv4)" );
-                snapshot_platform_socket_destroy( socket );
+                snapshot_platform_socket_destroy( s );
                 return NULL;
             }
             address->port = snapshot_platform_ntohs( sin.sin_port );
@@ -281,10 +282,10 @@ snapshot_platform_socket_t * snapshot_platform_socket_create( void * context, sn
     if ( socket_type == SNAPSHOT_PLATFORM_SOCKET_NON_BLOCKING )
     {
         // non-blocking
-        if ( fcntl( socket->handle, F_SETFL, O_NONBLOCK, 1 ) == -1 )
+        if ( fcntl( s->handle, F_SETFL, O_NONBLOCK, 1 ) == -1 )
         {
             snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to set socket to non-blocking" );
-            snapshot_platform_socket_destroy( socket );
+            snapshot_platform_socket_destroy( s );
             return NULL;
         }
     }
@@ -294,10 +295,10 @@ snapshot_platform_socket_t * snapshot_platform_socket_create( void * context, sn
         struct timeval tv;
         tv.tv_sec = 0;
         tv.tv_usec = (int) ( timeout_seconds * 1000000.0 );
-        if ( setsockopt( socket->handle, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof( tv ) ) < 0 )
+        if ( setsockopt( s->handle, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof( tv ) ) < 0 )
         {
             snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to set socket receive timeout" );
-            snapshot_platform_socket_destroy( socket );
+            snapshot_platform_socket_destroy( s );
             return NULL;
         }
     }
@@ -306,10 +307,10 @@ snapshot_platform_socket_t * snapshot_platform_socket_create( void * context, sn
         // blocking with no timeout
     }
 
-    return socket;
+    return s;
 }
 
-void snapshot_platform_socket_destroy( snapshot_platform_socket_t * socket )
+void snapshot_platform_socket_destroy( struct snapshot_platform_socket_t * socket )
 {
     snapshot_assert( socket );
 
@@ -321,7 +322,7 @@ void snapshot_platform_socket_destroy( snapshot_platform_socket_t * socket )
     snapshot_free( socket->context, socket );
 }
 
-void snapshot_platform_socket_send_packet( snapshot_platform_socket_t * socket, const snapshot_address_t * to, const void * packet_data, int packet_bytes )
+void snapshot_platform_socket_send_packet( struct snapshot_platform_socket_t * socket, const struct snapshot_address_t * to, const void * packet_data, int packet_bytes )
 {
     snapshot_assert( socket );
     snapshot_assert( to );
@@ -331,7 +332,7 @@ void snapshot_platform_socket_send_packet( snapshot_platform_socket_t * socket, 
 
     if ( to->type == SNAPSHOT_ADDRESS_IPV6 )
     {
-        sockaddr_in6 socket_address;
+        struct sockaddr_in6 socket_address;
         memset( &socket_address, 0, sizeof( socket_address ) );
         socket_address.sin6_family = AF_INET6;
         for ( int i = 0; i < 8; ++i )
@@ -339,7 +340,7 @@ void snapshot_platform_socket_send_packet( snapshot_platform_socket_t * socket, 
             ( (uint16_t*) &socket_address.sin6_addr ) [i] = snapshot_platform_htons( to->data.ipv6[i] );
         }
         socket_address.sin6_port = snapshot_platform_htons( to->port );
-        int result = int( sendto( socket->handle, (char*)( packet_data ), packet_bytes, 0, (sockaddr*)( &socket_address ), sizeof(sockaddr_in6) ) );
+        int result = (int) sendto( socket->handle, (char*)( packet_data ), packet_bytes, 0, (struct sockaddr*)( &socket_address ), sizeof(struct sockaddr_in6) );
         if ( result < 0 )
         {
             char address_string[SNAPSHOT_MAX_ADDRESS_STRING_LENGTH];
@@ -349,7 +350,7 @@ void snapshot_platform_socket_send_packet( snapshot_platform_socket_t * socket, 
     }
     else if ( to->type == SNAPSHOT_ADDRESS_IPV4 )
     {
-        sockaddr_in socket_address;
+        struct sockaddr_in socket_address;
         memset( &socket_address, 0, sizeof( socket_address ) );
         socket_address.sin_family = AF_INET;
         socket_address.sin_addr.s_addr = ( ( (uint32_t) to->data.ipv4[0] ) )        | 
@@ -357,7 +358,7 @@ void snapshot_platform_socket_send_packet( snapshot_platform_socket_t * socket, 
                                          ( ( (uint32_t) to->data.ipv4[2] ) << 16 )  | 
                                          ( ( (uint32_t) to->data.ipv4[3] ) << 24 );
         socket_address.sin_port = snapshot_platform_htons( to->port );
-        int result = int( sendto( socket->handle, (const char*)( packet_data ), packet_bytes, 0, (sockaddr*)( &socket_address ), sizeof(sockaddr_in) ) );
+        int result = (int) sendto( socket->handle, (const char*)( packet_data ), packet_bytes, 0, (struct sockaddr*)( &socket_address ), sizeof(struct sockaddr_in) );
         if ( result < 0 )
         {
             char address_string[SNAPSHOT_MAX_ADDRESS_STRING_LENGTH];
@@ -371,17 +372,17 @@ void snapshot_platform_socket_send_packet( snapshot_platform_socket_t * socket, 
     }
 }
 
-int snapshot_platform_socket_receive_packet( snapshot_platform_socket_t * socket, snapshot_address_t * from, void * packet_data, int max_packet_size )
+int snapshot_platform_socket_receive_packet( struct snapshot_platform_socket_t * socket, struct snapshot_address_t * from, void * packet_data, int max_packet_size )
 {
     snapshot_assert( socket );
     snapshot_assert( from );
     snapshot_assert( packet_data );
     snapshot_assert( max_packet_size > 0 );
 
-    sockaddr_storage sockaddr_from;
+    struct sockaddr_storage sockaddr_from;
     socklen_t from_length = sizeof( sockaddr_from );
 
-    int result = int( recvfrom( socket->handle, (char*) packet_data, max_packet_size, 0, (sockaddr*) &sockaddr_from, &from_length ) );
+    int result = (int) recvfrom( socket->handle, (char*) packet_data, max_packet_size, 0, (struct sockaddr*) &sockaddr_from, &from_length );
 
     if ( result <= 0 )
     {
@@ -397,7 +398,7 @@ int snapshot_platform_socket_receive_packet( snapshot_platform_socket_t * socket
 
     if ( sockaddr_from.ss_family == AF_INET6 )
     {
-        sockaddr_in6 * addr_ipv6 = (sockaddr_in6*) &sockaddr_from;
+        struct sockaddr_in6 * addr_ipv6 = (struct sockaddr_in6*) &sockaddr_from;
         from->type = SNAPSHOT_ADDRESS_IPV6;
         for ( int i = 0; i < 8; ++i )
         {
@@ -407,7 +408,7 @@ int snapshot_platform_socket_receive_packet( snapshot_platform_socket_t * socket
     }
     else if ( sockaddr_from.ss_family == AF_INET )
     {
-        sockaddr_in * addr_ipv4 = (sockaddr_in*) &sockaddr_from;
+        struct sockaddr_in * addr_ipv4 = (struct sockaddr_in*) &sockaddr_from;
         from->type = SNAPSHOT_ADDRESS_IPV4;
         from->data.ipv4[0] = (uint8_t) ( ( addr_ipv4->sin_addr.s_addr & 0x000000FF ) );
         from->data.ipv4[1] = (uint8_t) ( ( addr_ipv4->sin_addr.s_addr & 0x0000FF00 ) >> 8 );
@@ -438,7 +439,7 @@ struct thread_shim_data_t
 static void * thread_function_shim( void * data )
 {
     snapshot_assert( data );
-    thread_shim_data_t * shim_data = (thread_shim_data_t*) data;
+    struct thread_shim_data_t * shim_data = (struct thread_shim_data_t*) data;
     void * context = shim_data->context;
     void * real_thread_data = shim_data->real_thread_data;
     snapshot_platform_thread_func_t real_thread_function = shim_data->real_thread_function;
@@ -447,15 +448,15 @@ static void * thread_function_shim( void * data )
     return NULL;
 }
 
-snapshot_platform_thread_t * snapshot_platform_thread_create( void * context, snapshot_platform_thread_func_t thread_function, void * arg )
+struct snapshot_platform_thread_t * snapshot_platform_thread_create( void * context, snapshot_platform_thread_func_t thread_function, void * arg )
 {
-    snapshot_platform_thread_t * thread = (snapshot_platform_thread_t*) snapshot_malloc( context, sizeof( snapshot_platform_thread_t) );
+    struct snapshot_platform_thread_t * thread = (struct snapshot_platform_thread_t*) snapshot_malloc( context, sizeof( struct snapshot_platform_thread_t) );
 
     snapshot_assert( thread );
 
     thread->context = context;
 
-    thread_shim_data_t * shim_data = (thread_shim_data_t*) snapshot_malloc( context, sizeof(thread_shim_data_t) );
+    struct thread_shim_data_t * shim_data = (struct thread_shim_data_t*) snapshot_malloc( context, sizeof(struct thread_shim_data_t) );
     snapshot_assert( shim_data );
     if ( !shim_data )
     {
@@ -476,19 +477,19 @@ snapshot_platform_thread_t * snapshot_platform_thread_create( void * context, sn
     return thread;
 }
 
-void snapshot_platform_thread_join( snapshot_platform_thread_t * thread )
+void snapshot_platform_thread_join( struct snapshot_platform_thread_t * thread )
 {
     snapshot_assert( thread );
     pthread_join( thread->handle, NULL );
 }
 
-void snapshot_platform_thread_destroy( snapshot_platform_thread_t * thread )
+void snapshot_platform_thread_destroy( struct snapshot_platform_thread_t * thread )
 {
     snapshot_assert( thread );
     snapshot_free( thread->context, thread );
 }
 
-bool snapshot_platform_thread_high_priority( snapshot_platform_thread_t * thread )
+bool snapshot_platform_thread_high_priority( struct snapshot_platform_thread_t * thread )
 {
     struct sched_param param;
     param.sched_priority = sched_get_priority_max( SCHED_FIFO );
@@ -497,11 +498,11 @@ bool snapshot_platform_thread_high_priority( snapshot_platform_thread_t * thread
 
 // ---------------------------------------------------
 
-int snapshot_platform_mutex_create( snapshot_platform_mutex_t * mutex )
+int snapshot_platform_mutex_create( struct snapshot_platform_mutex_t * mutex )
 {
     snapshot_assert( mutex );
 
-    memset( mutex, 0, sizeof(snapshot_platform_mutex_t) );
+    memset( mutex, 0, sizeof(struct snapshot_platform_mutex_t) );
 
     pthread_mutexattr_t attr;
     pthread_mutexattr_init(&attr);
@@ -519,27 +520,27 @@ int snapshot_platform_mutex_create( snapshot_platform_mutex_t * mutex )
     return SNAPSHOT_OK;
 }
 
-void snapshot_platform_mutex_acquire( snapshot_platform_mutex_t * mutex )
+void snapshot_platform_mutex_acquire( struct snapshot_platform_mutex_t * mutex )
 {
     snapshot_assert( mutex );
     snapshot_assert( mutex->ok );
     pthread_mutex_lock( &mutex->handle );
 }
 
-void snapshot_platform_mutex_release( snapshot_platform_mutex_t * mutex )
+void snapshot_platform_mutex_release( struct snapshot_platform_mutex_t * mutex )
 {
     snapshot_assert( mutex );
     snapshot_assert( mutex->ok );
     pthread_mutex_unlock( &mutex->handle );
 }
 
-void snapshot_platform_mutex_destroy( snapshot_platform_mutex_t * mutex )
+void snapshot_platform_mutex_destroy( struct snapshot_platform_mutex_t * mutex )
 {
     snapshot_assert( mutex );
     if ( mutex->ok )
     {
         pthread_mutex_destroy( &mutex->handle );
-        memset( mutex, 0, sizeof(snapshot_platform_mutex_t) );
+        memset( mutex, 0, sizeof(struct snapshot_platform_mutex_t) );
     }
 }
 

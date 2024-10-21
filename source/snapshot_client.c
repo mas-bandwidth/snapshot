@@ -368,7 +368,7 @@ SNAPSHOT_BOOL snapshot_client_process_packet( struct snapshot_client_t * client,
     if ( !packet )
     {
         client->counters[SNAPSHOT_CLIENT_COUNTER_READ_PACKET_FAILURES]++;
-        return false;
+        return SNAPSHOT_FALSE;
     }
 
     uint8_t packet_type = ( (uint8_t*) packet ) [0];
@@ -387,7 +387,7 @@ SNAPSHOT_BOOL snapshot_client_process_packet( struct snapshot_client_t * client,
                 client->should_disconnect = 1;
                 client->should_disconnect_state = SNAPSHOT_CLIENT_STATE_CONNECTION_DENIED;
                 client->last_packet_receive_time = client->time;
-                return true;
+                return SNAPSHOT_TRUE;
             }
         }
         break;
@@ -407,7 +407,7 @@ SNAPSHOT_BOOL snapshot_client_process_packet( struct snapshot_client_t * client,
 
                 snapshot_client_set_state( client, SNAPSHOT_CLIENT_STATE_SENDING_CONNECTION_RESPONSE );
 
-                return true;
+                return SNAPSHOT_TRUE;
             }
         }
         break;
@@ -426,7 +426,7 @@ SNAPSHOT_BOOL snapshot_client_process_packet( struct snapshot_client_t * client,
 
                     client->last_packet_receive_time = client->time;
 
-                    return true;
+                    return SNAPSHOT_TRUE;
                 }
                 else if ( client->state == SNAPSHOT_CLIENT_STATE_SENDING_CONNECTION_RESPONSE )
                 {
@@ -442,7 +442,7 @@ SNAPSHOT_BOOL snapshot_client_process_packet( struct snapshot_client_t * client,
                     snapshot_address_to_string( &client->server_address, server_address_string );
                     snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "client connected to server %s slot %d", server_address_string, p->client_index );
     
-                    return true;
+                    return SNAPSHOT_TRUE;
                 }
             }
         }
@@ -456,7 +456,7 @@ SNAPSHOT_BOOL snapshot_client_process_packet( struct snapshot_client_t * client,
             {
                 snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "client received payload packet from server" );
 
-                struct snapshot_payload_packet_t * payload_packet = (snapshot_payload_packet_t*) packet;
+                struct snapshot_payload_packet_t * payload_packet = (struct snapshot_payload_packet_t*) packet;
 
                 uint8_t * payload_packet_data = payload_packet->payload_data;
                 int payload_packet_bytes = payload_packet->payload_bytes;
@@ -482,7 +482,7 @@ SNAPSHOT_BOOL snapshot_client_process_packet( struct snapshot_client_t * client,
 
                 client->last_packet_receive_time = client->time;
 
-                return true;
+                return SNAPSHOT_TRUE;
             }
         }
         break;
@@ -501,7 +501,7 @@ SNAPSHOT_BOOL snapshot_client_process_packet( struct snapshot_client_t * client,
 
                 client->last_packet_receive_time = client->time;
 
-                return true;
+                return SNAPSHOT_TRUE;
             }
         }
         break;
@@ -518,7 +518,7 @@ SNAPSHOT_BOOL snapshot_client_process_packet( struct snapshot_client_t * client,
                 client->should_disconnect_state = SNAPSHOT_CLIENT_STATE_DISCONNECTED;
                 client->last_packet_receive_time = client->time;
 
-                return true;
+                return SNAPSHOT_TRUE;
             }
         }
         break;
@@ -527,7 +527,7 @@ SNAPSHOT_BOOL snapshot_client_process_packet( struct snapshot_client_t * client,
             break;
     }
 
-    return false;
+    return SNAPSHOT_FALSE;
 }
 
 void snapshot_client_receive_packets( struct snapshot_client_t * client )
@@ -819,7 +819,7 @@ void snapshot_client_send_payload( struct snapshot_client_t * client )
 
         int payload_bytes = 0;
 
-        snapshot_generate_packet_data( payload_data, payload_bytes, SNAPSHOT_MAX_PAYLOAD_BYTES );
+        snapshot_generate_packet_data( payload_data, &payload_bytes, SNAPSHOT_MAX_PAYLOAD_BYTES );
 
         int num_packets = 0;
         uint8_t * packet_data[SNAPSHOT_ENDPOINT_MAX_WRITE_PACKETS];
@@ -831,7 +831,7 @@ void snapshot_client_send_payload( struct snapshot_client_t * client )
         {
             // send whole packet
 
-            snapshot_payload_packet_t * packet = snapshot_wrap_payload_packet( packet_data[0], packet_bytes[0] );
+            struct snapshot_payload_packet_t * packet = snapshot_wrap_payload_packet( packet_data[0], packet_bytes[0] );
 
             snapshot_client_send_packet_to_server( client, packet );
 
@@ -843,7 +843,7 @@ void snapshot_client_send_payload( struct snapshot_client_t * client )
 
             for ( int i = 0; i < num_packets; i++ )
             {
-                snapshot_payload_packet_t * packet = snapshot_wrap_payload_packet( packet_data[i], packet_bytes[i] );
+                struct snapshot_payload_packet_t * packet = snapshot_wrap_payload_packet( packet_data[i], packet_bytes[i] );
 
                 snapshot_client_send_packet_to_server( client, packet );
 
@@ -948,7 +948,7 @@ uint16_t snapshot_client_port( struct snapshot_client_t * client )
     return client->bind_address.port;
 }
 
-void snapshot_client_connect_loopback( struct snapshot_client_t * client, snapshot_address_t * server_address, int client_index, int max_clients )
+void snapshot_client_connect_loopback( struct snapshot_client_t * client, struct snapshot_address_t * server_address, int client_index, int max_clients )
 {
     snapshot_assert( client );
     snapshot_assert( server_address );
@@ -987,9 +987,9 @@ void snapshot_client_send_passthrough_packet( struct snapshot_client_t * client,
     if ( client->state != SNAPSHOT_CLIENT_STATE_CONNECTED )
         return;
 
-    uint8_t buffer[SNAPSHOT_PACKET_PREFIX_BYTES + sizeof(snapshot_passthrough_packet_t) + SNAPSHOT_MAX_PASSTHROUGH_BYTES + SNAPSHOT_PACKET_POSTFIX_BYTES];
+    uint8_t buffer[SNAPSHOT_PACKET_PREFIX_BYTES + sizeof(struct snapshot_passthrough_packet_t) + SNAPSHOT_MAX_PASSTHROUGH_BYTES + SNAPSHOT_PACKET_POSTFIX_BYTES];
 
-    struct snapshot_passthrough_packet_t * packet = (snapshot_passthrough_packet_t*) ( buffer + SNAPSHOT_PACKET_PREFIX_BYTES );
+    struct snapshot_passthrough_packet_t * packet = (struct snapshot_passthrough_packet_t*) ( buffer + SNAPSHOT_PACKET_PREFIX_BYTES );
 
     packet->packet_type = SNAPSHOT_PASSTHROUGH_PACKET;
     packet->passthrough_bytes = passthrough_bytes;

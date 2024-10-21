@@ -319,39 +319,39 @@ void test_bitpacker()
 
     memset( buffer, 0, sizeof(buffer) );
 
-    struct snapshot_bit_writer_t writer;
+    struct snapshot_bitwriter_t writer;
     
-    snapshot_bit_writer_init( &writer, buffer, BufferSize );
+    snapshot_bitwriter_init( &writer, buffer, BufferSize );
     
-    snapshot_write_bits( &writer, 0, 1 );
-    snapshot_write_bits( &writer, 1, 1 );
-    snapshot_write_bits( &writer, 10, 8 );
-    snapshot_write_bits( &writer, 255, 8 );
-    snapshot_write_bits( &writer, 1000, 10 );
-    snapshot_write_bits( &writer, 50000, 16 );
-    snapshot_write_bits( &writer, 9999999, 32 );
+    snapshot_bitwriter_write_bits( &writer, 0, 1 );
+    snapshot_bitwriter_write_bits( &writer, 1, 1 );
+    snapshot_bitwriter_write_bits( &writer, 10, 8 );
+    snapshot_bitwriter_write_bits( &writer, 255, 8 );
+    snapshot_bitwriter_write_bits( &writer, 1000, 10 );
+    snapshot_bitwriter_write_bits( &writer, 50000, 16 );
+    snapshot_bitwriter_write_bits( &writer, 9999999, 32 );
 
-    snapshot_flush_bits( &writer );
+    snapshot_bitwriter_flush_bits( &writer );
 
     const int bits_written = 1 + 1 + 8 + 8 + 10 + 16 + 32;
 
     snapshot_check( writer.bits_written = bits_written );
 
-    const int bytes_written = snapshot_get_bytes_written( &writer );
+    const int bytes_written = snapshot_bitwriter_get_bytes_written( &writer );
 
     snapshot_check( bytes_written == 10 );
 
-    struct snapshot_bit_reader_t reader;
+    struct snapshot_bitreader_t reader;
 
-    snapshot_bit_reader_init( &reader, buffer, bytes_written );
+    snapshot_bitreader_init( &reader, buffer, bytes_written );
 
-    uint32_t a = snapshot_read_bits( &reader, 1 );
-    uint32_t b = snapshot_read_bits( &reader, 1 );
-    uint32_t c = snapshot_read_bits( &reader, 8 );
-    uint32_t d = snapshot_read_bits( &reader, 8 );
-    uint32_t e = snapshot_read_bits( &reader, 10 );
-    uint32_t f = snapshot_read_bits( &reader, 16 );
-    uint32_t g = snapshot_read_bits( &reader, 32 );
+    uint32_t a = snapshot_bitreader_read_bits( &reader, 1 );
+    uint32_t b = snapshot_bitreader_read_bits( &reader, 1 );
+    uint32_t c = snapshot_bitreader_read_bits( &reader, 8 );
+    uint32_t d = snapshot_bitreader_read_bits( &reader, 8 );
+    uint32_t e = snapshot_bitreader_read_bits( &reader, 10 );
+    uint32_t f = snapshot_bitreader_read_bits( &reader, 16 );
+    uint32_t g = snapshot_bitreader_read_bits( &reader, 32 );
 
     snapshot_check( a == 0 );
     snapshot_check( b == 1 );
@@ -499,7 +499,7 @@ void test_crypto_sign_detached()
     unsigned char private_key[SNAPSHOT_CRYPTO_SIGN_SECRETKEYBYTES];
     snapshot_crypto_sign_keypair( public_key, private_key );
 
-    snapshot_crypto_sign_state_t state;
+    struct snapshot_crypto_sign_state_t state;
 
     unsigned char signature[SNAPSHOT_CRYPTO_SIGN_BYTES];
 
@@ -540,17 +540,17 @@ void test_platform_socket()
 {
     // non-blocking socket (ipv4)
     {
-        snapshot_address_t bind_address;
-        snapshot_address_t local_address;
+        struct snapshot_address_t bind_address;
+        struct snapshot_address_t local_address;
         snapshot_address_parse( &bind_address, "0.0.0.0" );
         snapshot_address_parse( &local_address, "127.0.0.1" );
-        snapshot_platform_socket_t * socket = snapshot_platform_socket_create( NULL, &bind_address, SNAPSHOT_PLATFORM_SOCKET_NON_BLOCKING, 0, 64*1024, 64*1024 );
+        struct snapshot_platform_socket_t * socket = snapshot_platform_socket_create( NULL, &bind_address, SNAPSHOT_PLATFORM_SOCKET_NON_BLOCKING, 0, 64*1024, 64*1024 );
         local_address.port = bind_address.port;
         snapshot_check( socket );
         uint8_t packet[256];
         memset( packet, 0, sizeof(packet) );
         snapshot_platform_socket_send_packet( socket, &local_address, packet, sizeof(packet) );
-        snapshot_address_t from;
+        struct snapshot_address_t from;
         while ( snapshot_platform_socket_receive_packet( socket, &from, packet, sizeof(packet) ) )
         {
             snapshot_check( snapshot_address_equal( &from, &local_address ) );
@@ -560,17 +560,17 @@ void test_platform_socket()
 
     // blocking socket with timeout (ipv4)
     {
-        snapshot_address_t bind_address;
-        snapshot_address_t local_address;
+        struct snapshot_address_t bind_address;
+        struct snapshot_address_t local_address;
         snapshot_address_parse( &bind_address, "0.0.0.0" );
         snapshot_address_parse( &local_address, "127.0.0.1" );
-        snapshot_platform_socket_t * socket = snapshot_platform_socket_create( NULL, &bind_address, SNAPSHOT_PLATFORM_SOCKET_BLOCKING, 0.01f, 64*1024, 64*1024 );
+        struct snapshot_platform_socket_t * socket = snapshot_platform_socket_create( NULL, &bind_address, SNAPSHOT_PLATFORM_SOCKET_BLOCKING, 0.01f, 64*1024, 64*1024 );
         local_address.port = bind_address.port;
         snapshot_check( socket );
         uint8_t packet[256];
         memset( packet, 0, sizeof(packet) );
         snapshot_platform_socket_send_packet( socket, &local_address, packet, sizeof(packet) );
-        snapshot_address_t from;
+        struct snapshot_address_t from;
         while ( snapshot_platform_socket_receive_packet( socket, &from, packet, sizeof(packet) ) )
         {
             snapshot_check( snapshot_address_equal( &from, &local_address ) );
@@ -580,17 +580,17 @@ void test_platform_socket()
 
     // blocking socket with no timeout (ipv4)
     {
-        snapshot_address_t bind_address;
-        snapshot_address_t local_address;
+        struct snapshot_address_t bind_address;
+        struct snapshot_address_t local_address;
         snapshot_address_parse( &bind_address, "0.0.0.0" );
         snapshot_address_parse( &local_address, "127.0.0.1" );
-        snapshot_platform_socket_t * socket = snapshot_platform_socket_create( NULL, &bind_address, SNAPSHOT_PLATFORM_SOCKET_BLOCKING, -1.0f, 64*1024, 64*1024 );
+        struct snapshot_platform_socket_t * socket = snapshot_platform_socket_create( NULL, &bind_address, SNAPSHOT_PLATFORM_SOCKET_BLOCKING, -1.0f, 64*1024, 64*1024 );
         local_address.port = bind_address.port;
         snapshot_check( socket );
         uint8_t packet[256];
         memset( packet, 0, sizeof(packet) );
         snapshot_platform_socket_send_packet( socket, &local_address, packet, sizeof(packet) );
-        snapshot_address_t from;
+        struct snapshot_address_t from;
         snapshot_platform_socket_receive_packet( socket, &from, packet, sizeof(packet) );
         snapshot_check( snapshot_address_equal( &from, &local_address ) );
         snapshot_platform_socket_destroy( socket );
@@ -600,17 +600,17 @@ void test_platform_socket()
 
     // non-blocking socket (ipv6)
     {
-        snapshot_address_t bind_address;
-        snapshot_address_t local_address;
+        struct snapshot_address_t bind_address;
+        struct snapshot_address_t local_address;
         snapshot_address_parse( &bind_address, "[::]" );
         snapshot_address_parse( &local_address, "[::1]" );
-        snapshot_platform_socket_t * socket = snapshot_platform_socket_create( NULL, &bind_address, SNAPSHOT_PLATFORM_SOCKET_NON_BLOCKING, 0, 64*1024, 64*1024 );
+        struct snapshot_platform_socket_t * socket = snapshot_platform_socket_create( NULL, &bind_address, SNAPSHOT_PLATFORM_SOCKET_NON_BLOCKING, 0, 64*1024, 64*1024 );
         local_address.port = bind_address.port;
         snapshot_check( socket );
         uint8_t packet[256];
         memset( packet, 0, sizeof(packet) );
         snapshot_platform_socket_send_packet( socket, &local_address, packet, sizeof(packet) );
-        snapshot_address_t from;
+        struct snapshot_address_t from;
         while ( snapshot_platform_socket_receive_packet( socket, &from, packet, sizeof(packet) ) )
         {
             snapshot_check( snapshot_address_equal( &from, &local_address ) );
@@ -620,17 +620,17 @@ void test_platform_socket()
 
     // blocking socket with timeout (ipv6)
     {
-        snapshot_address_t bind_address;
-        snapshot_address_t local_address;
+        struct snapshot_address_t bind_address;
+        struct snapshot_address_t local_address;
         snapshot_address_parse( &bind_address, "[::]" );
         snapshot_address_parse( &local_address, "[::1]" );
-        snapshot_platform_socket_t * socket = snapshot_platform_socket_create( NULL, &bind_address, SNAPSHOT_PLATFORM_SOCKET_BLOCKING, 0.01f, 64*1024, 64*1024 );
+        struct snapshot_platform_socket_t * socket = snapshot_platform_socket_create( NULL, &bind_address, SNAPSHOT_PLATFORM_SOCKET_BLOCKING, 0.01f, 64*1024, 64*1024 );
         local_address.port = bind_address.port;
         snapshot_check( socket );
         uint8_t packet[256];
         memset( packet, 0, sizeof(packet) );
         snapshot_platform_socket_send_packet( socket, &local_address, packet, sizeof(packet) );
-        snapshot_address_t from;
+        struct snapshot_address_t from;
         while ( snapshot_platform_socket_receive_packet( socket, &from, packet, sizeof(packet) ) )
         {
             snapshot_check( snapshot_address_equal( &from, &local_address ) );
@@ -640,17 +640,17 @@ void test_platform_socket()
 
     // blocking socket with no timeout (ipv6)
     {
-        snapshot_address_t bind_address;
-        snapshot_address_t local_address;
+        struct snapshot_address_t bind_address;
+        struct snapshot_address_t local_address;
         snapshot_address_parse( &bind_address, "[::]" );
         snapshot_address_parse( &local_address, "[::1]" );
-        snapshot_platform_socket_t * socket = snapshot_platform_socket_create( NULL, &bind_address, SNAPSHOT_PLATFORM_SOCKET_BLOCKING, -1.0f, 64*1024, 64*1024 );
+        struct snapshot_platform_socket_t * socket = snapshot_platform_socket_create( NULL, &bind_address, SNAPSHOT_PLATFORM_SOCKET_BLOCKING, -1.0f, 64*1024, 64*1024 );
         local_address.port = bind_address.port;
         snapshot_check( socket );
         uint8_t packet[256];
         memset( packet, 0, sizeof(packet) );
         snapshot_platform_socket_send_packet( socket, &local_address, packet, sizeof(packet) );
-        snapshot_address_t from;
+        struct snapshot_address_t from;
         snapshot_platform_socket_receive_packet( socket, &from, packet, sizeof(packet) );
         snapshot_check( snapshot_address_equal( &from, &local_address ) );
         snapshot_platform_socket_destroy( socket );
@@ -659,16 +659,17 @@ void test_platform_socket()
 #endif
 }
 
-static bool threads_work = false;
+static SNAPSHOT_BOOL threads_work;
 
-void test_thread_function(void*)
+void test_thread_function( void * dummy )
 {
-    threads_work = true;
+    (void) dummy;
+    threads_work = SNAPSHOT_TRUE;
 }
 
 void test_platform_thread()
 {
-    snapshot_platform_thread_t * thread = snapshot_platform_thread_create( NULL, test_thread_function, NULL );
+    struct snapshot_platform_thread_t * thread = snapshot_platform_thread_create( NULL, test_thread_function, NULL );
     snapshot_check( thread );
     snapshot_platform_thread_join( thread );
     snapshot_platform_thread_destroy( thread );
@@ -677,15 +678,11 @@ void test_platform_thread()
 
 void test_platform_mutex()
 {
-    snapshot_platform_mutex_t mutex;
+    struct snapshot_platform_mutex_t mutex;
     int result = snapshot_platform_mutex_create( &mutex );
     snapshot_check( result == SNAPSHOT_OK );
     snapshot_platform_mutex_acquire( &mutex );
     snapshot_platform_mutex_release( &mutex );
-    {
-        snapshot_platform_mutex_guard( &mutex );
-        // ...
-    }
     snapshot_platform_mutex_destroy( &mutex );
 }
 
@@ -1189,9 +1186,9 @@ void test_payload_packet()
 {
     // setup a payload packet
 
-    uint8_t input_packet_buffer[SNAPSHOT_PACKET_PREFIX_BYTES + sizeof(snapshot_payload_packet_t) + SNAPSHOT_MAX_PAYLOAD_BYTES + SNAPSHOT_PACKET_POSTFIX_BYTES];
+    uint8_t input_packet_buffer[SNAPSHOT_PACKET_PREFIX_BYTES + sizeof(struct snapshot_payload_packet_t) + SNAPSHOT_MAX_PAYLOAD_BYTES + SNAPSHOT_PACKET_POSTFIX_BYTES];
 
-    struct snapshot_payload_packet_t * input_packet = (snapshot_payload_packet_t*) ( input_packet_buffer + SNAPSHOT_PACKET_PREFIX_BYTES );
+    struct snapshot_payload_packet_t * input_packet = (struct snapshot_payload_packet_t*) ( input_packet_buffer + SNAPSHOT_PACKET_PREFIX_BYTES );
 
     input_packet->packet_type = SNAPSHOT_PAYLOAD_PACKET;
     input_packet->payload_bytes = SNAPSHOT_MAX_PAYLOAD_BYTES;
@@ -1242,9 +1239,9 @@ void test_passthrough_packet()
 {
     // setup a passthrough packet
 
-    uint8_t input_packet_buffer[SNAPSHOT_PACKET_PREFIX_BYTES + sizeof(snapshot_passthrough_packet_t) + SNAPSHOT_MAX_PASSTHROUGH_BYTES + SNAPSHOT_PACKET_POSTFIX_BYTES];
+    uint8_t input_packet_buffer[SNAPSHOT_PACKET_PREFIX_BYTES + sizeof(struct snapshot_passthrough_packet_t) + SNAPSHOT_MAX_PASSTHROUGH_BYTES + SNAPSHOT_PACKET_POSTFIX_BYTES];
 
-    struct snapshot_passthrough_packet_t * input_packet = (snapshot_passthrough_packet_t*) ( input_packet_buffer + SNAPSHOT_PACKET_PREFIX_BYTES );
+    struct snapshot_passthrough_packet_t * input_packet = (struct snapshot_passthrough_packet_t*) ( input_packet_buffer + SNAPSHOT_PACKET_PREFIX_BYTES );
 
     input_packet->packet_type = SNAPSHOT_PASSTHROUGH_PACKET;
     input_packet->passthrough_bytes = SNAPSHOT_MAX_PASSTHROUGH_BYTES;
@@ -1682,11 +1679,11 @@ void test_ipv4_client_server_connect()
     snapshot_client_destroy( client );
 }
 
-void generate_passthrough_packet( uint8_t * packet_data, int & packet_bytes )
+void generate_passthrough_packet( uint8_t * packet_data, int * packet_bytes )
 {
-    packet_bytes = 1 + rand() % SNAPSHOT_MAX_PASSTHROUGH_BYTES;
-    const int start = packet_bytes % 256;
-    for ( int i = 0; i < packet_bytes; i++ )
+    *packet_bytes = 1 + rand() % SNAPSHOT_MAX_PASSTHROUGH_BYTES;
+    const int start = *packet_bytes % 256;
+    for ( int i = 0; i < *packet_bytes; i++ )
     {
         packet_data[i] = (uint8_t) ( start + i ) % 256;
     }
@@ -1710,23 +1707,23 @@ struct passthrough_context_t
 void client_process_passthrough_callback( void * context, const uint8_t * passthrough_data, int passthrough_bytes )
 {
     verify_passthrough_packet( passthrough_data, passthrough_bytes );
-    passthrough_context_t * passthrough_context = (passthrough_context_t*) context;
+    struct passthrough_context_t * passthrough_context = (struct passthrough_context_t*) context;
     passthrough_context->num_passthrough_packets_received_on_client++; 
 }
 
-void server_process_passthrough_callback( void * context, const snapshot_address_t * client_address, int client_index, const uint8_t * passthrough_data, int passthrough_bytes )
+void server_process_passthrough_callback( void * context, const struct snapshot_address_t * client_address, int client_index, const uint8_t * passthrough_data, int passthrough_bytes )
 {
     (void) client_address;
     (void) client_index;
     verify_passthrough_packet( passthrough_data, passthrough_bytes );
-    passthrough_context_t * passthrough_context = (passthrough_context_t*) context;
+    struct passthrough_context_t * passthrough_context = (struct passthrough_context_t*) context;
     passthrough_context->num_passthrough_packets_received_on_server++;    
 }
 
 void test_ipv4_client_server_passthrough()
 {
-    passthrough_context_t passthrough_context;
-    memset( &passthrough_context, 0, sizeof(passthrough_context_t) );
+    struct passthrough_context_t passthrough_context;
+    memset( &passthrough_context, 0, sizeof(struct passthrough_context_t) );
 
     double time = 0.0;
     double delta_time = 1.0 / 10.0;
@@ -1796,7 +1793,7 @@ void test_ipv4_client_server_passthrough()
     {
         int passthrough_bytes = 0;
         uint8_t passthrough_data[SNAPSHOT_MAX_PASSTHROUGH_BYTES];
-        generate_passthrough_packet( passthrough_data, passthrough_bytes );
+        generate_passthrough_packet( passthrough_data, &passthrough_bytes );
 
         snapshot_client_send_passthrough_packet( client, passthrough_data, passthrough_bytes );
 
@@ -2029,15 +2026,15 @@ struct loopback_context_t
     struct snapshot_server_t * server;
 };
 
-void client_send_loopback_packet_callback( void * context, const snapshot_address_t * from, uint8_t * packet_data, int packet_bytes )
+void client_send_loopback_packet_callback( void * context, const struct snapshot_address_t * from, uint8_t * packet_data, int packet_bytes )
 {
-    loopback_context_t * loopback_context = (loopback_context_t*) context;
+    struct loopback_context_t * loopback_context = (struct loopback_context_t*) context;
     snapshot_server_process_packet( loopback_context->server, from, packet_data, packet_bytes );
 }
 
-void server_send_loopback_packet_callback( void * context, const snapshot_address_t * from, uint8_t * packet_data, int packet_bytes )
+void server_send_loopback_packet_callback( void * context, const struct snapshot_address_t * from, uint8_t * packet_data, int packet_bytes )
 {
-    loopback_context_t * loopback_context = (loopback_context_t*) context;
+    struct loopback_context_t * loopback_context = (struct loopback_context_t*) context;
     snapshot_client_process_packet( loopback_context->client, from, packet_data, packet_bytes );
 }
 
@@ -2045,7 +2042,7 @@ void test_client_server_loopback()
 {
     double time = 0.0;
 
-    loopback_context_t loopback_context;
+    struct loopback_context_t loopback_context;
 
     uint8_t private_key[SNAPSHOT_KEY_BYTES];
     snapshot_crypto_random_bytes( private_key, SNAPSHOT_KEY_BYTES );
@@ -2062,7 +2059,7 @@ void test_client_server_loopback()
 
     const char * server_address_string = "127.0.0.1:40000";
 
-    snapshot_address_t server_address;
+    struct snapshot_address_t server_address;
     snapshot_check( snapshot_address_parse( &server_address, server_address_string ) == SNAPSHOT_OK );
 
     struct snapshot_server_t * server = snapshot_server_create( server_address_string, &server_config, time );
@@ -3566,8 +3563,8 @@ void test_acks()
     snapshot_copy_string( sender_config.name, "sender", sizeof(sender_config.name) );
     snapshot_copy_string( receiver_config.name, "receiver", sizeof(receiver_config.name) );
 
-    snapshot_endpoint_t * sender = snapshot_endpoint_create( &sender_config, time );
-    snapshot_endpoint_t * receiver = snapshot_endpoint_create( &receiver_config, time );
+    struct snapshot_endpoint_t * sender = snapshot_endpoint_create( &sender_config, time );
+    struct snapshot_endpoint_t * receiver = snapshot_endpoint_create( &receiver_config, time );
 
     double delta_time = 0.01;
 
@@ -3705,8 +3702,8 @@ void test_acks_packet_loss()
     strncpy( sender_config.name, "sender", sizeof(sender_config.name) );
     strncpy( receiver_config.name, "receiver", sizeof(receiver_config.name) );
 
-    snapshot_endpoint_t * sender = snapshot_endpoint_create( &sender_config, time );
-    snapshot_endpoint_t * receiver = snapshot_endpoint_create( &receiver_config, time );
+    struct snapshot_endpoint_t * sender = snapshot_endpoint_create( &sender_config, time );
+    struct snapshot_endpoint_t * receiver = snapshot_endpoint_create( &receiver_config, time );
 
     double delta_time = 0.01;
 
@@ -3732,7 +3729,7 @@ void test_acks_packet_loss()
 
         // receiver process packet
 
-        bool drop = ( i % 2 ) != 0;
+        SNAPSHOT_BOOL drop = ( i % 2 ) != 0;
 
         uint8_t buffer[SNAPSHOT_PACKET_PREFIX_BYTES + SNAPSHOT_MAX_PACKET_BYTES + SNAPSHOT_PACKET_POSTFIX_BYTES];
 
@@ -3852,8 +3849,8 @@ void test_endpoint_payload()
     strncpy( sender_config.name, "sender", sizeof(sender_config.name) );
     strncpy( receiver_config.name, "receiver", sizeof(receiver_config.name) );
 
-    snapshot_endpoint_t * sender = snapshot_endpoint_create( &sender_config, time );
-    snapshot_endpoint_t * receiver = snapshot_endpoint_create( &receiver_config, time );
+    struct snapshot_endpoint_t * sender = snapshot_endpoint_create( &sender_config, time );
+    struct snapshot_endpoint_t * receiver = snapshot_endpoint_create( &receiver_config, time );
 
     double delta_time = 0.01;
 
@@ -3863,7 +3860,7 @@ void test_endpoint_payload()
 
         int dummy_payload_bytes = 0;
         uint8_t * dummy_payload_data = payload_buffer + SNAPSHOT_PACKET_PREFIX_BYTES;
-        snapshot_generate_packet_data( dummy_payload_data, dummy_payload_bytes, SNAPSHOT_MAX_PAYLOAD_BYTES );
+        snapshot_generate_packet_data( dummy_payload_data, &dummy_payload_bytes, SNAPSHOT_MAX_PAYLOAD_BYTES );
 
         // sender write packet(s)
 
@@ -4111,7 +4108,7 @@ void test_schema()
 #define RUN_TEST( test_function )                                           \
     do                                                                      \
     {                                                                       \
-        snapshot_printf( #test_function );                                  \
+        snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, #test_function );         \
         fflush( stdout );                                                   \
         test_function();                                                    \
     }                                                                       \
@@ -4121,7 +4118,7 @@ void snapshot_run_tests()
 {
     printf( "\n[test]\n\n" );
 
-    snapshot_quiet( true );
+    snapshot_quiet( SNAPSHOT_TRUE );
 
     const int num_iterations = 1; // 10000;
 

@@ -46,6 +46,8 @@
 
 #define SNAPSHOT_SERVER_NUM_COUNTERS                                                27
 
+struct snapshot_address_t;
+
 struct snapshot_server_config_t
 {
     void * context;
@@ -70,7 +72,7 @@ int snapshot_server_connected_clients( struct snapshot_server_t * server );
 
 int snapshot_server_max_clients( struct snapshot_server_t * server );
 
-bool snapshot_server_process_packet( struct snapshot_server_t * server, const struct snapshot_address_t * from, uint8_t * packet_data, int packet_bytes );
+SNAPSHOT_BOOL snapshot_server_process_packet( struct snapshot_server_t * server, const struct snapshot_address_t * from, uint8_t * packet_data, int packet_bytes );
 
 int snapshot_server_client_connected( struct snapshot_server_t * server, int client_index );
 

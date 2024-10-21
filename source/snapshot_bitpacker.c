@@ -12,6 +12,8 @@
 
 // -----------------------------------------------------------------------------------------------------------------------
 
+// todo
+/*
 void snapshot_bit_writer_init( struct snapshot_bit_writer_t * writer, void * data, int bytes )
 {
     snapshot_assert( writer );
@@ -258,3 +260,4 @@ void snapshot_read_bytes( struct snapshot_bit_reader_t * reader, uint8_t * data,
 }
 
 // -----------------------------------------------------------------------------------------------------------------------
+*/

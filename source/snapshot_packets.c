@@ -38,11 +38,11 @@ struct snapshot_payload_packet_t * snapshot_wrap_payload_packet( uint8_t * paylo
     snapshot_assert( payload_bytes > 0 );
     snapshot_assert( payload_bytes <= SNAPSHOT_MAX_PAYLOAD_BYTES );
 
-    size_t offset = offsetof(snapshot_payload_packet_t, payload_data);
+    size_t offset = offsetof(struct snapshot_payload_packet_t, payload_data);
 
     uint8_t * buffer = payload_data - offset;
 
-    struct snapshot_payload_packet_t * packet = (snapshot_payload_packet_t*) buffer;
+    struct snapshot_payload_packet_t * packet = (struct snapshot_payload_packet_t*) buffer;
 
     packet->packet_type = SNAPSHOT_PAYLOAD_PACKET;
     packet->payload_bytes = payload_bytes;
@@ -55,11 +55,11 @@ struct snapshot_passthrough_packet_t * snapshot_wrap_passthrough_packet( uint8_t
     snapshot_assert( passthrough_bytes > 0 );
     snapshot_assert( passthrough_bytes <= SNAPSHOT_MAX_PASSTHROUGH_BYTES );
 
-    size_t offset = offsetof(snapshot_passthrough_packet_t, passthrough_data);
+    size_t offset = offsetof(struct snapshot_passthrough_packet_t, passthrough_data);
 
     uint8_t * buffer = passthrough_data - offset;
 
-    struct snapshot_passthrough_packet_t * packet = (snapshot_passthrough_packet_t*) buffer;
+    struct snapshot_passthrough_packet_t * packet = (struct snapshot_passthrough_packet_t*) buffer;
 
     packet->packet_type = SNAPSHOT_PASSTHROUGH_PACKET;
     packet->passthrough_bytes = passthrough_bytes;
@@ -175,7 +175,7 @@ uint8_t * snapshot_write_packet( void * packet, uint8_t * buffer, int buffer_len
                 int payload_bytes = payload_packet->payload_bytes;
                 size_t header_bytes = p - start;
                 uint8_t * header = start;
-                start = ( (uint8_t*) packet ) + offsetof(snapshot_payload_packet_t, payload_data) - header_bytes;
+                start = ( (uint8_t*) packet ) + offsetof(struct snapshot_payload_packet_t, payload_data) - header_bytes;
                 encrypted_start = start + header_bytes;
                 memcpy( start, header, header_bytes );
                 p = start + header_bytes + payload_bytes;
@@ -190,7 +190,7 @@ uint8_t * snapshot_write_packet( void * packet, uint8_t * buffer, int buffer_len
                 int passthrough_bytes = passthrough_packet->passthrough_bytes;
                 size_t header_bytes = p - start;
                 uint8_t * header = start;
-                start = ( (uint8_t*) packet ) + offsetof(snapshot_passthrough_packet_t, passthrough_data) - header_bytes;
+                start = ( (uint8_t*) packet ) + offsetof(struct snapshot_passthrough_packet_t, passthrough_data) - header_bytes;
                 encrypted_start = start + header_bytes;
                 memcpy( start, header, header_bytes );
                 p = start + header_bytes + passthrough_bytes;

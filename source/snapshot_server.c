@@ -116,7 +116,7 @@ struct snapshot_server_t
     struct snapshot_server_config_t config;
     struct snapshot_platform_socket_t * socket;
     struct snapshot_address_t address;
-    bool allow_any_address;
+    SNAPSHOT_BOOL allow_any_address;
     uint64_t flags;
     double time;
     int max_clients;
@@ -166,7 +166,7 @@ struct snapshot_server_t * snapshot_server_create( const char * server_address_s
 
     if ( !config->network_simulator )
     {
-        snapshot_address_t bind_address;
+        struct snapshot_address_t bind_address;
         memset( &bind_address, 0, sizeof(bind_address) );
         bind_address.type = server_address.type;
         bind_address.port = server_address.port;
@@ -200,7 +200,7 @@ struct snapshot_server_t * snapshot_server_create( const char * server_address_s
         return NULL;
     }
 
-    memset( server, 0, sizeof(snapshot_server_t) );
+    memset( server, 0, sizeof(struct snapshot_server_t) );
 
 #if SNAPSHOT_DEVELOPMENT
     if ( config->network_simulator )
@@ -252,7 +252,7 @@ struct snapshot_server_t * snapshot_server_create( const char * server_address_s
 
     for ( int i = 0; i < SNAPSHOT_MAX_CLIENTS; i++ )
     {
-        snapshot_endpoint_config_t endpoint_config;
+        struct snapshot_endpoint_config_t endpoint_config;
         snapshot_endpoint_default_config( &endpoint_config );
         snprintf( endpoint_config.name, sizeof(endpoint_config.name), "server[%d]", i );
         endpoint_config.context = config->context;
@@ -276,7 +276,7 @@ struct snapshot_server_t * snapshot_server_create( const char * server_address_s
     if ( server_address.type == SNAPSHOT_ADDRESS_IPV4 && server_address.data.ipv4[0] == 0 && server_address.data.ipv4[1] == 0 && server_address.data.ipv4[2] == 0 && server_address.data.ipv4[3] == 0 )
     {
         snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "server allowing any address to connect (ipv4)" );
-        server->allow_any_address = true;
+        server->allow_any_address = SNAPSHOT_TRUE;
     }
 
     if ( server_address.type == SNAPSHOT_ADDRESS_IPV6 )
@@ -286,7 +286,7 @@ struct snapshot_server_t * snapshot_server_create( const char * server_address_s
         if ( memcmp( server_address.data.ipv6, zero, 16 ) == 0 )
         {
             snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, "server allowing any address to connect (ipv6)" );
-            server->allow_any_address = true;
+            server->allow_any_address = SNAPSHOT_TRUE;
         }
     }
 
@@ -313,7 +313,7 @@ void snapshot_server_destroy( struct snapshot_server_t * server )
     snapshot_free( server->config.context, server );
 }
 
-void snapshot_server_send_global_packet( snapshot_server_t * server, void * packet, const struct snapshot_address_t * to, uint8_t * packet_key )
+void snapshot_server_send_global_packet( struct snapshot_server_t * server, void * packet, const struct snapshot_address_t * to, uint8_t * packet_key )
 {
     snapshot_assert( server );
     snapshot_assert( packet );
@@ -527,7 +527,7 @@ int snapshot_server_find_client_index_by_address( struct snapshot_server_t * ser
     return -1;
 }
 
-void snapshot_server_process_connection_request_packet( snapshot_server_t * server, 
+void snapshot_server_process_connection_request_packet( struct snapshot_server_t * server, 
                                                         const struct snapshot_address_t * from, 
                                                         struct snapshot_connection_request_packet_t * packet )
 {
@@ -805,7 +805,7 @@ int snapshot_server_process_payload( struct snapshot_server_t * server, int clie
     return SNAPSHOT_OK;
 }
 
-void snapshot_server_process_passthrough( struct snapshot_server_t * server, const snapshot_address_t * client_address, int client_index, uint8_t * passthrough_data, int passthrough_bytes )
+void snapshot_server_process_passthrough( struct snapshot_server_t * server, const struct snapshot_address_t * client_address, int client_index, uint8_t * passthrough_data, int passthrough_bytes )
 {
     snapshot_assert( server );
     snapshot_assert( client_address );
@@ -821,7 +821,7 @@ void snapshot_server_process_passthrough( struct snapshot_server_t * server, con
     }
 }
 
-bool snapshot_server_process_packet( struct snapshot_server_t * server, const struct snapshot_address_t * from, uint8_t * packet_data, int packet_bytes )
+SNAPSHOT_BOOL snapshot_server_process_packet( struct snapshot_server_t * server, const struct snapshot_address_t * from, uint8_t * packet_data, int packet_bytes )
 {
     snapshot_assert( server );
     snapshot_assert( from );
@@ -830,7 +830,7 @@ bool snapshot_server_process_packet( struct snapshot_server_t * server, const st
     snapshot_assert( packet_bytes <= SNAPSHOT_MAX_PACKET_BYTES );
 
     if ( packet_bytes < 1 )
-        return false;
+        return SNAPSHOT_FALSE;
 
     server->counters[SNAPSHOT_SERVER_COUNTER_PACKETS_PROCESSED]++;
 
@@ -855,7 +855,7 @@ bool snapshot_server_process_packet( struct snapshot_server_t * server, const st
     {
         char address_string[SNAPSHOT_MAX_ADDRESS_STRING_LENGTH];
         snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server could not process packet because no encryption mapping exists for %s", snapshot_address_to_string( from, address_string ) );
-        return false;
+        return SNAPSHOT_FALSE;
     }
 
     uint8_t out_packet_data[2048];
@@ -876,7 +876,7 @@ bool snapshot_server_process_packet( struct snapshot_server_t * server, const st
     if ( !packet )
     {
         server->counters[SNAPSHOT_SERVER_COUNTER_READ_PACKET_FAILURES]++;
-        return false;
+        return SNAPSHOT_FALSE;
     }
 
     uint8_t packet_type = ( (uint8_t*) packet ) [0];
@@ -892,7 +892,7 @@ bool snapshot_server_process_packet( struct snapshot_server_t * server, const st
                 char from_address_string[SNAPSHOT_MAX_ADDRESS_STRING_LENGTH];
                 snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server received connection request from %s", snapshot_address_to_string( from, from_address_string ) );
                 snapshot_server_process_connection_request_packet( server, from, (struct snapshot_connection_request_packet_t*) packet );
-                return true;
+                return SNAPSHOT_TRUE;
             }
         }
         break;
@@ -906,7 +906,7 @@ bool snapshot_server_process_packet( struct snapshot_server_t * server, const st
                 char from_address_string[SNAPSHOT_MAX_ADDRESS_STRING_LENGTH];
                 snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server received connection response from %s", snapshot_address_to_string( from, from_address_string ) );
                 snapshot_server_process_connection_response_packet( server, from, (struct snapshot_connection_response_packet_t*) packet, encryption_index );
-                return true;
+                return SNAPSHOT_TRUE;
             }
         }
         break;
@@ -924,7 +924,7 @@ bool snapshot_server_process_packet( struct snapshot_server_t * server, const st
                     snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server confirmed connection with client %d", client_index );
                     server->client_confirmed[client_index] = 1;
                 }
-                return true;
+                return SNAPSHOT_TRUE;
             }
         }
         break;
@@ -942,7 +942,7 @@ bool snapshot_server_process_packet( struct snapshot_server_t * server, const st
                     snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server confirmed connection with client %d", client_index );
                     server->client_confirmed[client_index] = 1;
                 }
-                struct snapshot_payload_packet_t * payload_packet = (snapshot_payload_packet_t*) packet;
+                struct snapshot_payload_packet_t * payload_packet = (struct snapshot_payload_packet_t*) packet;
                 uint8_t * payload_packet_data = payload_packet->payload_data;
                 int payload_packet_bytes = payload_packet->payload_bytes;
                 uint8_t buffer[SNAPSHOT_PACKET_PREFIX_BYTES + SNAPSHOT_MAX_PACKET_BYTES + SNAPSHOT_PACKET_POSTFIX_BYTES];
@@ -959,7 +959,7 @@ bool snapshot_server_process_packet( struct snapshot_server_t * server, const st
                         snapshot_endpoint_mark_payload_processed( server->client_endpoint[client_index], payload_sequence, payload_ack, payload_ack_bits, payload_packet_bytes );
                     }
                 }
-                return true;
+                return SNAPSHOT_TRUE;
             }
         }
         break;
@@ -977,9 +977,9 @@ bool snapshot_server_process_packet( struct snapshot_server_t * server, const st
                     snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server confirmed connection with client %d", client_index );
                     server->client_confirmed[client_index] = 1;
                 }
-                struct snapshot_passthrough_packet_t * passthrough_packet = (snapshot_passthrough_packet_t*) packet;
+                struct snapshot_passthrough_packet_t * passthrough_packet = (struct snapshot_passthrough_packet_t*) packet;
                 snapshot_server_process_passthrough( server, &server->client_address[client_index], client_index, passthrough_packet->passthrough_data, passthrough_packet->passthrough_bytes );
-                return true;
+                return SNAPSHOT_TRUE;
             }
         }
         break;
@@ -992,7 +992,7 @@ bool snapshot_server_process_packet( struct snapshot_server_t * server, const st
             {
                 snapshot_printf( SNAPSHOT_LOG_LEVEL_DEBUG, "server received disconnect packet from client %d", client_index );
                 snapshot_server_disconnect_client_internal( server, client_index, 0 );
-                return true;
+                return SNAPSHOT_TRUE;
            }
         }
         break;
@@ -1001,7 +1001,7 @@ bool snapshot_server_process_packet( struct snapshot_server_t * server, const st
             break;
     }
 
-    return false;
+    return SNAPSHOT_FALSE;
 }
 
 void snapshot_server_receive_packets( struct snapshot_server_t * server )
@@ -1168,7 +1168,7 @@ void snapshot_server_send_payload_to_client( struct snapshot_server_t * server, 
 
         int payload_bytes = 0;
 
-        snapshot_generate_packet_data( payload_data, payload_bytes, SNAPSHOT_MAX_PAYLOAD_BYTES );
+        snapshot_generate_packet_data( payload_data, &payload_bytes, SNAPSHOT_MAX_PAYLOAD_BYTES );
 
         int num_packets = 0;
         uint8_t * packet_data[SNAPSHOT_ENDPOINT_MAX_WRITE_PACKETS];
@@ -1180,7 +1180,7 @@ void snapshot_server_send_payload_to_client( struct snapshot_server_t * server, 
         {
             // send whole packet
 
-            snapshot_payload_packet_t * packet = snapshot_wrap_payload_packet( packet_data[0], packet_bytes[0] );
+            struct snapshot_payload_packet_t * packet = snapshot_wrap_payload_packet( packet_data[0], packet_bytes[0] );
 
             snapshot_server_send_packet_to_client( server, client_index, packet );
 
@@ -1192,7 +1192,7 @@ void snapshot_server_send_payload_to_client( struct snapshot_server_t * server, 
 
             for ( int i = 0; i < num_packets; i++ )
             {
-                snapshot_payload_packet_t * packet = snapshot_wrap_payload_packet( packet_data[i], packet_bytes[i] );
+                struct snapshot_payload_packet_t * packet = snapshot_wrap_payload_packet( packet_data[i], packet_bytes[i] );
 
                 snapshot_server_send_packet_to_client( server, client_index, packet );
 
@@ -1313,9 +1313,9 @@ void snapshot_server_send_passthrough_packet( struct snapshot_server_t * server,
     snapshot_assert( passthrough_data );
     snapshot_assert( passthrough_bytes > 0 );
 
-    uint8_t buffer[SNAPSHOT_PACKET_PREFIX_BYTES + sizeof(snapshot_passthrough_packet_t) + SNAPSHOT_MAX_PASSTHROUGH_BYTES + SNAPSHOT_PACKET_POSTFIX_BYTES];
+    uint8_t buffer[SNAPSHOT_PACKET_PREFIX_BYTES + sizeof(struct snapshot_passthrough_packet_t) + SNAPSHOT_MAX_PASSTHROUGH_BYTES + SNAPSHOT_PACKET_POSTFIX_BYTES];
 
-    struct snapshot_passthrough_packet_t * packet = (snapshot_passthrough_packet_t*) ( buffer + SNAPSHOT_PACKET_PREFIX_BYTES );
+    struct snapshot_passthrough_packet_t * packet = (struct snapshot_passthrough_packet_t*) ( buffer + SNAPSHOT_PACKET_PREFIX_BYTES );
 
     packet->packet_type = SNAPSHOT_PASSTHROUGH_PACKET;
     packet->passthrough_bytes = passthrough_bytes;

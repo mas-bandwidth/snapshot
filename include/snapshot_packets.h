@@ -31,6 +31,8 @@
 #define SNAPSHOT_DISCONNECT_PACKET                   7
 #define SNAPSHOT_NUM_PACKETS                         8
 
+struct snapshot_replay_protection_t;
+
 inline int snapshot_sequence_number_bytes_required( uint64_t sequence )
 {
     uint64_t mask = 0xFF00000000000000UL;
