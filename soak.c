@@ -22,81 +22,6 @@
 #include <signal.h>
 #include <inttypes.h>
 #include <stdlib.h>
-#include <map>
-
-// -------------------------------------------------------------------
-
-struct AllocatorEntry
-{
-    uint64_t bytes;
-};
-
-class Allocator
-{
-    int64_t num_allocations;
-    std::map<void*, AllocatorEntry*> entries;
-
-public:
-
-    Allocator()
-    {
-        num_allocations = 0;
-    }
-
-    ~Allocator()
-    {
-        printf( "checking for memory leaks...\n" );
-        if ( num_allocations > 0 )
-        {
-            printf( "leaked %d allocations\n", (int) num_allocations );
-        }
-        else
-        {
-            printf( "no memory leaks found.\n" );
-        }
-        snapshot_assert( num_allocations == 0 );
-        snapshot_assert( entries.size() == 0 );
-    }
-
-    void * Alloc( size_t size )
-    {
-        void * pointer = malloc( size );
-        snapshot_assert( pointer );
-        snapshot_assert( entries[pointer] == NULL );
-        AllocatorEntry * entry = new AllocatorEntry();
-        entry->bytes = size;
-        entries[pointer] = entry;
-        num_allocations++;
-        return pointer;
-    }
-
-    void Free( void * pointer )
-    {
-        snapshot_assert( pointer );
-        snapshot_assert( num_allocations > 0 );
-        std::map<void*, AllocatorEntry*>::iterator itor = entries.find( pointer );
-        snapshot_assert( itor != entries.end() );
-        // printf( "free %d bytes\n", (int)itor->second->bytes );
-        entries.erase( itor );
-        num_allocations--;
-        free( pointer );
-    }
-};
-
-void * malloc_function( void * context, size_t bytes )
-{
-    snapshot_assert( context );
-    Allocator * allocator = (Allocator*) context;
-    // printf( "allocated %d bytes\n", (int)bytes ); fflush( stdout );
-    return allocator->Alloc( bytes );
-}
-
-void free_function( void * context, void * p )
-{
-    snapshot_assert( context );
-    Allocator * allocator = (Allocator*) context;
-    return allocator->Free( p );
-}
 
 // -------------------------------------------------------------------
 
@@ -125,9 +50,9 @@ static void log_function( int level, const char * format, ... )
 
 static void assert_function( const char * condition, const char * function, const char * file, int line )
 {
-    snapshot_printf( "assert failed: ( %s ), function %s, file %s, line %d\n", condition, function, file, line );
+    snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "assert failed: ( %s ), function %s, file %s, line %d\n", condition, function, file, line );
     fflush( stdout );
-    assert( false );
+    assert( 0 );
 }
 
 // -------------------------------------------------------------------
@@ -152,8 +77,8 @@ void interrupt_handler( int signal )
 const int MAX_SERVERS = 16;
 const int MAX_CLIENTS = 200;
 
-static snapshot_client_t * client[MAX_CLIENTS];
-static snapshot_server_t * server[MAX_SERVERS];
+static struct snapshot_client_t * client[MAX_CLIENTS];
+static struct snapshot_server_t * server[MAX_SERVERS];
 
 int main( int argc, char ** argv )
 {
@@ -165,10 +90,6 @@ int main( int argc, char ** argv )
         snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "failed to initialize shapshot" );
         return 1;
     }
-
-    Allocator allocator;
-
-    snapshot_allocator( malloc_function, free_function );
 
     snapshot_log_function( log_function );
 
@@ -198,7 +119,6 @@ int main( int argc, char ** argv )
 
                 struct snapshot_server_config_t server_config;
                 snapshot_default_server_config( &server_config );
-                server_config.context = &allocator;
                 server_config.max_clients = max_clients;
                 server_config.protocol_id = TEST_PROTOCOL_ID;
                 memcpy( &server_config.private_key, test_private_key, SNAPSHOT_KEY_BYTES );
@@ -247,7 +167,6 @@ int main( int argc, char ** argv )
 
                 struct snapshot_client_config_t client_config;
                 snapshot_default_client_config( &client_config );
-                client_config.context = &allocator;
                 client[i] = snapshot_client_create( "0.0.0.0", &client_config, time );
 
                 if ( !client[i] )

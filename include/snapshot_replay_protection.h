@@ -21,14 +21,14 @@ struct snapshot_replay_protection_t
     uint64_t received_packet[SNAPSHOT_REPLAY_PROTECTION_BUFFER_SIZE];
 };
 
-inline void snapshot_replay_protection_reset( struct snapshot_replay_protection_t * replay_protection )
+static inline void snapshot_replay_protection_reset( struct snapshot_replay_protection_t * replay_protection )
 {
     snapshot_assert( replay_protection );
     replay_protection->most_recent_sequence = 0;
     memset( replay_protection->received_packet, 0xFF, sizeof( replay_protection->received_packet ) );
 }
 
-inline int snapshot_replay_protection_already_received( struct snapshot_replay_protection_t * replay_protection, uint64_t sequence )
+static inline int snapshot_replay_protection_already_received( struct snapshot_replay_protection_t * replay_protection, uint64_t sequence )
 {
     snapshot_assert( replay_protection );
 
@@ -46,7 +46,7 @@ inline int snapshot_replay_protection_already_received( struct snapshot_replay_p
     return 0;
 }
 
-inline void snapshot_replay_protection_advance_sequence( struct snapshot_replay_protection_t * replay_protection, uint64_t sequence )
+static inline void snapshot_replay_protection_advance_sequence( struct snapshot_replay_protection_t * replay_protection, uint64_t sequence )
 {
     snapshot_assert( replay_protection );
 

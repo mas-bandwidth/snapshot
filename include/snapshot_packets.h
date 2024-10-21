@@ -33,7 +33,7 @@
 
 struct snapshot_replay_protection_t;
 
-inline int snapshot_sequence_number_bytes_required( uint64_t sequence )
+static inline int snapshot_sequence_number_bytes_required( uint64_t sequence )
 {
     uint64_t mask = 0xFF00000000000000UL;
     int i;
@@ -126,7 +126,7 @@ void * snapshot_read_packet( uint8_t * buffer,
 
 #include "stdlib.h"
 
-inline void snapshot_generate_packet_data( uint8_t * packet_data, int * packet_bytes, int max_size )
+static inline void snapshot_generate_packet_data( uint8_t * packet_data, int * packet_bytes, int max_size )
 {
     *packet_bytes = 1 + rand() % ( max_size - 1 );
     const int start = *packet_bytes % 256;
@@ -136,7 +136,7 @@ inline void snapshot_generate_packet_data( uint8_t * packet_data, int * packet_b
     }
 }
 
-inline void snapshot_verify_packet_data( const uint8_t * packet_data, int packet_bytes )
+static inline void snapshot_verify_packet_data( const uint8_t * packet_data, int packet_bytes )
 {
     const int start = packet_bytes % 256;
     for ( int i = 0; i < packet_bytes; i++ )

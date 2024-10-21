@@ -40,15 +40,15 @@ struct loopback_context_t
     struct snapshot_server_t * server;
 };
 
-void client_send_loopback_packet_callback( void * context, const snapshot_address_t * from, uint8_t * packet_data, int packet_bytes )
+void client_send_loopback_packet_callback( void * context, const struct snapshot_address_t * from, uint8_t * packet_data, int packet_bytes )
 {
-    loopback_context_t * loopback_context = (loopback_context_t*) context;
+    struct loopback_context_t * loopback_context = (struct loopback_context_t*) context;
     snapshot_server_process_packet( loopback_context->server, from, packet_data, packet_bytes );
 }
 
-void server_send_loopback_packet_callback( void * context, const snapshot_address_t * from, uint8_t * packet_data, int packet_bytes )
+void server_send_loopback_packet_callback( void * context, const struct snapshot_address_t * from, uint8_t * packet_data, int packet_bytes )
 {
-    loopback_context_t * loopback_context = (loopback_context_t*) context;
+    struct loopback_context_t * loopback_context = (struct loopback_context_t*) context;
     snapshot_client_process_packet( loopback_context->client, from, packet_data, packet_bytes );
 }
 
@@ -71,14 +71,14 @@ int main( int argc, char ** argv )
     if ( argc == 2 )
         server_address_string = argv[1];
 
-    snapshot_address_t server_address;
+    struct snapshot_address_t server_address;
     if ( snapshot_address_parse( &server_address, server_address_string ) != SNAPSHOT_OK )
     {
         snapshot_printf( SNAPSHOT_LOG_LEVEL_ERROR, "bad server address: %s", server_address_string );
         return 1;
     }
 
-    loopback_context_t loopback_context;
+    struct loopback_context_t loopback_context;
 
     struct snapshot_server_config_t server_config;
     snapshot_default_server_config( &server_config );

@@ -4108,7 +4108,7 @@ void test_schema()
 #define RUN_TEST( test_function )                                           \
     do                                                                      \
     {                                                                       \
-        snapshot_printf( SNAPSHOT_LOG_LEVEL_INFO, #test_function );         \
+        printf( #test_function "\n" );                                      \
         fflush( stdout );                                                   \
         test_function();                                                    \
     }                                                                       \
