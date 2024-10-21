@@ -2,15 +2,11 @@ DONE
 
 	Convert the bitpacker to C style
 
-TODO
-
 	Update the bitpacker tests to C style
-
-	------
 
 	Convert the library to compile as C, not C++
 
-	------
+TODO
 
 	Implement a schema that fully defines the set of channels, messages, object types, tables attached to objects, table strategies, player cmds etc.
 
