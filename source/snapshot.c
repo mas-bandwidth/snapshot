@@ -50,13 +50,13 @@ void snapshot_copy_string( char * dest, const char * source, size_t dest_size )
     }
 }
 
-inline void * snapshot_default_malloc_function( void * context, size_t bytes )
+static inline void * snapshot_default_malloc_function( void * context, size_t bytes )
 {
     (void) context;
     return malloc( bytes );
 }
 
-inline void snapshot_default_free_function( void * context, void * p )
+static inline void snapshot_default_free_function( void * context, void * p )
 {
     (void) context;
     free( p );

@@ -12,9 +12,7 @@
 
 // -----------------------------------------------------------------------------------------------------------------------
 
-// todo
-/*
-void snapshot_bit_writer_init( struct snapshot_bit_writer_t * writer, void * data, int bytes )
+void snapshot_bitwriter_init( struct snapshot_bitwriter_t * writer, void * data, int bytes )
 {
     snapshot_assert( writer );
     snapshot_assert( data );
@@ -28,7 +26,7 @@ void snapshot_bit_writer_init( struct snapshot_bit_writer_t * writer, void * dat
     writer->scratch_bits = 0;
 }
 
-void snapshot_write_bits( struct snapshot_bit_writer_t * writer, uint32_t value, int bits )
+void snapshot_bitwriter_write_bits( struct snapshot_bitwriter_t * writer, uint32_t value, int bits )
 {
     snapshot_assert( writer );
     snapshot_assert( bits > 0 );
@@ -56,22 +54,22 @@ void snapshot_write_bits( struct snapshot_bit_writer_t * writer, uint32_t value,
     writer->bits_written += bits;
 }
 
-void snapshot_write_align( struct snapshot_bit_writer_t * writer )
+void snapshot_bitwriter_write_align( struct snapshot_bitwriter_t * writer )
 {
     snapshot_assert( writer );
     const int remainder_bits = writer->bits_written % 8;
     if ( remainder_bits != 0 )
     {
         uint32_t zero = 0;
-        snapshot_write_bits( writer, zero, 8 - remainder_bits );
+        snapshot_bitwriter_write_bits( writer, zero, 8 - remainder_bits );
         snapshot_assert( ( writer->bits_written % 8 ) == 0 );
     }
 }
 
-void snapshot_write_bytes( struct snapshot_bit_writer_t * writer, const uint8_t * data, int bytes )
+void snapshot_bitwriter_write_bytes( struct snapshot_bitwriter_t * writer, const uint8_t * data, int bytes )
 {
     snapshot_assert( writer );
-    snapshot_assert( snapshot_get_write_align_bits( writer ) == 0 );
+    snapshot_assert( snapshot_bitwriter_get_align_bits( writer ) == 0 );
     snapshot_assert( writer->bits_written + bytes * 8 <= writer->num_bits );
     snapshot_assert( ( writer->bits_written % 32 ) == 0 || ( writer->bits_written % 32 ) == 8 || ( writer->bits_written % 32 ) == 16 || ( writer->bits_written % 32 ) == 24 );
 
@@ -79,13 +77,13 @@ void snapshot_write_bytes( struct snapshot_bit_writer_t * writer, const uint8_t 
     if ( head_bytes > bytes )
         head_bytes = bytes;
     for ( int i = 0; i < head_bytes; ++i )
-        snapshot_write_bits( writer, data[i], 8 );
+        snapshot_bitwriter_write_bits( writer, data[i], 8 );
     if ( head_bytes == bytes )
         return;
 
-    snapshot_flush_bits( writer );
+    snapshot_bitwriter_flush_bits( writer );
 
-    snapshot_assert( snapshot_get_write_align_bits( writer ) == 0 );
+    snapshot_assert( snapshot_bitwriter_get_align_bits( writer ) == 0 );
 
     int num_words = ( bytes - head_bytes ) / 4;
     if ( num_words > 0 )
@@ -97,20 +95,20 @@ void snapshot_write_bytes( struct snapshot_bit_writer_t * writer, const uint8_t 
         writer->scratch = 0;
     }
 
-    snapshot_assert( snapshot_get_write_align_bits( writer ) == 0 );
+    snapshot_assert( snapshot_bitwriter_get_align_bits( writer ) == 0 );
 
     int tail_start = head_bytes + num_words * 4;
     int tail_bytes = bytes - tail_start;
     snapshot_assert( tail_bytes >= 0 && tail_bytes < 4 );
     for ( int i = 0; i < tail_bytes; ++i )
-        snapshot_write_bits( writer, data[tail_start+i], 8 );
+        snapshot_bitwriter_write_bits( writer, data[tail_start+i], 8 );
 
-    snapshot_assert( snapshot_get_write_align_bits( writer ) == 0 );
+    snapshot_assert( snapshot_bitwriter_get_align_bits( writer ) == 0 );
 
     snapshot_assert( head_bytes + num_words * 4 + tail_bytes == bytes );
 }
 
-void snapshot_flush_bits( struct snapshot_bit_writer_t * writer )
+void snapshot_bitwriter_flush_bits( struct snapshot_bitwriter_t * writer )
 {
     snapshot_assert( writer );
     if ( writer->scratch_bits != 0 )
@@ -128,13 +126,13 @@ void snapshot_flush_bits( struct snapshot_bit_writer_t * writer )
     }
 }
 
-int snapshot_get_write_align_bits( struct snapshot_bit_writer_t * writer )
+int snapshot_bitwriter_get_align_bits( struct snapshot_bitwriter_t * writer )
 {
     snapshot_assert( writer );
     return ( 8 - ( writer->bits_written % 8 ) ) % 8;
 }
 
-int snapshot_get_bytes_written( struct snapshot_bit_writer_t * writer )
+int snapshot_bitwriter_get_bytes_written( struct snapshot_bitwriter_t * writer )
 {
     snapshot_assert( writer );
     return ( writer->bits_written + 7 ) / 8;
@@ -142,7 +140,7 @@ int snapshot_get_bytes_written( struct snapshot_bit_writer_t * writer )
 
 // -----------------------------------------------------------------------------------------------------------------------
 
-void snapshot_bit_reader_init( struct snapshot_bit_reader_t * reader, void * data, int bytes )
+void snapshot_bitreader_init( struct snapshot_bitreader_t * reader, void * data, int bytes )
 {
     snapshot_assert( reader );
     snapshot_assert( data );
@@ -158,13 +156,13 @@ void snapshot_bit_reader_init( struct snapshot_bit_reader_t * reader, void * dat
     reader->word_index = 0;
 }
 
-SNAPSHOT_BOOL snapshot_would_read_past_end( struct snapshot_bit_reader_t * reader, int bits )
+SNAPSHOT_BOOL snapshot_bitreader_would_read_past_end( struct snapshot_bitreader_t * reader, int bits )
 {
     snapshot_assert( reader );
     return reader->bits_read + bits > reader->num_bits;
 }
 
-uint32_t snapshot_read_bits( struct snapshot_bit_reader_t * reader, int bits )
+uint32_t snapshot_bitreader_read_bits( struct snapshot_bitreader_t * reader, int bits )
 {
     snapshot_assert( reader );
     snapshot_assert( bits > 0 );
@@ -197,13 +195,13 @@ uint32_t snapshot_read_bits( struct snapshot_bit_reader_t * reader, int bits )
     return output;
 }
 
-SNAPSHOT_BOOL snapshot_read_align( struct snapshot_bit_reader_t * reader )
+SNAPSHOT_BOOL snapshot_bitreader_read_align( struct snapshot_bitreader_t * reader )
 {
     snapshot_assert( reader );
     int remainder_bits = reader->bits_read % 8;
     if ( remainder_bits != 0 )
     {
-        uint32_t value = snapshot_read_bits( reader, 8 - remainder_bits );
+        uint32_t value = snapshot_bitreader_read_bits( reader, 8 - remainder_bits );
         snapshot_assert( reader->bits_read % 8 == 0 );
         if ( value != 0 )
         {
@@ -213,16 +211,16 @@ SNAPSHOT_BOOL snapshot_read_align( struct snapshot_bit_reader_t * reader )
     return SNAPSHOT_TRUE;
 }
 
-int snapshot_get_read_align_bits( struct snapshot_bit_reader_t * reader )
+int snapshot_bitreader_get_align_bits( struct snapshot_bitreader_t * reader )
 {
     snapshot_assert( reader );
     return ( 8 - reader->bits_read % 8 ) % 8;
 }
 
-void snapshot_read_bytes( struct snapshot_bit_reader_t * reader, uint8_t * data, int bytes )
+void snapshot_bitreader_read_bytes( struct snapshot_bitreader_t * reader, uint8_t * data, int bytes )
 {
     snapshot_assert( reader );
-    snapshot_assert( snapshot_get_read_align_bits( reader ) == 0 );
+    snapshot_assert( snapshot_bitreader_get_align_bits( reader ) == 0 );
     snapshot_assert( reader->bits_read + bytes * 8 <= reader->num_bits );
     snapshot_assert( ( reader->bits_read % 32 ) == 0 || ( reader->bits_read % 32 ) == 8 || ( reader->bits_read % 32 ) == 16 || ( reader->bits_read % 32 ) == 24 );
 
@@ -230,11 +228,11 @@ void snapshot_read_bytes( struct snapshot_bit_reader_t * reader, uint8_t * data,
     if ( head_bytes > bytes )
         head_bytes = bytes;
     for ( int i = 0; i < head_bytes; ++i )
-        data[i] = (uint8_t) snapshot_read_bits( reader, 8 );
+        data[i] = (uint8_t) snapshot_bitreader_read_bits( reader, 8 );
     if ( head_bytes == bytes )
         return;
 
-    snapshot_assert( snapshot_get_read_align_bits( reader ) == 0 );
+    snapshot_assert( snapshot_bitreader_get_align_bits( reader ) == 0 );
 
     int num_words = ( bytes - head_bytes ) / 4;
     if ( num_words > 0 )
@@ -246,18 +244,17 @@ void snapshot_read_bytes( struct snapshot_bit_reader_t * reader, uint8_t * data,
         reader->scratch_bits = 0;
     }
 
-    snapshot_assert( snapshot_get_read_align_bits( reader ) == 0 );
+    snapshot_assert( snapshot_bitreader_get_align_bits( reader ) == 0 );
 
     int tail_start = head_bytes + num_words * 4;
     int tail_bytes = bytes - tail_start;
     snapshot_assert( tail_bytes >= 0 && tail_bytes < 4 );
     for ( int i = 0; i < tail_bytes; ++i )
-        data[tail_start+i] = (uint8_t) snapshot_read_bits( reader, 8 );
+        data[tail_start+i] = (uint8_t) snapshot_bitreader_read_bits( reader, 8 );
 
-    snapshot_assert( snapshot_get_read_align_bits( reader ) == 0 );
+    snapshot_assert( snapshot_bitreader_get_align_bits( reader ) == 0 );
 
     snapshot_assert( head_bytes + num_words * 4 + tail_bytes == bytes );
 }
 
 // -----------------------------------------------------------------------------------------------------------------------
-*/

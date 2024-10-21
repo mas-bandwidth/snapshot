@@ -39,7 +39,7 @@ inline uint32_t snapshot_log2( uint32_t x )
     return snapshot_popcount( f );
 }
 
-inline int snapshot_bits_required( uint32_t min, uint32_t max )
+static inline int snapshot_bits_required( uint32_t min, uint32_t max )
 {
 #ifdef __GNUC__
     return ( min == max ) ? 0 : 32 - __builtin_clz( max - min );
