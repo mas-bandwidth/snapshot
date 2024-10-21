@@ -13,7 +13,7 @@
 
 #include "snapshot.h"
 
-inline uint32_t popcount( uint32_t x )
+inline uint32_t snapshot_popcount( uint32_t x )
 {
 #ifdef __GNUC__
     return __builtin_popcount( x );
@@ -28,7 +28,7 @@ inline uint32_t popcount( uint32_t x )
 #endif // #ifdef __GNUC__
 }
 
-inline uint32_t log2( uint32_t x )
+inline uint32_t snapshot_log2( uint32_t x )
 {
     const uint32_t a = x | ( x >> 1 );
     const uint32_t b = a | ( a >> 2 );
@@ -36,10 +36,10 @@ inline uint32_t log2( uint32_t x )
     const uint32_t d = c | ( c >> 8 );
     const uint32_t e = d | ( d >> 16 );
     const uint32_t f = e >> 1;
-    return popcount( f );
+    return snapshot_popcount( f );
 }
 
-inline int bits_required( uint32_t min, uint32_t max )
+inline int snapshot_bits_required( uint32_t min, uint32_t max )
 {
 #ifdef __GNUC__
     return ( min == max ) ? 0 : 32 - __builtin_clz( max - min );
@@ -48,7 +48,7 @@ inline int bits_required( uint32_t min, uint32_t max )
 #endif // #ifdef __GNUC__
 }
 
-inline uint64_t bswap_uint64( uint64_t value )
+inline uint64_t snapshot_bswap_uint64( uint64_t value )
 {
 #ifdef __GNUC__
     return __builtin_bswap64( value );
@@ -60,7 +60,7 @@ inline uint64_t bswap_uint64( uint64_t value )
 #endif // #ifdef __GNUC__
 }
 
-inline uint32_t bswap_uint32( uint32_t value )
+inline uint32_t snapshot_bswap_uint32( uint32_t value )
 {
 #ifdef __GNUC__
     return __builtin_bswap32( value );
@@ -69,20 +69,20 @@ inline uint32_t bswap_uint32( uint32_t value )
 #endif // #ifdef __GNUC__
 }
 
-inline uint16_t bswap_uint16( uint16_t value )
+inline uint16_t snapshot_bswap_uint16( uint16_t value )
 {
     return ( value & 0x00ff ) << 8 | ( value & 0xff00 ) >> 8;
 }
 
-inline bool sequence_greater_than( uint16_t s1, uint16_t s2 )
+inline bool snapshot_sequence_greater_than( uint16_t s1, uint16_t s2 )
 {
     return ( ( s1 > s2 ) && ( s1 - s2 <= 32768 ) ) ||
            ( ( s1 < s2 ) && ( s2 - s1  > 32768 ) );
 }
 
-inline bool sequence_less_than( uint16_t s1, uint16_t s2 )
+inline bool snapshot_sequence_less_than( uint16_t s1, uint16_t s2 )
 {
-    return sequence_greater_than( s2, s1 );
+    return snapshot_sequence_greater_than( s2, s1 );
 }
 
 // todo: convert code below to C style. I don't want to use C++ anymore

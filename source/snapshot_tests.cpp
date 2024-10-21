@@ -374,18 +374,18 @@ void test_bitpacker()
 
 void test_bits_required()
 {
-    snapshot_check( bits_required( 0, 0 ) == 0 );
-    snapshot_check( bits_required( 0, 1 ) == 1 );
-    snapshot_check( bits_required( 0, 2 ) == 2 );
-    snapshot_check( bits_required( 0, 3 ) == 2 );
-    snapshot_check( bits_required( 0, 4 ) == 3 );
-    snapshot_check( bits_required( 0, 5 ) == 3 );
-    snapshot_check( bits_required( 0, 6 ) == 3 );
-    snapshot_check( bits_required( 0, 7 ) == 3 );
-    snapshot_check( bits_required( 0, 8 ) == 4 );
-    snapshot_check( bits_required( 0, 255 ) == 8 );
-    snapshot_check( bits_required( 0, 65535 ) == 16 );
-    snapshot_check( bits_required( 0, 4294967295U ) == 32 );
+    snapshot_check( snapshot_bits_required( 0, 0 ) == 0 );
+    snapshot_check( snapshot_bits_required( 0, 1 ) == 1 );
+    snapshot_check( snapshot_bits_required( 0, 2 ) == 2 );
+    snapshot_check( snapshot_bits_required( 0, 3 ) == 2 );
+    snapshot_check( snapshot_bits_required( 0, 4 ) == 3 );
+    snapshot_check( snapshot_bits_required( 0, 5 ) == 3 );
+    snapshot_check( snapshot_bits_required( 0, 6 ) == 3 );
+    snapshot_check( snapshot_bits_required( 0, 7 ) == 3 );
+    snapshot_check( snapshot_bits_required( 0, 8 ) == 4 );
+    snapshot_check( snapshot_bits_required( 0, 255 ) == 8 );
+    snapshot_check( snapshot_bits_required( 0, 65535 ) == 16 );
+    snapshot_check( snapshot_bits_required( 0, 4294967295U ) == 32 );
 }
 
 void test_crypto_random_bytes()
