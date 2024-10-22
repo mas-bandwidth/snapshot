@@ -30,6 +30,7 @@
 #include "snapshot_packet_header.h"
 #include "snapshot_endpoint.h"
 #include "snapshot_base64.h"
+#include "snapshot_schema.h"
 
 #include <math.h>
 #include <stdio.h>
@@ -4102,7 +4103,13 @@ void test_base64()
 
 void test_schema()
 {
-    // todo
+    struct snapshot_schema_t * schema = snapshot_schema_create( NULL );
+
+    snapshot_check( schema );
+
+    // ...
+
+    snapshot_schema_destroy( schema );
 }
 
 #define RUN_TEST( test_function )                                           \
