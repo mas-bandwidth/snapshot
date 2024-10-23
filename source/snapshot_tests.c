@@ -4162,6 +4162,53 @@ void test_schema()
         snapshot_schema_add_property_data_block( schema, "data block property", 1024 );
     }
 
+    snapshot_schema_add_table( schema, "Player" );
+    {
+        snapshot_schema_add_property_vector3( schema, "position", 0.0f, 0.0f, 0.0f );
+        snapshot_schema_add_property_quaternion( schema, "orientation", 0.0f, 0.0f, 0.0f, 1.0f );
+        snapshot_schema_add_property_vector3( schema, "linear velocity", 0.0f, 0.0f, 0.0f );
+        snapshot_schema_add_property_vector3( schema, "angular velocity", 0.0f, 0.0f, 0.0f );
+    }
+
+    snapshot_schema_add_table( schema, "RigidBody" );
+    {
+        snapshot_schema_add_property_boolean( schema, "boolean property", SNAPSHOT_TRUE );
+
+        snapshot_schema_add_property_int32( schema, "int32 property", -3000 );
+
+        snapshot_schema_add_property_uint32( schema, "uint32 property", 3000 );
+
+        snapshot_schema_add_property_int64( schema, "int64 property", -300000000000 );
+
+        snapshot_schema_add_property_uint64( schema, "uint64 property", 300000000000 );
+
+        snapshot_schema_add_property_float32( schema, "float32 property", 100.0f );
+
+        snapshot_schema_add_property_float64( schema, "float64 property", 10000000.0f );
+
+        snapshot_schema_add_property_vector3( schema, "vector3 property", 1.0f, 2.0f, 3.0f );
+        snapshot_schema_set_property_array_size( schema, 16 );
+
+        snapshot_schema_add_property_quaternion( schema, "quaternion property", 0.0f, 0.0f, 0.0f, 1.0f );
+        snapshot_schema_set_property_array_size( schema, 16 );
+
+        snapshot_schema_add_property_network_id( schema, "network id property" );
+
+        snapshot_schema_add_property_string( schema, "string property", "default value", 64 );
+
+        snapshot_schema_add_property_data_block( schema, "data block property", 1024 );
+    }
+
+    snapshot_schema_add_object_type( schema, "Player" );
+    {
+        snapshot_schema_add_table_to_object( schema, "Player" );
+    }
+
+    snapshot_schema_add_object_type( schema, "RigidBody" );
+    {
+        snapshot_schema_add_table_to_object( schema, "RigidBody" );
+    }
+
     snapshot_schema_destroy( schema );
 }
 
