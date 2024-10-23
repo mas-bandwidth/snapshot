@@ -13,20 +13,22 @@
 
 #include "snapshot.h"
 
-#define PROPERTY_TYPE_BOOLEAN       0
-#define PROPERTY_TYPE_INT32         1
-#define PROPERTY_TYPE_UINT32        2
-#define PROPERTY_TYPE_INT64         3
-#define PROPERTY_TYPE_UINT64        4
-#define PROPERTY_TYPE_FLOAT32       5
-#define PROPERTY_TYPE_FLOAT64       6
-#define PROPERTY_TYPE_VECTOR3       7
-#define PROPERTY_TYPE_QUATERNION    8
-#define PROPERTY_TYPE_STRING        9
-#define PROPERTY_TYPE_DATA_BLOCK   10
-#define PROPERTY_TYPE_NETWORK_ID   11
+#define PROPERTY_TYPE_BOOLEAN                           0
+#define PROPERTY_TYPE_INT32                             1
+#define PROPERTY_TYPE_UINT32                            2
+#define PROPERTY_TYPE_INT64                             3
+#define PROPERTY_TYPE_UINT64                            4
+#define PROPERTY_TYPE_FLOAT32                           5
+#define PROPERTY_TYPE_FLOAT64                           6
+#define PROPERTY_TYPE_VECTOR3                           7
+#define PROPERTY_TYPE_QUATERNION                        8
+#define PROPERTY_TYPE_STRING                            9
+#define PROPERTY_TYPE_DATA_BLOCK                       10
+#define PROPERTY_TYPE_NETWORK_ID                       11
 
-#define NUM_PROPERTY_TYPES 12
+#define NUM_PROPERTY_TYPES                             12
+
+#define SNAPSHOT_PROPERTY_FLAGS_NORMAL_VECTOR       (1<<0)
 
 extern struct snapshot_schema_t * snapshot_schema_create( void * context );
 
@@ -59,6 +61,8 @@ extern void snapshot_schema_add_property_network_id( struct snapshot_schema_t * 
 extern void snapshot_schema_add_property_string( struct snapshot_schema_t * schema, const char * name, const char * default_value, int max_length );
 
 extern void snapshot_schema_add_property_data_block( struct snapshot_schema_t * schema, const char * name, int max_bytes );
+
+extern void snapshot_schema_set_property_array_size( struct snapshot_schema_t * schema, int array_size );
 
 extern void snapshot_schema_set_property_flags( struct snapshot_schema_t * schema, uint64_t flags );
 

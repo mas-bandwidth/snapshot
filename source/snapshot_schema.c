@@ -156,6 +156,13 @@ void snapshot_schema_add_property_data_block( struct snapshot_schema_t * schema,
     (void) max_bytes;
 }
 
+void snapshot_schema_set_property_array_size( struct snapshot_schema_t * schema, int array_size )
+{
+    // ...
+    (void) schema;
+    (void) array_size;
+}
+
 void snapshot_schema_set_property_flags( struct snapshot_schema_t * schema, uint64_t flags )
 {
     // ...
