@@ -8,9 +8,11 @@ DONE
 
 TODO
 
-	Implement a schema that fully defines the set of channels, messages, object types, tables attached to objects, table strategies, player cmds etc.
+	Extend to support reliable and unreliable messages.
 
-	In short, *everything* in the snapshot protocol will be driven by the schema, not by C++.
+	These will be data blocks, so serialization is outside the scope of this library (unlike yojimbo, which has bitpacked message types).
+
+	This makes the library more flexible and portable across multiple languages.
 
 	------
 
